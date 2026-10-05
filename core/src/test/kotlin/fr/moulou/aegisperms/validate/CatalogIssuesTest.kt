@@ -4,16 +4,19 @@
 package fr.moulou.aegisperms.validate
 
 import fr.moulou.aegisperms.Fixtures.commandKey
+import fr.moulou.aegisperms.Fixtures.configuration
 import fr.moulou.aegisperms.Fixtures.issues
 import fr.moulou.aegisperms.Fixtures.literals
 import fr.moulou.aegisperms.Fixtures.permissions
 import fr.moulou.aegisperms.model.ApiKey
 import fr.moulou.aegisperms.model.CommandKey
+import fr.moulou.aegisperms.model.Configuration
 import fr.moulou.aegisperms.model.Group
 import fr.moulou.aegisperms.model.Keys
 import fr.moulou.aegisperms.model.Permissions
 import fr.moulou.aegisperms.model.Rule
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -116,6 +119,29 @@ class CatalogIssuesTest {
         )
 
         assertTrue(issues(permissions(Permissions.DELIVERED.groups + ("vip" to Group(rules = rules)))).isEmpty())
+    }
+
+    @Test
+    fun `un constat de l'arbre en erreur fait refuser la configuration`() {
+        val error = Issue(IssueKind.ALIAS_TARGET_NOT_LITERALS, ConfigurationFile.SETTINGS, listOf("aliases", "gmc"), literals("gmc", "minecraft:gamemode creative", "creative"))
+        val report = ConfigurationValidator.validate(configuration(Permissions.DELIVERED), withTreeIssues(error))
+
+        assertFalse(report.isValid)
+        assertEquals(listOf(error), report.issues)
+    }
+
+    @Test
+    fun `un constat de l'arbre en avertissement laisse la configuration valide, et sort avant ceux des règles`() {
+        val warning = Issue(IssueKind.COMMAND_WITHOUT_OWNER, ConfigurationFile.SETTINGS, listOf("namespaces", "owners"), literals("orphan"))
+        val report = ConfigurationValidator.validate(configuration(permissions(Permissions.DELIVERED.groups + ("vip" to Group(rules = mapOf("minecraft:command.fly" to Rule.ALLOW))))), withTreeIssues(warning))
+
+        assertTrue(report.isValid)
+        assertEquals(listOf(IssueKind.COMMAND_WITHOUT_OWNER, IssueKind.UNKNOWN_COMMAND_KEY), report.issues.map { it.kind })
+    }
+
+    /** Le catalogue de test, avec ces constats de l'arbre en plus. */
+    private fun withTreeIssues(vararg treeIssues: Issue): Catalog = object : Catalog by catalog {
+        override fun treeIssues(configuration: Configuration): List<Issue> = treeIssues.toList()
     }
 
     /** Les constats des droits livrés, un groupe `vip` en plus avec cette règle, face au catalogue. */

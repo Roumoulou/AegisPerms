@@ -5,6 +5,7 @@ package fr.moulou.aegisperms.validate
 
 import fr.moulou.aegisperms.model.ApiKey
 import fr.moulou.aegisperms.model.CommandKey
+import fr.moulou.aegisperms.model.Configuration
 
 /** Ce que la validation demande au catalogue (cahier des charges, 4.6), la liste des clés connues du serveur. Sans lui, les constats qui en dépendent se taisent. */
 interface Catalog {
@@ -29,6 +30,13 @@ interface Catalog {
 
     /** Vrai pour une clé d'API connue de vanilla ou déjà demandée. */
     fun hasApiKey(key: ApiKey): Boolean
+
+    /**
+     * Les constats qui confrontent [configuration] à l'arbre des commandes (4.5) : ses alias, ses préfixes et ses rattachements, face aux commandes que le
+     * serveur porte. Seul qui tient l'index sait les faire, et ils comptent comme les autres : une erreur fait refuser la configuration. La configuration
+     * reçue n'est pas encore validée : une clé de règle peut y être mal formée.
+     */
+    fun treeIssues(configuration: Configuration): List<Issue> = emptyList()
 }
 
 /** Un nœud plus exigeant que son ancêtre, avec le niveau d'op que vanilla lui demande. */

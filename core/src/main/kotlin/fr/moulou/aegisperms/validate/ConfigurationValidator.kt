@@ -29,7 +29,8 @@ import java.util.UUID
 
 /**
  * La validation d'une configuration entière, réglages et droits ensemble (cahier des charges, 4.5). Elle est déterministe : ses constats sortent dans le
- * même ordre quel que soit celui des entrées, les droits d'abord, groupes puis joueurs par nom croissant, puis les réglages.
+ * même ordre quel que soit celui des entrées, les droits d'abord, groupes puis joueurs par nom croissant, puis les réglages, puis ceux que le catalogue tire
+ * de l'arbre des commandes.
  *
  * Ce que seule la lecture d'un fichier sait dire, un fichier illisible, une clé inconnue ou écrite deux fois, une valeur hors d'un domaine fermé, se
  * constate à la lecture.
@@ -54,6 +55,7 @@ object ConfigurationValidator {
         checkGroups(configuration.permissions, issues)
         checkPlayers(configuration.permissions, issues)
         checkSettings(configuration.settings, issues)
+        if (catalog != null) issues += catalog.treeIssues(configuration)
 
         // Les constats qui suivent demandent de résoudre, donc une configuration qui se compile : une erreur les arrête.
         if (issues.any { it.severity == Severity.ERROR }) return ValidationReport(issues)

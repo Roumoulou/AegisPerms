@@ -223,6 +223,22 @@ class ConfigurationFilesTest {
     }
 
     @Test
+    fun `un constat que le catalogue tire de l'arbre a sa ligne, et son erreur fait refuser la configuration`() {
+        put(settingsPath, """{""", """  "schema-version": 1,""", """  "aliases": {""", """    "gmc": "minecraft:gamemode creative"""", """  }""", """}""")
+        val withTree = object : Catalog by catalog {
+            override fun treeIssues(configuration: Configuration): List<Issue> = configuration.settings.aliases.map { (name, target) ->
+                Issue(IssueKind.ALIAS_TARGET_NOT_LITERALS, ConfigurationFile.SETTINGS, listOf("aliases", name), literals(name, target, "creative"))
+            }
+        }
+        ConfigurationFiles(config).use { files ->
+            assertEquals(emptyList<Issue>(), files.reload().valid().report.issues)
+            val expected = listOf(Issue(IssueKind.ALIAS_TARGET_NOT_LITERALS, ConfigurationFile.SETTINGS, listOf("aliases", "gmc"), literals("gmc", "minecraft:gamemode creative", "creative"), line = 4))
+            assertEquals(expected, files.reload(withTree).refused())
+            assertEquals(expected, files.check(withTree).refused())
+        }
+    }
+
+    @Test
     fun `un rechargement refusé ne casse rien, et un fichier corrigé se recharge`() {
         put(settingsPath, """{ "schema-version": 1, "mode": "observe" }""")
         ConfigurationFiles(config).use { files ->

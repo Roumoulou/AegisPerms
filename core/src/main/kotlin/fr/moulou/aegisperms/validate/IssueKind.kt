@@ -7,7 +7,8 @@ package fr.moulou.aegisperms.validate
  * La nature d'un constat (cahier des charges, 4.5), avec son niveau. Chaque nature dit les arguments que son texte attend, dans l'ordre : celui qui tient
  * les fichiers de langue (5.7) s'y fie.
  *
- * Les sept premières sont celles que seule la lecture d'un fichier sait constater : c'est elle qui les émet, avant toute validation.
+ * Les sept premières sont celles que seule la lecture d'un fichier sait constater : c'est elle qui les émet, avant toute validation. Celles qui confrontent
+ * les réglages à l'arbre des commandes, des alias aux racines partagées, viennent de qui tient l'index, par [Catalog.treeIssues].
  */
 enum class IssueKind(val severity: Severity) {
 
@@ -71,6 +72,18 @@ enum class IssueKind(val severity: Severity) {
     /** Un préfixe donné à deux mods. Arguments : le préfixe, le premier modid, le second. */
     DUPLICATE_PREFIX(Severity.ERROR),
 
+    /**
+     * Un alias dont la cible n'est pas une suite de littéraux (3.6) : une valeur d'argument, le plus souvent. Arguments : le nom de l'alias, sa cible telle
+     * qu'écrite, le mot qui n'est pas un littéral.
+     */
+    ALIAS_TARGET_NOT_LITERALS(Severity.ERROR),
+
+    /** Un alias dont la cible s'écrit avec le préfixe qu'on tape au lieu du modid (3.6). Arguments : le nom de l'alias, sa cible telle qu'écrite, l'écriture attendue. */
+    ALIAS_TARGET_TYPED_PREFIX(Severity.ERROR),
+
+    /** Une règle qui porte l'ancienne clé d'une commande rattachée à un autre mod (3.2). Arguments : la clé de la règle, la clé que le rattachement lui donne. */
+    REASSIGNED_COMMAND_KEY(Severity.ERROR),
+
     /** Un groupe nomme deux fois le même parent. Arguments : le groupe, le parent. */
     DUPLICATE_PARENT(Severity.WARNING),
 
@@ -115,6 +128,36 @@ enum class IssueKind(val severity: Severity) {
 
     /** Un `allow` de nœud qui couvre un descendant plus exigeant (2.8). Arguments : la clé de la règle, celle du descendant, le niveau d'op qu'il demande. */
     ALLOW_DEMANDING(Severity.WARNING),
+
+    /** Un alias dont le nom est déjà celui d'une commande racine ou d'une forme préfixée, ignoré (3.6). Argument : le nom de l'alias. */
+    ALIAS_NAME_TAKEN(Severity.WARNING),
+
+    /** Un alias dont la commande visée n'est pas sur le serveur, ignoré (3.6). Arguments : le nom de l'alias, sa cible telle qu'écrite. */
+    ALIAS_TARGET_MISSING(Severity.WARNING),
+
+    /** Un préfixe qui est le modid d'un autre mod chargé, et lui cède la place (3.3). Arguments : le modid à qui la table le donne, le préfixe. */
+    PREFIX_YIELDS(Severity.WARNING),
+
+    /** Une forme préfixée dont le nom est déjà pris à la racine, refusée (3.8). Arguments : le nom nu de la commande, le nom de la forme. */
+    PREFIXED_FORM_NAME_TAKEN(Severity.WARNING),
+
+    /** Un rattachement qui vise une commande racine de vanilla, ignoré (3.2). Arguments : la commande racine, le modid. */
+    OWNER_ASSIGNMENT_VANILLA(Severity.WARNING),
+
+    /** Un rattachement vers un mod qui n'est pas chargé, ignoré (3.2). Arguments : la commande racine, le modid. */
+    OWNER_ASSIGNMENT_UNKNOWN_MOD(Severity.WARNING),
+
+    /** Un rattachement d'une commande racine qui n'est pas sur le serveur, ignoré (3.2). Argument : la commande racine. */
+    OWNER_ASSIGNMENT_UNKNOWN_COMMAND(Severity.WARNING),
+
+    /** Une commande racine sans mod propriétaire connu : ses clés prennent l'espace de noms `unknown`, jusqu'à un rattachement (3.2). Argument : la commande racine. */
+    COMMAND_WITHOUT_OWNER(Severity.WARNING),
+
+    /**
+     * Une commande racine que plusieurs mods se partagent : son mod propriétaire peut changer avec l'ordre de chargement, jusqu'à un rattachement (3.2).
+     * Arguments : la commande racine, son mod propriétaire, les co-propriétaires, séparés par des virgules.
+     */
+    SHARED_ROOT(Severity.WARNING),
 
     /** Un `deny` dont la clé n'existe plus : ce qu'il fermait ne l'est peut-être plus. Argument : la clé. */
     DENY_KEY_GONE(Severity.REINFORCED),
