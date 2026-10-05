@@ -5,22 +5,26 @@ package fr.moulou.aegisperms.files
 
 import fr.moulou.aegisperms.validate.ConfigurationFile
 import fr.moulou.storify.core.Store
+import fr.moulou.storify.encodeToPathAtomically
 import kotlinx.serialization.KSerializer
 import java.nio.file.Path
 import kotlin.io.path.exists
 
 /**
  * Un fichier de configuration et son store (cahier des charges, 4.11). Il ouvre le store, ce qui crée le fichier quand il manque, le relit, et construit à
- * la relecture un store qui n'a pas pu l'être plus tôt (4.8). Un fichier qui existe n'est jamais complété ni réécrit ici, et un fichier absent se crée à
- * l'ouverture d'un store, jamais à sa relecture.
+ * la relecture un store qui n'a pas pu l'être plus tôt (4.8). Un fichier qui existe n'est jamais complété ici, et un fichier absent se crée à l'ouverture
+ * d'un store, jamais à sa relecture.
  *
- * La lecture elle-même, et ce qu'elle rend, est celle de [FileReader] : aucune exception de fichier ne sort d'ici.
+ * Il retient l'empreinte du fichier à chaque lecture par le store, réussie ou non, et à chaque écriture : c'est ce qui fait reconnaître un changement
+ * fait par un autre (4.8).
+ *
+ * La lecture elle-même, et ce qu'elle rend, est celle de [FileReader] : aucune exception de fichier ne sort d'une lecture.
  */
 internal class StoredFile<DATA : Any>(
     val file: ConfigurationFile,
     val path: Path,
     private val format: JsonFileFormat,
-    serializer: KSerializer<DATA>,
+    private val serializer: KSerializer<DATA>,
     /** Construit le store sur [path] ; Storify y écrit le fichier quand il manque. */
     private val openStore: (Path) -> Store<DATA>,
 ) : AutoCloseable {
@@ -37,12 +41,20 @@ internal class StoredFile<DATA : Any>(
     /** Ce que le store tient, les données de sa dernière lecture réussie, ou `null` tant qu'il n'a pas pu se construire. */
     val data: DATA? get() = store?.data
 
+    /** Vrai quand le fichier n'est plus celui de la dernière lecture ou écriture : un autre l'a écrit, remplacé ou supprimé. Vrai aussi avant toute lecture d'un fichier présent. */
+    val hasChanged: Boolean get() = Fingerprint.of(path) != fingerprint
+
     private var store: Store<DATA>? = null
+
+    private var fingerprint: Fingerprint? = null
 
     /** Lit le fichier par son store : l'ouvre s'il ne l'est pas, ce qui crée un fichier absent, et le relit sinon. En échec, le store garde ce qu'il tenait. */
     fun read(): FileRead<DATA> {
         val opened = store
-        if (opened == null && !path.exists()) return create()
+        if (opened == null && !path.exists()) return create().also { fingerprint = Fingerprint.of(path) }
+
+        // L'empreinte se prend avant la lecture : un fichier qui change pendant qu'on le lit sera vu comme changé.
+        fingerprint = Fingerprint.of(path)
         return reader.read(path) {
             if (opened == null) {
                 open().data
@@ -61,6 +73,20 @@ internal class StoredFile<DATA : Any>(
     }
 
     private fun open(): Store<DATA> = openStore(path).also { store = it }
+
+    /**
+     * Écrit [data] dans le fichier, entier et atomiquement (4.2), puis le relit par le store, qui tient ainsi ce qui vient d'être écrit. Les données d'un
+     * store sont immuables : c'est le fichier qui change, et le store qui le suit.
+     *
+     * Écrire sans store ouvert, ou sur un store en lecture seule, est une faute du code. Une panne d'écriture remonte telle quelle, le fichier précédent
+     * resté entier : c'est à l'appelant de la rendre.
+     */
+    fun write(data: DATA): FileRead<DATA> {
+        val opened = checkNotNull(store) { "No store is open on '$path': nothing can be written" }
+        check(!opened.isReadOnly) { "The store of '$path' is read-only" }
+        format.encodeToPathAtomically(serializer, data, path)
+        return read()
+    }
 
     override fun close() {
         store?.close()
