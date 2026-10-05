@@ -9,8 +9,13 @@ import fr.moulou.aegisperms.model.Settings
 import fr.moulou.aegisperms.validate.Catalog
 import fr.moulou.aegisperms.validate.ConfigurationFile
 import fr.moulou.aegisperms.validate.ConfigurationValidator
+import fr.moulou.aegisperms.validate.ValidationReport
+import fr.moulou.storify.encodeToPathAtomically
+import kotlinx.serialization.SerializationStrategy
+import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Clock
+import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 /**
@@ -150,7 +155,44 @@ class ConfigurationFiles internal constructor(val directory: Path, private val c
      * fichier ne se lit plus.
      */
     fun writeLastGood(configuration: Configuration, generation: Long): GeneratedWrite = try {
-        lastGood.write(configuration, generation, clock.instant().truncatedTo(ChronoUnit.SECONDS))
+        lastGood.write(configuration, generation, now())
+        GeneratedWrite.Done
+    } catch (failure: Exception) {
+        GeneratedWrite.Failed(failure)
+    }
+
+    /**
+     * Écrit `catalog.json` (4.6) : les clés de commande de [commands] remplacent celles du catalogue précédent, et les clés d'API de [requestedApiKeys],
+     * une clé vers son type, s'ajoutent à celles qu'il gardait. Le catalogue précédent est relu d'abord, pour retrouver ses clés d'API et leur date, et
+     * pour dire les clés de commande apparues et disparues. Illisible, il est régénéré, et le résultat le signale.
+     */
+    fun updateCatalog(commands: Map<String, CommandEntry>, requestedApiKeys: Map<String, String> = emptyMap()): CatalogUpdate {
+        val path = directory.resolve(CatalogFile.FILE_NAME)
+        val existed = Files.exists(path)
+        val previous = if (existed) CatalogFile.read(path) else null
+        val catalog = CatalogFile.succeeding(previous, commands, requestedApiKeys, now())
+        val changes = previous?.let { CatalogChanges.between(it, catalog) }
+        return CatalogUpdate(catalog, changes, previousUnreadable = existed && previous == null, write = writeGenerated(CatalogFile.serializer(), catalog, path))
+    }
+
+    /** Le catalogue tel qu'il est écrit, pour qui le consulte ; `null` quand il manque ou ne se lit pas. */
+    fun readCatalog(): CatalogFile? = CatalogFile.read(directory.resolve(CatalogFile.FILE_NAME))
+
+    /**
+     * Écrit dans `state.json` la tentative de publication qui vient d'avoir lieu (4.7), à la place de la précédente : [generation] est celle de l'état
+     * en vigueur après elle, et [report] ses constats.
+     */
+    fun writeState(generation: Long, source: PublicationSource, result: PublicationResult, report: ValidationReport): GeneratedWrite =
+        writeGenerated(StateFile.serializer(), StateFile.of(generation, now(), source, result, report), directory.resolve(StateFile.FILE_NAME))
+
+    /** L'état tel qu'il est écrit, pour qui édite les fichiers sans voir la console ; `null` quand il manque ou ne se lit pas. Le mod ne l'appelle pas. */
+    fun readState(): StateFile? = StateFile.read(directory.resolve(StateFile.FILE_NAME))
+
+    /** L'instant de l'horloge, à la seconde : celui que portent les fichiers générés. */
+    private fun now(): Instant = clock.instant().truncatedTo(ChronoUnit.SECONDS)
+
+    private fun <DATA> writeGenerated(serializer: SerializationStrategy<DATA>, data: DATA, path: Path): GeneratedWrite = try {
+        JsonFileFormat.GENERATED.encodeToPathAtomically(serializer, data, path)
         GeneratedWrite.Done
     } catch (failure: Exception) {
         GeneratedWrite.Failed(failure)
