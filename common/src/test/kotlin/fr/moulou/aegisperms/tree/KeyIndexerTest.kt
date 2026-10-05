@@ -8,6 +8,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder.literal
 import com.mojang.brigadier.builder.RequiredArgumentBuilder.argument
+import com.mojang.brigadier.tree.CommandNode
 import fr.moulou.aegisperms.files.CommandRequirement
 import fr.moulou.aegisperms.model.CommandKey
 import fr.moulou.aegisperms.model.Keys
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.util.IdentityHashMap
 
 /** Les clés des nœuds d'un arbre (cahier des charges, 2.4), calculées sur des arbres Brigadier synthétiques, sans Minecraft. */
 class KeyIndexerTest {
@@ -182,6 +184,36 @@ class KeyIndexerTest {
         assertNull(index.entry(dispatcher, "bad name", "below"))
         assertNull(index.entry(dispatcher, "alias"))
         assertEquals(setOf(key("minecraft:command.good")), index.nodesByKey.keys)
+    }
+
+    @Test
+    fun `une forme et un alias se jugent sur la clé de leur cible, et leurs enfants gardent la leur`() {
+        val dispatcher = CommandDispatcher<Any>()
+        dispatcher.register(literal<Any>("whitelist").then(literal<Any>("add").then(argument<Any, String>("targets", StringArgumentType.word()).executes { 1 })))
+        val whitelist = dispatcher.root.getChild("whitelist")
+        val add = whitelist.getChild("add")
+        val prefixed = CommandForms.nodeOf(PlannedForm("mc:whitelist", whitelist, listOf(whitelist)))
+        val wla = CommandForms.nodeOf(PlannedForm("wla", add, listOf(whitelist, add)))
+        dispatcher.root.addChild(prefixed)
+        dispatcher.root.addChild(wla)
+        val targets = IdentityHashMap<CommandNode<Any>, CommandNode<Any>>().apply { put(prefixed, whitelist); put(wla, add) }
+        val sharing = IdentityHashMap<CommandNode<Any>, List<CommandNode<Any>>>().apply { put(whitelist, listOf(prefixed)); put(add, listOf(wla)) }
+        val hidden = identitySetOf<CommandNode<Any>>().apply { add(whitelist) }
+
+        val index = KeyIndexer.index(dispatcher.root, { Keys.MINECRAFT }, { CommandRequirement.NONE }, Forms(targets, sharing, hidden))
+
+        assertEquals(key("minecraft:command.whitelist"), index.entries.getValue(prefixed).key)
+        assertEquals(key("minecraft:command.whitelist.add"), index.entries.getValue(wla).key)
+        assertTrue(index.entries.getValue(prefixed).isForm && index.entries.getValue(prefixed).isRoot)
+        assertNull(index.entries.getValue(wla).ownKey)
+        // Les enfants partagés gardent la clé du chemin de la cible, et ne se disent pas partagés pour autant.
+        val sharedChild = index.entries.getValue(add.getChild("targets"))
+        assertEquals(key("minecraft:command.whitelist.add.targets"), sharedChild.key)
+        assertFalse(sharedChild.shared)
+        assertTrue(index.entries.getValue(whitelist).hiddenUnderRequirePrefix)
+        assertEquals(listOf<CommandNode<Any>>(wla), index.entries.getValue(add).forms)
+        assertEquals(listOf("whitelist", "mc:whitelist"), index.nodesByKey.getValue(key("minecraft:command.whitelist")).map { it.name })
+        assertTrue(index.aliasKeys.isEmpty())
     }
 
     private fun key(text: String): CommandKey = Keys.parse(text) as CommandKey

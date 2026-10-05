@@ -26,4 +26,31 @@ class RequirementsTest {
         assertFalse(Requirements.isDefault(Predicate<Any> { true }))
         assertFalse(Requirements.isDefault(literal<Any>("c").requires { true }.build().requirement))
     }
+
+    @Test
+    fun `l'exigence d'un chemin sans exigence est le prédicat par défaut`() {
+        val path = listOf(literal<Any>("whitelist").build(), literal<Any>("list").build())
+
+        assertTrue(Requirements.isDefault(Requirements.ofPath(path)))
+    }
+
+    @Test
+    fun `une seule exigence sur le chemin reste elle-même, donc lisible`() {
+        val whitelist = literal<Any>("whitelist").requires(ADMINS).build()
+        val add = literal<Any>("add").build()
+
+        assertSame(ADMINS, Requirements.ofPath(listOf(whitelist, add)))
+        assertSame(ADMINS, Requirements.ofPath(listOf(whitelist, add, whitelist)))
+    }
+
+    @Test
+    fun `plusieurs exigences sur le chemin se conjuguent`() {
+        val datapack = literal<Any>("datapack").requires(GAMEMASTERS).build()
+        val create = literal<Any>("create").requires(ADMINS).build()
+        val both = Requirements.ofPath(listOf(datapack, create))
+
+        assertFalse(both.test(2))
+        assertTrue(both.test(3))
+        assertFalse(Requirements.ofPath(listOf(create, datapack)).test(2))
+    }
 }

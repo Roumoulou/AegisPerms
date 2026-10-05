@@ -3,6 +3,7 @@
 
 package fr.moulou.aegisperms.tree
 
+import com.mojang.brigadier.tree.CommandNode
 import fr.moulou.aegisperms.files.CommandRequirement
 import fr.moulou.aegisperms.model.CommandKey
 
@@ -29,6 +30,21 @@ class NodeEntry(
     val inheritsKey: Boolean,
     /** Vrai pour un nœud rattaché à plusieurs nœuds de l'arbre, qui porte la clé de son premier chemin (2.4). */
     val shared: Boolean,
+    /**
+     * Vrai pour une forme préfixée ou un alias de la table (3.4, 3.6) : un littéral racine que le mod a ajouté, jugé sur la clé de sa cible, dont il porte la
+     * commande et partage les enfants.
+     */
+    val isForm: Boolean = false,
+    /**
+     * Vrai pour la forme nue d'une commande qui a une forme préfixée : sous la forme exigée, une source jugée ne la voit pas (3.5). `/aegis` et la commande
+     * qu'un alias de même nom rend aux joueurs ne le sont jamais.
+     */
+    val hiddenUnderRequirePrefix: Boolean = false,
+    /**
+     * Les formes et les alias qui partagent les enfants de ce nœud : un enfant qu'on lui ajoute tard leur revient aussi (3.4), et l'arbre d'un joueur qui ne
+     * reçoit pas ce nœud dirige vers l'une d'elles les redirections qui le visaient (3.7).
+     */
+    val forms: List<CommandNode<*>> = emptyList(),
 ) : NodeMark {
 
     /** Vrai pour un alias de vanilla, un littéral racine qui redirige vers une autre commande racine. */

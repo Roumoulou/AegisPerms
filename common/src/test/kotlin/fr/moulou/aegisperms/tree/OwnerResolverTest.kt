@@ -3,10 +3,8 @@
 
 package fr.moulou.aegisperms.tree
 
-import com.mojang.brigadier.Command
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.builder.LiteralArgumentBuilder.literal
-import com.mojang.brigadier.context.CommandContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -36,6 +34,15 @@ class OwnerResolverTest {
         val tp = dispatcher.register(literal<Any>("tp").redirect(teleport))
 
         assertEquals(Owner("minecraft", OwnerSource.DETECTED, emptyList()), resolver().ownerOf(tp))
+    }
+
+    @Test
+    fun `une racine qui redirige vers la racine de l'arbre n'emprunte le mod d'aucune autre commande`() {
+        val dispatcher = CommandDispatcher<Any>()
+        dispatcher.register(literal<Any>("teleport").executes(VanillaCommand()))
+        val again = dispatcher.register(literal<Any>("again").redirect(dispatcher.root))
+
+        assertEquals(Owner("unknown", OwnerSource.UNKNOWN, emptyList()), resolver().ownerOf(again))
     }
 
     @Test
@@ -100,36 +107,5 @@ class OwnerResolverTest {
         assertEquals(Owner("minecraft", OwnerSource.DETECTED, emptyList()), resolver(assignedOwners = mapOf("teleport" to "homes")).ownerOf(teleport))
     }
 
-    private fun resolver(assignedOwners: Map<String, String> = emptyMap()): OwnerResolver = OwnerResolver(FakeMods, assignedOwners)
-
-    /** Un loader simulé : trois mods chargés, chacun avec la classe qui définit ses commandes. La classe d'`OrphanCommand` n'est dans aucun. */
-    private object FakeMods : ModLocator {
-
-        private val modIdByClassName = mapOf(
-            VanillaCommand::class.java.name to "minecraft",
-            HomeCommand::class.java.name to "homes",
-            WarpsMod::class.java.name to "warps",
-        )
-
-        override fun modIdOf(className: String): String? = modIdByClassName[className]
-
-        override fun isLoaded(modId: String): Boolean = modId in modIdByClassName.values
-    }
-
-    private class VanillaCommand : Command<Any> {
-        override fun run(context: CommandContext<Any>): Int = 1
-    }
-
-    private class HomeCommand : Command<Any> {
-        override fun run(context: CommandContext<Any>): Int = 1
-    }
-
-    private class OrphanCommand : Command<Any> {
-        override fun run(context: CommandContext<Any>): Int = 1
-    }
-
-    /** Un mod qui définit sa commande par une lambda : la classe de la commande est une classe cachée, dont cet objet est l'hôte. */
-    private object WarpsMod {
-        fun command(): Command<Any> = Command { 1 }
-    }
+    private fun resolver(assignedOwners: Map<String, String> = emptyMap()): OwnerResolver = OwnerResolver(FakeMods(), assignedOwners)
 }

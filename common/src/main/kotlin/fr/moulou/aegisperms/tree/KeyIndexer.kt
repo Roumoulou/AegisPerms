@@ -30,11 +30,17 @@ class KeyIndex<S>(
  *
  * Un nom vide ou qui porte un blanc ne fait pas une clé : le nœud et tout ce qui descend de lui se jugent sur la clé du plus proche ancêtre qui en a une, et
  * une commande racine dans ce cas reste sans fiche.
+ *
+ * Une forme préfixée ou un alias de la table se juge sur la clé de sa cible, à toute profondeur, et les enfants qu'il partage avec elle gardent les clés du
+ * chemin de la cible (3.4, 3.6) : le parcours n'entre pas dans les formes.
  */
 object KeyIndexer {
 
-    /** Indexe l'arbre de [root]. [namespaceOf] rend le modid du mod propriétaire d'une commande racine, [requirementOf] l'exigence vanilla d'un nœud. */
-    fun <S> index(root: RootCommandNode<S>, namespaceOf: (CommandNode<S>) -> String, requirementOf: (CommandNode<S>) -> CommandRequirement): KeyIndex<S> {
+    /**
+     * Indexe l'arbre de [root]. [namespaceOf] rend le modid du mod propriétaire d'une commande racine, [requirementOf] l'exigence vanilla d'un nœud, et
+     * [forms] dit les formes et les alias que le mod a ajoutés à l'arbre.
+     */
+    fun <S> index(root: RootCommandNode<S>, namespaceOf: (CommandNode<S>) -> String, requirementOf: (CommandNode<S>) -> CommandRequirement, forms: Forms<S> = Forms.none()): KeyIndex<S> {
         val visits = IdentityHashMap<CommandNode<S>, Visit>()
         val order = ArrayList<CommandNode<S>>()
 
@@ -44,14 +50,14 @@ object KeyIndexer {
                 known.shared = true
                 return
             }
-            visits[node] = Visit(key, ownKey = null, isRoot, inheritsKey)
+            visits[node] = Visit(key, ownKey = null, isRoot, inheritsKey, isForm = false)
             order += node
             for (child in node.children) {
                 if (inheritsKey || !Keys.isNodeName(child.name)) visit(child, key, isRoot = false, inheritsKey = true) else visit(child, key.descendant(child.name), isRoot = false, inheritsKey = false)
             }
         }
 
-        val roots = root.children.filter { Keys.isNodeName(it.name) }
+        val roots = root.children.filter { it !in forms.targets && Keys.isNodeName(it.name) }
         val aliasTargets = IdentityHashMap<CommandNode<S>, CommandNode<S>>()
         for (child in roots) vanillaAliasTarget(root, child)?.let { aliasTargets[child] = it }
         for (child in roots) {
@@ -64,16 +70,22 @@ object KeyIndexer {
             // Une cible restée sans fiche, faute d'un nom qui fasse une clé, laisse son alias sans fiche aussi.
             val target = visits[finalTarget(alias, aliasTargets)] ?: continue
             val ownKey = Keys.command(namespaceOf(alias), listOf(alias.name))
-            visits[alias] = Visit(target.key, ownKey, isRoot = true, inheritsKey = false)
+            visits[alias] = Visit(target.key, ownKey, isRoot = true, inheritsKey = false, isForm = false)
             order += alias
             aliasKeys[ownKey] = target.key
+        }
+
+        for (form in root.children) {
+            val target = visits[forms.targets[form] ?: continue] ?: continue
+            visits[form] = Visit(target.key, ownKey = null, isRoot = true, inheritsKey = false, isForm = true)
+            order += form
         }
 
         val entries = IdentityHashMap<CommandNode<S>, NodeEntry>()
         val nodesByKey = LinkedHashMap<CommandKey, MutableList<CommandNode<S>>>()
         for (node in order) {
             val visit = visits.getValue(node)
-            entries[node] = NodeEntry(visit.key, visit.ownKey, requirementOf(node), visit.isRoot, visit.inheritsKey, visit.shared)
+            entries[node] = NodeEntry(visit.key, visit.ownKey, requirementOf(node), visit.isRoot, visit.inheritsKey, visit.shared, visit.isForm, node in forms.hiddenBareForms, forms.sharing[node].orEmpty())
             nodesByKey.getOrPut(visit.key) { ArrayList() } += node
         }
         return KeyIndex(entries, nodesByKey, aliasKeys)
@@ -98,7 +110,7 @@ object KeyIndexer {
     }
 
     /** Ce que le parcours retient d'un nœud avant d'en faire une fiche : `shared` ne se sait qu'à la fin. */
-    private class Visit(val key: CommandKey, val ownKey: CommandKey?, val isRoot: Boolean, val inheritsKey: Boolean) {
+    private class Visit(val key: CommandKey, val ownKey: CommandKey?, val isRoot: Boolean, val inheritsKey: Boolean, val isForm: Boolean) {
         var shared = false
     }
 }

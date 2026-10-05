@@ -3,29 +3,29 @@
 
 package fr.moulou.aegisperms.tree
 
-import com.mojang.brigadier.Command
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder.literal
 import com.mojang.brigadier.builder.RequiredArgumentBuilder.argument
-import com.mojang.brigadier.context.CommandContext
 import fr.moulou.aegisperms.files.CommandRequirement
 import fr.moulou.aegisperms.model.CommandKey
 import fr.moulou.aegisperms.model.Keys
+import fr.moulou.aegisperms.model.NamespaceSettings
+import fr.moulou.aegisperms.model.Settings
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import java.util.function.Predicate
 
 /** L'index d'un arbre de commandes (cahier des charges, 7.4 et 7.5), sur des arbres synthétiques, un loader simulé et une lecture d'exigence simulée. */
 class CommandIndexTest {
 
     companion object {
-        private val GAMEMASTERS_ONLY = Predicate<Any> { false }
-        private val PLAYERS_ONLY = Predicate<Any> { false }
+        /** Les réglages livrés, sans les formes préfixées : l'arbre reste tel que ses mods l'ont enregistré. */
+        private val WITHOUT_FORMS = Settings.DELIVERED.copy(namespaces = NamespaceSettings(enabled = false))
     }
 
     @Test
@@ -61,7 +61,7 @@ class CommandIndexTest {
     @Test
     fun `l'index rend les nœuds d'une clé et le mod propriétaire d'une racine`() {
         val dispatcher = tree()
-        val index = index(dispatcher, assignedOwners = mapOf("home" to "warps"))
+        val index = index(dispatcher, WITHOUT_FORMS.copy(namespaces = NamespaceSettings(enabled = false, owners = mapOf("home" to "warps"))))
 
         assertEquals(listOf(dispatcher.root.getChild("gamemode"), dispatcher.root.getChild("gm")), index.nodesOf(key("minecraft:command.gamemode")))
         assertTrue(index.nodesOf(key("minecraft:command.absent")).isEmpty())
@@ -73,19 +73,37 @@ class CommandIndexTest {
     }
 
     @Test
+    fun `les formes et les alias des réglages s'ajoutent à l'arbre avant les clés`() {
+        val dispatcher = tree()
+        val index = index(dispatcher, Settings.DELIVERED.copy(aliases = mapOf("gmc" to "minecraft:gamemode creative")))
+        val gamemode = dispatcher.root.getChild("gamemode")
+        val prefixed = dispatcher.root.getChild("mc:gamemode")
+
+        assertEquals(listOf("gamemode", "gm", "home"), index.originals.map { it.name })
+        assertEquals(listOf("gamemode", "gm", "home", "mc:gamemode", "mc:gm", "homes:home", "gmc"), dispatcher.root.children.map { it.name })
+        assertEquals(key("minecraft:command.gamemode"), index.entryOf(prefixed)?.key)
+        assertTrue(index.entryOf(prefixed)!!.isForm)
+        assertEquals(key("minecraft:command.gamemode.creative"), index.entryOf(dispatcher.root.getChild("gmc"))?.key)
+        assertTrue(index.entryOf(gamemode)!!.hiddenUnderRequirePrefix)
+        assertEquals(listOf(prefixed, dispatcher.root.getChild("mc:gm")), index.entryOf(gamemode)!!.forms)
+        assertEquals(setOf("gamemode", "gm", "home"), index.owners.keys)
+        assertEquals(AliasOutcome.Added, index.plan.aliasOutcomes["gmc"])
+    }
+
+    @Test
     fun `un enfant ajouté après l'index prend la clé de son parent prolongée de son nom, sous-arbre compris`() {
         val dispatcher = tree()
         val index = index(dispatcher)
         val gamemode = dispatcher.root.getChild("gamemode")
-        val late = literal<Any>("late").requires(GAMEMASTERS_ONLY).then(argument<Any, String>("name", StringArgumentType.word()).executes { 1 }).build()
+        val late = literal<Any>("late").requires(GAMEMASTERS).then(argument<Any, String>("name", StringArgumentType.word()).executes { 1 }).build()
         gamemode.addChild(late)
 
-        val entries = CommandIndex.lateEntries(index.entryOf(gamemode)!!, late, Reader) { false }
+        val entries = CommandIndex.lateEntries(index.entryOf(gamemode)!!, late, FakeRequirements) { false }
 
         assertEquals(listOf(late, late.getChild("name")), entries.map { it.first })
         assertEquals(listOf(key("minecraft:command.gamemode.late"), key("minecraft:command.gamemode.late.name")), entries.map { it.second.key })
         assertEquals(listOf(CommandRequirement.GAMEMASTERS, CommandRequirement.NONE), entries.map { it.second.requirement })
-        assertTrue(entries.none { it.second.isRoot || it.second.inheritsKey || it.second.shared })
+        assertTrue(entries.none { it.second.isRoot || it.second.inheritsKey || it.second.shared || it.second.isForm })
     }
 
     @Test
@@ -96,7 +114,7 @@ class CommandIndexTest {
         val late = argument<Any, String>("player name", StringArgumentType.word()).then(literal<Any>("set").executes { 1 }).build()
         home.addChild(late)
 
-        val entries = CommandIndex.lateEntries(index.entryOf(home)!!, late, Reader) { false }
+        val entries = CommandIndex.lateEntries(index.entryOf(home)!!, late, FakeRequirements) { false }
 
         assertEquals(listOf(key("homes:command.home"), key("homes:command.home")), entries.map { it.second.key })
         assertTrue(entries.all { it.second.inheritsKey })
@@ -108,7 +126,7 @@ class CommandIndexTest {
         val index = index(dispatcher)
         val late = literal<Any>("late").build()
 
-        val entries = CommandIndex.lateEntries(index.entryOf(dispatcher.root.getChild("gm"))!!, late, Reader) { false }
+        val entries = CommandIndex.lateEntries(index.entryOf(dispatcher.root.getChild("gm"))!!, late, FakeRequirements) { false }
 
         assertEquals(listOf(key("minecraft:command.gm.late")), entries.map { it.second.key })
     }
@@ -121,54 +139,70 @@ class CommandIndexTest {
         val known = literal<Any>("known").then(literal<Any>("below")).build()
         val late = literal<Any>("late").then(known).then(literal<Any>("fresh")).build()
 
-        assertTrue(CommandIndex.lateEntries(index.entryOf(gamemode)!!, late, Reader) { true }.isEmpty())
+        assertTrue(CommandIndex.lateEntries(index.entryOf(gamemode)!!, late, FakeRequirements) { true }.isEmpty())
 
-        val entries = CommandIndex.lateEntries(index.entryOf(gamemode)!!, late, Reader) { it === known }
+        val entries = CommandIndex.lateEntries(index.entryOf(gamemode)!!, late, FakeRequirements) { it === known }
         assertEquals(listOf("late", "fresh"), entries.map { it.first.name })
         assertFalse(entries.any { it.first === known.getChild("below") })
     }
 
+    @Test
+    fun `une racine tardive reçoit son mod, sa clé et sa forme préfixée`() {
+        val dispatcher = tree()
+        val index = index(dispatcher, Settings.DELIVERED)
+        val warp = dispatcher.register(literal<Any>("warp").requires(MOD_OPTION).executes(WarpsMod.command()).then(literal<Any>("list").executes(WarpsMod.command())))
+
+        val late = index.lateRoot(warp, index::markOf)!!
+        val form = late.form!!
+        val (ofWarp, ofList, ofForm) = late.entries.map { it.second }
+
+        assertEquals(Owner("warps", OwnerSource.DETECTED, emptyList()), late.owner)
+        assertEquals(listOf(warp, warp.getChild("list"), form), late.entries.map { it.first })
+        assertEquals(key("warps:command.warp"), ofWarp.key)
+        assertTrue(ofWarp.isRoot)
+        assertTrue(ofWarp.hiddenUnderRequirePrefix)
+        assertEquals(listOf(form), ofWarp.forms)
+        assertEquals(key("warps:command.warp.list"), ofList.key)
+        assertEquals("warps:warp", form.name)
+        assertEquals(key("warps:command.warp"), ofForm.key)
+        assertTrue(ofForm.isForm)
+        assertSame(warp.getChild("list"), form.getChild("list"))
+        assertSame(warp.command, form.command)
+        // La forme s'ajoute à la racine une fois les fiches posées : ce n'est pas l'index qui le fait.
+        assertNull(dispatcher.root.getChild("warps:warp"))
+    }
+
+    @Test
+    fun `une racine tardive sans mod propriétaire, ou dont le nom de forme est pris, n'a pas de forme`() {
+        val dispatcher = tree()
+        val index = index(dispatcher, Settings.DELIVERED)
+        val orphan = dispatcher.register(literal<Any>("orphan").executes(OrphanCommand()))
+        dispatcher.register(literal<Any>("warps:warp").executes(OrphanCommand()))
+        val warp = dispatcher.register(literal<Any>("warp").executes(WarpsMod.command()))
+        val unnamed = dispatcher.register(literal<Any>("bad name").executes(WarpsMod.command()))
+
+        val lateOrphan = index.lateRoot(orphan, index::markOf)!!
+        val lateWarp = index.lateRoot(warp, index::markOf)!!
+
+        assertNull(lateOrphan.form)
+        assertEquals(key("unknown:command.orphan"), lateOrphan.entries.single().second.key)
+        assertFalse(lateOrphan.entries.single().second.hiddenUnderRequirePrefix)
+        assertNull(lateWarp.form)
+        assertFalse(lateWarp.entries.single().second.hiddenUnderRequirePrefix)
+        assertNotNull(dispatcher.root.getChild("warps:warp").command)
+        assertNull(index.lateRoot(unnamed, index::markOf))
+    }
+
     private fun key(text: String): CommandKey = Keys.parse(text) as CommandKey
 
-    private fun index(dispatcher: CommandDispatcher<Any>, assignedOwners: Map<String, String> = emptyMap()): CommandIndex<Any> =
-        CommandIndex.build(dispatcher.root, assignedOwners, Mods, Reader)
+    private fun index(dispatcher: CommandDispatcher<Any>, settings: Settings = WITHOUT_FORMS): CommandIndex<Any> = CommandIndex.build(dispatcher.root, settings, FakeMods(), FakeRequirements)
 
     /** `gamemode` de vanilla, son alias `gm`, et `home`, la commande d'un mod. */
     private fun tree(): CommandDispatcher<Any> {
         val dispatcher = CommandDispatcher<Any>()
-        val gamemode = dispatcher.register(literal<Any>("gamemode").requires(GAMEMASTERS_ONLY).then(literal<Any>("creative").executes(VanillaCommand())))
-        dispatcher.register(literal<Any>("gm").requires(GAMEMASTERS_ONLY).redirect(gamemode))
-        dispatcher.register(literal<Any>("home").requires(PLAYERS_ONLY).executes(HomeCommand()))
+        val gamemode = dispatcher.register(literal<Any>("gamemode").requires(GAMEMASTERS).then(literal<Any>("creative").executes(VanillaCommand())))
+        dispatcher.register(literal<Any>("gm").requires(GAMEMASTERS).redirect(gamemode))
+        dispatcher.register(literal<Any>("home").requires(MOD_OPTION).executes(HomeCommand()))
         return dispatcher
-    }
-
-    private object Mods : ModLocator {
-
-        private val modIdByClassName = mapOf(VanillaCommand::class.java.name to "minecraft", HomeCommand::class.java.name to "homes", WarpCommand::class.java.name to "warps")
-
-        override fun modIdOf(className: String): String? = modIdByClassName[className]
-
-        override fun isLoaded(modId: String): Boolean = modId in modIdByClassName.values
-    }
-
-    /** Une lecture d'exigence simulée : deux prédicats connus, et le prédicat par défaut de Brigadier. */
-    private object Reader : RequirementReader {
-        override fun read(requirement: Predicate<*>): CommandRequirement = when {
-            Requirements.isDefault(requirement) -> CommandRequirement.NONE
-            requirement === GAMEMASTERS_ONLY -> CommandRequirement.GAMEMASTERS
-            else -> CommandRequirement.MOD_PREDICATE
-        }
-    }
-
-    private class VanillaCommand : Command<Any> {
-        override fun run(context: CommandContext<Any>): Int = 1
-    }
-
-    private class HomeCommand : Command<Any> {
-        override fun run(context: CommandContext<Any>): Int = 1
-    }
-
-    private class WarpCommand : Command<Any> {
-        override fun run(context: CommandContext<Any>): Int = 1
     }
 }

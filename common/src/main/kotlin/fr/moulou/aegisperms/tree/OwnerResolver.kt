@@ -4,6 +4,7 @@
 package fr.moulou.aegisperms.tree
 
 import com.mojang.brigadier.tree.CommandNode
+import com.mojang.brigadier.tree.RootCommandNode
 import fr.moulou.aegisperms.model.Keys
 
 /** Comment le mod propriétaire d'une commande racine a été trouvé. */
@@ -68,13 +69,14 @@ class OwnerResolver(private val mods: ModLocator, private val assignedOwners: Ma
 
     /**
      * Le mod de la commande du nœud ou, à défaut, du premier descendant qui en a une, en profondeur. Pour un nœud qui ne fait que rediriger, sans commande ni
-     * enfant, c'est celui de sa cible, qui porte les commandes qu'il mène à exécuter.
+     * enfant, c'est celui de sa cible, qui porte les commandes qu'il mène à exécuter. La racine de l'arbre n'est la cible de personne : elle mène à toutes les
+     * commandes, et prêterait le mod de la première venue.
      */
     private fun firstCommandMod(node: CommandNode<*>, seen: MutableSet<CommandNode<*>>): String? {
         if (!seen.add(node)) return null
         modOf(node)?.let { return it }
         for (child in node.children) firstCommandMod(child, seen)?.let { return it }
-        if (node.command == null && node.children.isEmpty()) node.redirect?.let { return firstCommandMod(it, seen) }
+        if (node.command == null && node.children.isEmpty()) node.redirect?.takeIf { it !is RootCommandNode<*> }?.let { return firstCommandMod(it, seen) }
         return null
     }
 
