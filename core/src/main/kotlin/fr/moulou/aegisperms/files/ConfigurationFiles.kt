@@ -30,6 +30,8 @@ class ConfigurationFiles internal constructor(val directory: Path, private val c
 
     private val lastGood = LastGood(directory, reader, settingsFormat, permissionsFormat)
 
+    private val backupFiles = Backups(directory, reader)
+
     /**
      * Les réglages sur lesquels une écriture des droits s'appuie : ceux de la dernière lecture valide par les stores, ou ceux que le démarrage applique
      * quand les droits, eux, viennent de leur fichier. `null` met les droits en lecture seule.
@@ -116,7 +118,7 @@ class ConfigurationFiles internal constructor(val directory: Path, private val c
     fun changedOutside(): Set<ConfigurationFile> = setOfNotNull(settings.file.takeIf { settings.hasChanged }, permissions.file.takeIf { permissions.hasChanged })
 
     /**
-     * Écrit [newPermissions] dans le fichier des droits (4.8), le seul que le mod écrit : une modification par `/aegis`, le renommage d'un joueur.
+     * Écrit [newPermissions] dans le fichier des droits (4.8), le seul qu'une commande modifie : une modification par `/aegis`, le renommage d'un joueur.
      *
      * Les droits se valident d'abord avec les réglages en place, puis l'empreinte du fichier se compare à celle de sa dernière lecture : le mod n'écrit
      * pas sur un fichier qui a bougé. Le fichier s'écrit alors entier et atomiquement, puis se relit, si bien que la configuration rendue est celle du
@@ -152,6 +154,56 @@ class ConfigurationFiles internal constructor(val directory: Path, private val c
         GeneratedWrite.Done
     } catch (failure: Exception) {
         GeneratedWrite.Failed(failure)
+    }
+
+    /**
+     * Copie les deux fichiers en place dans `backups\<horodatage>[-nom]\`, à l'octet et avec un manifeste (4.10). L'horodatage est l'heure locale, sans
+     * deux-points, et un dossier déjà là n'est jamais écrasé.
+     */
+    fun backup(name: String? = null): BackupResult {
+        if (name != null && !Backups.isValidName(name)) return BackupResult.InvalidName
+        return try {
+            backupFiles.write(name, clock)?.let(BackupResult::Done) ?: BackupResult.NothingToBackUp
+        } catch (failure: Exception) {
+            BackupResult.Failed(failure)
+        }
+    }
+
+    /** Les sauvegardes que [restore] peut reprendre, par le nom de leur dossier, triées. */
+    fun backups(): List<String> = backupFiles.list()
+
+    /**
+     * Remplace les deux fichiers en place par ceux de la sauvegarde [folder] (4.10), à l'octet : la mise en forme de qui l'avait écrite revient avec elle.
+     *
+     * La sauvegarde se valide d'abord comme une configuration entière, et rien n'est touché si elle est refusée. Les fichiers en place sont alors mis de
+     * côté dans une sauvegarde `-before-restore`, puis remplacés, puis relus par leurs stores : la configuration rendue est celle du disque, et les
+     * droits redeviennent inscriptibles. C'est la seule écriture du fichier des réglages après le premier démarrage.
+     */
+    fun restore(folder: String, catalog: Catalog? = null): RestoreResult {
+        val source = backupFiles.resolve(folder) ?: return RestoreResult.UnknownBackup
+        when (val saved = backupFiles.read(source, catalog)) {
+            null -> return RestoreResult.IncompleteBackup
+            is ConfigurationRead.Refused -> return RestoreResult.Refused(saved.report)
+            is ConfigurationRead.Valid -> {}
+        }
+
+        // Sans sauvegarde des fichiers en place, pas de remplacement : on ne remplace pas ce qu'on n'a pas su mettre de côté.
+        val savedAs = try {
+            backupFiles.write(Backups.BEFORE_RESTORE, clock)
+        } catch (failure: Exception) {
+            return RestoreResult.Failed(failure)
+        }
+        try {
+            backupFiles.restore(source)
+        } catch (failure: Exception) {
+            // Un seul des deux fichiers a pu être remplacé : les stores se relisent, pour que rien ne s'écrive sur ce qui n'est plus lu.
+            readByStores(catalog)
+            return RestoreResult.Failed(failure)
+        }
+        return when (val read = reload(catalog)) {
+            is ConfigurationRead.Valid -> RestoreResult.Restored(read.configuration, read.report, savedAs)
+            is ConfigurationRead.Refused -> RestoreResult.Refused(read.report)
+        }
     }
 
     /** Ferme les deux stores. Rien ne s'écrit : aucun n'a de modification en attente. */
