@@ -59,7 +59,7 @@ dependencies {
  *  ── DEUX ENVIRONNEMENTS, VANILLA PURS ───────────────────────────────────────
  *  `client` et `server`, dans mc-26.3\run\.
  *
- *  L'entrepôt S:\18 a les profils 26.3, `vanilla` et `dev`, et ses maps : le client
+ *  L'entrepôt C:\MC-Kit a les profils 26.3, `vanilla` et `dev`, et ses maps : le client
  *  reçoit la sélection de outfitter.maps, le serveur le monde que le profil `dev`
  *  désigne.
  *

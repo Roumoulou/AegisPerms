@@ -62,7 +62,7 @@ dependencies {
  *  ── DEUX ENVIRONNEMENTS, VANILLA PURS ───────────────────────────────────────
  *  `client` et `server`, dans mc-26.1\run\.
  *
- *  L'entrepôt S:\18 a les profils 26.1.2, `vanilla` et `dev`, pas de maps 26.1.2 :
+ *  L'entrepôt C:\MC-Kit a les profils 26.1.2, `vanilla` et `dev`, pas de maps 26.1.2 :
  *  le client démarre sans monde, le serveur génère le sien, ce qu'Outfitter annonce.
  *
  *  ── LE SERVEUR DE TEST ──────────────────────────────────────────────────────

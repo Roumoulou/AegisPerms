@@ -56,11 +56,11 @@ dependencies {
  *  Le plugin Outfitter (pris sur Repsy : voir settings.gradle.kts) prépare chaque
  *  environnement avant son run, serveur de test compris, et déploie le jar. Ce bloc
  *  ne déclare que ce qui est propre à ce module : la version de Minecraft, qui
- *  choisit le dossier de l'entrepôt S:\18, les deux environnements avec leur profil,
+ *  choisit le dossier de l'entrepôt C:\MC-Kit, les deux environnements avec leur profil,
  *  le serveur de test, la cible de déploiement et le panier du serveur dédié. Tout
  *  le reste vient des clés `outfitter.*` : gradle.properties de la racine pour ce
  *  qui est propre au projet (maps, monde du serveur, logs), machine.properties pour
- *  ce qui est propre au poste ou à la personne (l'entrepôt S:\18, le joueur).
+ *  ce qui est propre au poste ou à la personne (l'entrepôt C:\MC-Kit, le joueur).
  *  Outfitter lit le machine.properties de la racine, puis celui de ce module s'il
  *  existe, qui le surcharge clé par clé.
  *
@@ -78,7 +78,7 @@ dependencies {
  *  fait tourner dans son dossier, mc-26.2\run\game-test, hors de build\, le remet à
  *  neuf avant chaque run (`freshGameTest` : world\ et config\ retirés) et range le
  *  rapport de ses tests dans build\test-results\gameTest\TEST-gameTest.xml. Il ne
- *  reçoit rien de l'entrepôt : un clone sans S:\18 le rejoue tel quel.
+ *  reçoit rien de l'entrepôt : un clone sans C:\MC-Kit le rejoue tel quel.
  *
  *  Pour ne jouer qu'une partie des tests, un motif à jokers sur leur identifiant,
  *  <mod>:<classe>_<méthode> en snake_case, l'argument entre guillemets : sans eux,
