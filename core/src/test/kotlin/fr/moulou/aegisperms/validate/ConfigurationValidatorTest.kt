@@ -71,7 +71,7 @@ class ConfigurationValidatorTest {
     fun `chaque nature de constat a son niveau et sa clé de traduction`() {
         assertEquals("aegisperms.issue.malformed_key", IssueKind.MALFORMED_KEY.translationKey)
         assertEquals(IssueKind.entries.size, IssueKind.entries.map { it.translationKey }.toSet().size)
-        assertEquals(mapOf(Severity.ERROR to 12, Severity.WARNING to 13, Severity.REINFORCED to 2), IssueKind.entries.groupingBy { it.severity }.eachCount())
+        assertEquals(mapOf(Severity.ERROR to 19, Severity.WARNING to 13, Severity.REINFORCED to 2), IssueKind.entries.groupingBy { it.severity }.eachCount())
     }
 
     @Test

@@ -6,8 +6,34 @@ package fr.moulou.aegisperms.validate
 /**
  * La nature d'un constat (cahier des charges, 4.5), avec son niveau. Chaque nature dit les arguments que son texte attend, dans l'ordre : celui qui tient
  * les fichiers de langue (5.7) s'y fie.
+ *
+ * Les sept premières sont celles que seule la lecture d'un fichier sait constater : c'est elle qui les émet, avant toute validation.
  */
 enum class IssueKind(val severity: Severity) {
+
+    /** Un fichier qui ne se lit pas : absent quand le mod le relit, verrouillé, ou un dossier à sa place. Argument : ce que le système en dit. */
+    UNREADABLE_FILE(Severity.ERROR),
+
+    /** Un fichier qui n'est pas du JSON strict, ou que sa structure fait refuser sans que la lecture sache dire où (4.2). Argument : ce que le parseur en dit. */
+    MALFORMED_FILE(Severity.ERROR),
+
+    /** Une clé écrite deux fois dans un même objet : un groupe, un joueur ou une règle en double (4.12). Argument : la clé. */
+    DUPLICATE_KEY(Severity.ERROR),
+
+    /** Un fichier sans `schema-version` (4.2). Sans argument. */
+    MISSING_SCHEMA_VERSION(Severity.ERROR),
+
+    /** Un fichier d'un numéro de structure plus récent que le mod. Arguments : le numéro du fichier, celui que le mod lit. */
+    NEWER_SCHEMA_VERSION(Severity.ERROR),
+
+    /** Une clé que le fichier ne connaît pas à cet endroit, une faute de frappe le plus souvent. Argument : la clé. */
+    UNKNOWN_KEY(Severity.ERROR),
+
+    /**
+     * Une valeur hors de son domaine : une valeur fermée inconnue, `chefs` pour `admin-level`, ou une valeur d'un autre type que le sien, un nombre entre
+     * guillemets. Arguments : la valeur telle qu'écrite, son domaine.
+     */
+    VALUE_OUT_OF_DOMAIN(Severity.ERROR),
 
     /** Le groupe `default` manque. Sans argument. */
     MISSING_DEFAULT(Severity.ERROR),

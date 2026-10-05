@@ -50,28 +50,8 @@ class SettingsJsonTest {
 
     @Test
     fun `le fichier des réglages du premier démarrage s'écrit à l'octet près`() {
-        val expected = """
-            {
-              "schema-version": 1,
-              "admin-level": "owners",
-              "denied-commands": "hidden",
-              "refusal-message": null,
-              "language": "auto",
-              "mode": "enforce",
-              "namespaces": {
-                "enabled": true,
-                "require-prefix": true,
-                "prefixes": {
-                  "minecraft": "mc"
-                },
-                "owners": {}
-              },
-              "aliases": {},
-              "watch-files": true
-            }
-        """.trimIndent() + "\n"
-        assertEquals(expected, write(Settings.DELIVERED))
-        assertArrayEquals(expected.toByteArray(Charsets.UTF_8), Files.readAllBytes(file))
+        assertEquals(DeliveredTexts.SETTINGS, write(Settings.DELIVERED))
+        assertArrayEquals(DeliveredTexts.SETTINGS.toByteArray(Charsets.UTF_8), Files.readAllBytes(file))
     }
 
     @Test

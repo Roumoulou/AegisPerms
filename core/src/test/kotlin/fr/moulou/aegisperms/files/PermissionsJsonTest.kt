@@ -54,31 +54,8 @@ class PermissionsJsonTest {
 
     @Test
     fun `le fichier des droits du premier démarrage s'écrit à l'octet près`() {
-        val expected = """
-            {
-              "schema-version": 1,
-              "groups": {
-                "admin": {
-                  "include-ops": "owners",
-                  "rules": {
-                    "command": "allow"
-                  },
-                  "weight": 100
-                },
-                "default": {
-                  "rules": {
-                    "command": "deny",
-                    "minecraft:command.help": "allow",
-                    "minecraft:command.me": "allow",
-                    "minecraft:command.msg": "allow"
-                  }
-                }
-              },
-              "players": {}
-            }
-        """.trimIndent() + "\n"
-        assertEquals(expected, write(Permissions.DELIVERED))
-        assertArrayEquals(expected.toByteArray(Charsets.UTF_8), Files.readAllBytes(file))
+        assertEquals(DeliveredTexts.PERMISSIONS, write(Permissions.DELIVERED))
+        assertArrayEquals(DeliveredTexts.PERMISSIONS.toByteArray(Charsets.UTF_8), Files.readAllBytes(file))
     }
 
     @Test
