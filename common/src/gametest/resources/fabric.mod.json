@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "aegisperms-gametest",
+  "version": "1.0.0",
+  "name": "AegisPerms, étage 2 des tests",
+  "description": "Les tests d'AegisPerms sur un serveur de test : le mod et ses mixins appliqués, face à de vrais joueurs simulés. Jamais publié.",
+  "authors": ["roumoulou"],
+  "license": "LGPL-3.0-only",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": [
+      "fr.moulou.aegisperms.gametest.WitnessGameTests"
+    ]
+  },
+  "depends": {
+    "aegisperms": "*",
+    "fabric-gametest-api-v1": "*"
+  }
+}

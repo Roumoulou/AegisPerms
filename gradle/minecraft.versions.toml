@@ -1,0 +1,29 @@
+# La chaîne Fabric commune à toutes les versions du jeu servies (alias `mc`). Ce qui
+# suit UNE version précise, le jeu, la Fabric API, son module GameTest, Brigadier, vit
+# dans le catalogue de cette version : gradle/mc-<version>.versions.toml.
+
+[versions]
+
+fabric-loader = "0.19.5" # Chargeur Fabric : charge les mods au démarrage. Le même pour toutes les versions servies (mesuré chez TravellingDimension : 0.19.5 lance 26.1.2, 26.2 et 26.3)
+fabric-language-kotlin = "1.14.1+kotlin.2.4.20" # Adaptateur Kotlin pour Fabric (embarque kotlinx.serialization, kotlin-reflect et kotlinx-datetime), le même jar pour 26.1.2, 26.2 et 26.3
+fabric-loom = "1.18.2" # Plugin Gradle Loom : outillage de compilation pour les mods Fabric, une seule version pour tous les modules. Épinglé, un -SNAPSHOT bougerait sous le build
+fabric-permissions-api = "0.7.0" # L'API de permissions de lucko, sur Maven Central : le même jar pour 26.1.2, 26.2 et 26.3 (son fabric.mod.json demande minecraft >= 26.1)
+
+# Aucun mod de développement ici : les runs de dev sont vanilla purs.
+
+
+[libraries]
+
+fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "fabric-loader" }
+# Amorce le jeu dans les tests (étage 1). Versionné en verrou avec le chargeur : même
+# version.ref, donc il suivra tout seul la prochaine montée de `fabric-loader`.
+fabric-loader-junit = { module = "net.fabricmc:fabric-loader-junit", version.ref = "fabric-loader" }
+fabric-language-kotlin = { module = "net.fabricmc:fabric-language-kotlin", version.ref = "fabric-language-kotlin" }
+# Le mod en est le fournisseur, et l'embarque dans son jar (jar-in-jar, section 2 du plugin de version).
+fabric-permissions-api = { module = "me.lucko:fabric-permissions-api", version.ref = "fabric-permissions-api" }
+
+
+[plugins]
+
+# Appliqué par build-logic, qui en fait une dépendance à cette version : les modules l'appliquent sans version.
+fabric-loom = { id = "net.fabricmc.fabric-loom", version.ref = "fabric-loom" }

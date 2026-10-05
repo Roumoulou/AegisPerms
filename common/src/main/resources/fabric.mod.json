@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${version}",
+  "name": "AegisPerms",
+  "description": "Le pare-feu des commandes d'un serveur Fabric : pour chaque joueur et chaque nœud de l'arbre Brigadier, ce qui se voit et ce qui s'utilise, commandes vanilla et commandes des mods comprises, sans rien installer côté client.",
+  "authors": ["roumoulou"],
+  "contact": {},
+  "license": "LGPL-3.0-only",
+  "environment": "server",
+  "entrypoints": {
+    "server": [
+      {
+        "adapter": "kotlin",
+        "value": "fr.moulou.aegisperms.AegisPerms"
+      }
+    ]
+  },
+  "mixins": [
+    "aegisperms.mixins.json"
+  ],
+  "depends": {
+    "java": ">=${java_version}",
+    "minecraft": "~${minecraft_version}",
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": ">=${fabric_api_version}",
+    "fabric-language-kotlin": ">=${fabric_language_kotlin_version}"
+  },
+  "breaks": {
+    "luckperms": "*",
+    "vanilla-permissions": "*",
+    "universal_perms": "*",
+    "player_roles": "*"
+  }
+}

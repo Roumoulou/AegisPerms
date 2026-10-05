@@ -1,0 +1,43 @@
+# ═══ Sorties de build et caches ═════════════════════════════════════════════
+.gradle/
+build/
+.kotlin/
+out/
+
+# ═══ Environnement de développement Loom ════════════════════════════════════
+# run/ porte les mondes, les réglages faits en jeu et les logs. Tout se
+# régénère par les tâches prepare<Env> d'Outfitter, depuis l'entrepôt S:\18.
+#
+# logs/, mods/ et .fabric/ ne sont PAS ignorés, exprès : un dossier de jeu vit
+# sous run/ ou sous build/, et ces trois-là à la racine d'un module disent qu'un
+# jeu a tourné hors du sien. `git status` doit le montrer.
+run/
+
+# ═══ IntelliJ ═══════════════════════════════════════════════════════════════
+.idea/
+*.iml
+
+# ═══ Secrets : ceinture et bretelles ════════════════════════════════════════
+# Rien de sensible ne vit dans ce dossier. Ces motifs sont là pour le jour où
+# quelque chose y tomberait par accident.
+# machine.properties porte les réglages par machine. Le motif local.properties
+# reste, parce qu'un outil de l'écosystème Android peut en créer un.
+machine.properties
+local.properties
+.env
+.env.*
+*.pem
+*.key
+*.kdbx
+*.dpapi
+
+# ═══ Sauvegardes ponctuelles ════════════════════════════════════════════════
+# La convention .avant-<motif> pose une copie à côté du fichier remplacé. Ce
+# sont des filets de sécurité locaux, pas de l'historique : Git s'en charge.
+# processResources les exclut du jar par le même motif.
+*.avant-*
+
+# ═══ Divers ═════════════════════════════════════════════════════════════════
+*.log
+.DS_Store
+Thumbs.db

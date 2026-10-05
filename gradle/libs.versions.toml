@@ -1,0 +1,67 @@
+[versions]
+
+# ── Plugins de build ──────────────────────────────────────────────────────────
+kotlin = "2.4.20" # Version du compilateur Kotlin (doit être cohérente avec fabric-language-kotlin !)
+java = "25" # Version Java cible (utilisée pour la compilation ET dans fabric.mod.json via ${java_version})
+
+# ── Outfitter ─────────────────────────────────────────────────────────────────
+# Le plugin des environnements de développement, pris sur Repsy à cette version
+# (settings.gradle.kts) : un -SNAPSHOT n'est rafraîchi qu'une fois par vingt-quatre
+# heures, --refresh-dependencies force la reprise. Les modules de version lui déclarent
+# leur serveur de test (`gameTests { }`) : une version antérieure à la 0.3 ne compilerait
+# pas leur build.
+outfitter = "0.3.2-SNAPSHOT"
+
+# ── Publication ───────────────────────────────────────────────────────────────
+# mod-publish-plugin, de modmuss50, le mainteneur de Loom : Modrinth et CurseForge d'une
+# seule déclaration, la section 9 du plugin de version. Retenu contre Minotaur (Modrinth
+# seul) et CurseForgeGradle (CurseForge seul), qu'il aurait fallu tenir d'accord. Gradle 9
+# au minimum depuis sa 2.0 ; sa doc traite Fabric 26.1 et plus, où l'on publie `jar`.
+mod-publish = "2.2.1"
+
+# ── Storify ───────────────────────────────────────────────────────────────────
+# La bibliothèque des fichiers JSON du mod (permissions.json, settings.json), prise sur
+# Repsy à sa version publiée : un -SNAPSHOT n'est rafraîchi qu'une fois par vingt-quatre
+# heures, --refresh-dependencies force la reprise. tomlkt et json5 sont ses deux
+# dépendances que fabric-language-kotlin ne fournit pas : le jar du mod les embarque avec
+# elle (jar-in-jar, section 2 du plugin de version), aux versions de son catalogue.
+storify = "0.4.0-SNAPSHOT"
+tomlkt = "0.6.1"
+json5 = "0.8.0"
+
+# ── Tests ─────────────────────────────────────────────────────────────────────
+# JUnit seul : l'agrégat `junit-jupiter` porte l'api, les tests paramétrés et le moteur,
+# rien d'autre n'est à déclarer.
+junit = "6.1.3"
+
+# ── Dépendances du mod ────────────────────────────────────────────────────────
+# kotlinx-serialization est fourni au runtime par fabric-language-kotlin,
+# on ne déclare ici que la version de compilation (doit rester compatible FLK).
+kotlinx-serialization = "1.11.0"
+
+
+[libraries]
+
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+
+# Storify et les deux jars qu'elle réclame au runtime en plus de fabric-language-kotlin.
+storify = { module = "fr.moulou:storify", version.ref = "storify" }
+tomlkt = { module = "dev.eav.tomlkt:tomlkt", version.ref = "tomlkt" }
+json5 = { module = "li.songe:json5", version.ref = "json5" }
+
+# JUnit
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+# Le lanceur se déclare parce que l'étage 0 coupe l'héritage de configurations que Gradle
+# installe par défaut, et perd du même coup celui que Gradle y ajoutait. Même `version.ref`
+# que Jupiter : depuis JUnit 6 la plateforme porte le même numéro.
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit" }
+
+
+
+[plugins]
+
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+outfitter = { id = "fr.moulou.outfitter", version.ref = "outfitter" }
+# Appliqué par build-logic, qui en fait une dépendance à cette version : comme Loom, sans version dans les modules.
+mod-publish = { id = "me.modmuss50.mod-publish-plugin", version.ref = "mod-publish" }
