@@ -3,10 +3,13 @@
 
 package fr.moulou.aegisperms.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * Un joueur (cahier des charges, 2.5), tel que le fichier des droits l'écrit (4.4) : sa forme lisible ([ReadableForm]) est la clé de l'entrée qui le porte,
  * et l'UUID qu'elle donne est son identité.
  */
+@Serializable
 data class Player(
     /** Les groupes directs, dans l'ordre écrit. */
     val groups: List<String> = emptyList(),

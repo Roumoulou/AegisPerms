@@ -3,17 +3,24 @@
 
 package fr.moulou.aegisperms.model
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 /**
  * Les droits (cahier des charges, 4.4) : les groupes et les joueurs du fichier `permissions.json`, tels qu'il les écrit. Rien n'y est vérifié : c'est la
  * validation (4.5) qui en juge.
  */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
 data class Permissions(
     /** Le numéro de la structure du fichier (4.2). Sans valeur par défaut : il s'écrit toujours, et un fichier qui ne le porte pas est refusé. */
-    val schemaVersion: Int,
-    /** Les groupes, sous leur nom. */
-    val groups: Map<String, Group> = emptyMap(),
-    /** Les joueurs, sous leur forme lisible. */
-    val players: Map<String, Player> = emptyMap(),
+    @SerialName("schema-version") val schemaVersion: Int,
+    /** Les groupes, sous leur nom. Ils s'écrivent toujours, même vides, là où le fichier omet ce qui vaut sa valeur par défaut. */
+    @EncodeDefault val groups: Map<String, Group> = emptyMap(),
+    /** Les joueurs, sous leur forme lisible. Ils s'écrivent toujours, comme les groupes. */
+    @EncodeDefault val players: Map<String, Player> = emptyMap(),
 ) {
 
     companion object {

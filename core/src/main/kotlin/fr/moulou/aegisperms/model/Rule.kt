@@ -3,10 +3,20 @@
 
 package fr.moulou.aegisperms.model
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KeepGeneratedSerializer
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 /**
  * Ce qu'une règle dit de sa clé (cahier des charges, 2.5), tel que le fichier des droits l'écrit (4.4) : la clé est celle de l'entrée qui porte la règle.
  * [visible] ne vaut que pour un `deny` ; absent, le réglage `denied-commands` décide.
+ *
+ * Elle s'écrit en forme courte ou longue par [RuleSerializer], qui s'appuie sur le sérialiseur généré, gardé pour lui.
  */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable(with = RuleSerializer::class)
+@KeepGeneratedSerializer
 data class Rule(val value: RuleValue, val visible: Boolean? = null, val note: String? = null) {
 
     companion object {
@@ -19,7 +29,8 @@ data class Rule(val value: RuleValue, val visible: Boolean? = null, val note: St
 }
 
 /** La valeur d'une règle. */
+@Serializable
 enum class RuleValue {
-    ALLOW,
-    DENY,
+    @SerialName("allow") ALLOW,
+    @SerialName("deny") DENY,
 }

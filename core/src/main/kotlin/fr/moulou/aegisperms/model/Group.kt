@@ -3,16 +3,20 @@
 
 package fr.moulou.aegisperms.model
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 /**
  * Un groupe (cahier des charges, 2.5), tel que le fichier des droits l'écrit (4.4) : son nom est la clé de l'entrée qui le porte, et tous ses champs sont
  * facultatifs.
  */
+@Serializable
 data class Group(
     val weight: Int = 0,
     /** Les parents, dans l'ordre déclaré. */
     val parents: List<String> = emptyList(),
     /** Le niveau d'op à partir duquel un op est membre d'office, ou `null` quand le groupe n'en compte pas. */
-    val includeOps: OpLevel? = null,
+    @SerialName("include-ops") val includeOps: OpLevel? = null,
     /** Les règles propres du groupe, sous le texte de leur clé. */
     val rules: Map<String, Rule> = emptyMap(),
     val note: String? = null,
