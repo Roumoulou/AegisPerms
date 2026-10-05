@@ -124,6 +124,15 @@ class KeysTest {
     }
 
     @Test
+    fun `un nom vide ou qui porte un blanc ne fait pas un nom de nœud`() {
+        for (name in listOf("targets", "facingEntity", "home.set", "50%", "minecraft:max_minecart_speed")) assertTrue(Keys.isNodeName(name), name)
+        for (name in listOf("", "player name", "tab\tname", "bell\u0007")) {
+            assertFalse(Keys.isNodeName(name), name)
+            assertThrows(MalformedKeyException::class.java) { Keys.command("homes", listOf("home", name)) }
+        }
+    }
+
+    @Test
     fun `une clé couvre ses descendantes, jamais ses ancêtres`() {
         val teleport = commandKey("minecraft:command.teleport")
         val location = commandKey("minecraft:command.teleport.targets.location")

@@ -69,12 +69,15 @@ object Keys {
         }
         if (!IDENTIFIER_PART.matches(namespace)) throw MalformedKeyException(text, KeyDefect.INVALID_NAMESPACE)
         interned[text]?.let { return it as CommandKey }
-        for (segment in segments) {
-            if (segment.isEmpty()) throw MalformedKeyException(text, KeyDefect.EMPTY_NODE_NAME)
-            if (segment.any { it.isWhitespace() || it.isISOControl() }) throw MalformedKeyException(text, KeyDefect.INVALID_NODE_NAME)
-        }
+        for (segment in segments) nodeNameDefect(segment)?.let { throw MalformedKeyException(text, it) }
         return intern(CommandKey(namespace, segments.toList(), text))
     }
+
+    /**
+     * Vrai pour un nom dont [command] fait un nom de nœud : ni vide, ni porteur d'un blanc ou d'un caractère de contrôle. Brigadier laisse un mod nommer un
+     * argument comme il veut : qui indexe un arbre s'en assure avant de bâtir une clé.
+     */
+    fun isNodeName(name: String): Boolean = nodeNameDefect(name) == null
 
     /** La clé d'API `<namespace>:<segments>`, les segments joints par des barres obliques. */
     fun api(namespace: String, segments: List<String>): ApiKey {
@@ -108,6 +111,12 @@ object Keys {
 
     /** Vrai pour un chemin qui vaut `command` ou commence par `command.` : c'est celui d'une clé de commande, jamais d'une clé d'API. */
     internal fun isCommandPath(segments: List<String>): Boolean = (segments.size == 1 && segments[0] == COMMAND) || segments[0].startsWith(COMMAND_PREFIX)
+
+    private fun nodeNameDefect(name: String): KeyDefect? = when {
+        name.isEmpty() -> KeyDefect.EMPTY_NODE_NAME
+        name.any { it.isWhitespace() || it.isISOControl() } -> KeyDefect.INVALID_NODE_NAME
+        else -> null
+    }
 
     private fun unescape(input: String, part: String): String {
         if (part.indexOf('%') < 0) return part
