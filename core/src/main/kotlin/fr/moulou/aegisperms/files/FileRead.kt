@@ -10,9 +10,9 @@ internal sealed interface FileRead<out DATA> {
 
     /**
      * Le fichier se lit. [created] est vrai quand il manquait et que le mod vient de l'écrire avec les valeurs livrées. [text] est le texte lu, pour donner
-     * leur ligne aux constats que la validation fera de [data].
+     * leur ligne aux constats que la validation fera de [data] ; il manque quand les données ne viennent pas du fichier en place, mais du repli (4.9).
      */
-    class Loaded<DATA>(val data: DATA, val created: Boolean, val text: FileText) : FileRead<DATA>
+    class Loaded<DATA>(val data: DATA, val created: Boolean, val text: FileText?) : FileRead<DATA>
 
     /** Le fichier est refusé : [issues] dit pourquoi, chaque constat avec son chemin JSON et sa ligne quand ils se trouvent. */
     class Refused(val issues: List<Issue>) : FileRead<Nothing>

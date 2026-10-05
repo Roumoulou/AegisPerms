@@ -10,15 +10,17 @@ import fr.moulou.aegisperms.validate.Catalog
 import fr.moulou.aegisperms.validate.ConfigurationFile
 import fr.moulou.aegisperms.validate.ConfigurationValidator
 import java.nio.file.Path
+import java.time.Clock
+import java.time.temporal.ChronoUnit
 
 /**
  * Les fichiers de `config\aegisperms\` (cahier des charges, 4.2), le point d'entrée du package : ce que le mod et l'application de bureau appellent pour
  * lire, valider, écrire et sauvegarder une configuration.
  *
  * Elle s'appelle d'un seul fil, le fil des fichiers (7.4), et ne se protège pas contre un second. Rien de ce qui vient d'un fichier n'en sort en
- * exception (4.9) : chaque appel rend un résultat, qui porte ses constats.
+ * exception (4.9) : chaque appel rend un résultat, qui porte ses constats ou sa panne. L'heure vient de [clock], qu'un test fixe.
  */
-class ConfigurationFiles internal constructor(val directory: Path, settingsFormat: JsonFileFormat, permissionsFormat: JsonFileFormat) : AutoCloseable {
+class ConfigurationFiles internal constructor(val directory: Path, private val clock: Clock, settingsFormat: JsonFileFormat, permissionsFormat: JsonFileFormat) : AutoCloseable {
 
     private val settings = Stores.settings(directory, settingsFormat)
 
@@ -26,26 +28,83 @@ class ConfigurationFiles internal constructor(val directory: Path, settingsForma
 
     private val reader = ConfigurationReader(settings.reader, permissions.reader)
 
-    /**
-     * Les réglages de la dernière lecture par les stores, quand elle a rendu une configuration valide ; `null` sinon. Une écriture s'appuie sur eux, et
-     * sans eux les droits sont en lecture seule.
-     */
-    private var validSettings: FileRead.Loaded<Settings>? = null
+    private val lastGood = LastGood(directory, reader, settingsFormat, permissionsFormat)
 
-    constructor(directory: Path) : this(directory, JsonFileFormat.SETTINGS, JsonFileFormat.PERMISSIONS)
+    /**
+     * Les réglages sur lesquels une écriture des droits s'appuie : ceux de la dernière lecture valide par les stores, ou ceux que le démarrage applique
+     * quand les droits, eux, viennent de leur fichier. `null` met les droits en lecture seule.
+     */
+    private var writableWith: FileRead.Loaded<Settings>? = null
+
+    constructor(directory: Path, clock: Clock = Clock.systemDefaultZone()) : this(directory, clock, JsonFileFormat.SETTINGS, JsonFileFormat.PERMISSIONS)
+
+    /**
+     * Lit la configuration au démarrage du serveur (4.9), et rend toujours de quoi appliquer des règles. Un fichier absent se crée avec les valeurs
+     * livrées. Un fichier illisible ou invalide n'est ni corrigé ni réécrit : ce qui s'applique à sa place vient de la copie `last-good`, ou, sans copie
+     * valide, des valeurs livrées, et la combinaison se revalide à chaque pas. Des droits venus d'ailleurs que de leur fichier sont en lecture seule.
+     */
+    fun start(catalog: Catalog? = null): ConfigurationStart {
+        val reads = readByStores(catalog)
+        val live = reads.combined
+        if (live is ConfigurationRead.Valid) return ConfigurationStart(live.configuration, ConfigurationSource.FILE, ConfigurationSource.FILE, live.report, live.created)
+
+        val copy = lastGood.read(catalog)
+        val sources = ConfigurationFile.entries.associateWithTo(mutableMapOf()) { ConfigurationSource.FILE }
+        var faulty = live.report.errors.map { it.file }.toSet()
+        while (true) {
+            for (file in faulty) sources[file] = fallbackOf(sources.getValue(file), copy)
+            val settingsSource = sources.getValue(ConfigurationFile.SETTINGS)
+            val permissionsSource = sources.getValue(ConfigurationFile.PERMISSIONS)
+            val candidate = Configuration(
+                settings = when (settingsSource) {
+                    ConfigurationSource.FILE -> (reads.settings as FileRead.Loaded).data
+                    ConfigurationSource.LAST_GOOD -> checkNotNull(copy).configuration.settings
+                    ConfigurationSource.DELIVERED -> Settings.DELIVERED
+                },
+                permissions = when (permissionsSource) {
+                    ConfigurationSource.FILE -> (reads.permissions as FileRead.Loaded).data
+                    ConfigurationSource.LAST_GOOD -> checkNotNull(copy).configuration.permissions
+                    ConfigurationSource.DELIVERED -> Permissions.DELIVERED
+                },
+            )
+            val errors = ConfigurationValidator.validate(candidate, catalog).errors
+            // Les valeurs livrées sont le dernier repli : quand les deux fichiers y sont, la descente s'arrête.
+            if (errors.isEmpty() || sources.values.all { it == ConfigurationSource.DELIVERED }) {
+                if (permissionsSource == ConfigurationSource.FILE) {
+                    val settingsText = (reads.settings as? FileRead.Loaded)?.text.takeIf { settingsSource == ConfigurationSource.FILE }
+                    writableWith = FileRead.Loaded(candidate.settings, created = false, settingsText)
+                }
+                return ConfigurationStart(candidate, settingsSource, permissionsSource, live.report, createdOf(reads))
+            }
+            // Un fichier déjà aux valeurs livrées ne descend plus : s'il est seul en cause, c'est l'autre qui descend.
+            faulty = errors.map { it.file }.filterTo(mutableSetOf()) { sources[it] != ConfigurationSource.DELIVERED }.ifEmpty { ConfigurationFile.entries.toSet() }
+        }
+    }
 
     /**
      * Relit les deux fichiers par leurs stores et valide la configuration entière (4.8). Le premier appel ouvre les stores, ce qui crée un fichier absent
      * avec les valeurs livrées, et tout appel construit un store qui n'a pas pu l'être plus tôt. Sans [catalog], les constats qui en dépendent se taisent.
      *
-     * L'empreinte de chaque fichier est retenue, que la lecture soit valide ou refusée.
+     * L'empreinte de chaque fichier est retenue, que la lecture soit valide ou refusée. Refusée, elle met les droits en lecture seule jusqu'à la
+     * prochaine configuration valide : une modification compilée sur l'état en vigueur ne doit pas atterrir sur un fichier qui ne lui correspond plus.
      */
-    fun reload(catalog: Catalog? = null): ConfigurationRead {
+    fun reload(catalog: Catalog? = null): ConfigurationRead = readByStores(catalog).combined
+
+    private fun readByStores(catalog: Catalog?): StoreReads {
         val settingsRead = settings.read()
-        val read = reader.combine(settingsRead, permissions.read(), catalog)
-        validSettings = (settingsRead as? FileRead.Loaded)?.takeIf { read is ConfigurationRead.Valid }
-        return read
+        val permissionsRead = permissions.read()
+        val combined = reader.combine(settingsRead, permissionsRead, catalog)
+        writableWith = (settingsRead as? FileRead.Loaded)?.takeIf { combined is ConfigurationRead.Valid }
+        return StoreReads(settingsRead, permissionsRead, combined)
     }
+
+    private fun fallbackOf(source: ConfigurationSource, copy: LastGood.Copy?): ConfigurationSource =
+        if (source == ConfigurationSource.FILE && copy != null) ConfigurationSource.LAST_GOOD else ConfigurationSource.DELIVERED
+
+    private fun createdOf(reads: StoreReads): Set<ConfigurationFile> = setOfNotNull(
+        ConfigurationFile.SETTINGS.takeIf { (reads.settings as? FileRead.Loaded)?.created == true },
+        ConfigurationFile.PERMISSIONS.takeIf { (reads.permissions as? FileRead.Loaded)?.created == true },
+    )
 
     /** Lit et valide les deux fichiers tels qu'ils sont sur le disque, sans rien créer, ouvrir ni retenir : c'est `/aegis validate` (5.3). */
     fun check(catalog: Catalog? = null): ConfigurationRead = reader.read(directory, catalog)
@@ -64,7 +123,7 @@ class ConfigurationFiles internal constructor(val directory: Path, settingsForma
      * disque, avec la ligne de chaque avertissement.
      */
     fun write(newPermissions: Permissions, catalog: Catalog? = null): ConfigurationWrite {
-        val settingsRead = validSettings ?: return ConfigurationWrite.ReadOnly
+        val settingsRead = writableWith ?: return ConfigurationWrite.ReadOnly
         val proposed = ConfigurationValidator.validate(Configuration(settingsRead.data, newPermissions), catalog)
         if (!proposed.isValid) return ConfigurationWrite.Refused(proposed)
         if (permissions.hasChanged) return ConfigurationWrite.FileMoved
@@ -78,10 +137,21 @@ class ConfigurationFiles internal constructor(val directory: Path, settingsForma
             is ConfigurationRead.Valid -> ConfigurationWrite.Written(read.configuration, read.report)
             // Un autre a remplacé le fichier entre l'écriture et sa relecture : ce qui se lit n'est plus valide, comme après un rechargement refusé.
             is ConfigurationRead.Refused -> {
-                validSettings = null
+                writableWith = null
                 ConfigurationWrite.Refused(read.report)
             }
         }
+    }
+
+    /**
+     * Écrit dans `last-good\` la configuration qui vient d'être publiée sous [generation] (4.9) : c'est elle que le prochain démarrage reprendra si un
+     * fichier ne se lit plus.
+     */
+    fun writeLastGood(configuration: Configuration, generation: Long): GeneratedWrite = try {
+        lastGood.write(configuration, generation, clock.instant().truncatedTo(ChronoUnit.SECONDS))
+        GeneratedWrite.Done
+    } catch (failure: Exception) {
+        GeneratedWrite.Failed(failure)
     }
 
     /** Ferme les deux stores. Rien ne s'écrit : aucun n'a de modification en attente. */
@@ -89,4 +159,7 @@ class ConfigurationFiles internal constructor(val directory: Path, settingsForma
         settings.close()
         permissions.close()
     }
+
+    /** Les lectures des deux fichiers par leurs stores, et ce qu'elles font ensemble. */
+    private class StoreReads(val settings: FileRead<Settings>, val permissions: FileRead<Permissions>, val combined: ConfigurationRead)
 }

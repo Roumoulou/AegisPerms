@@ -47,6 +47,12 @@ class JsonFileFormat private constructor(private val json: Json, private val sor
          */
         val PERMISSIONS = permissions(SchemaMigrations(Permissions.SCHEMA_VERSION))
 
+        /**
+         * Le format des fichiers que le mod écrit seul (4.1) : le manifeste d'une copie, le catalogue, l'état. Trié comme le fichier des droits, sans ce qui
+         * vaut sa valeur par défaut, et de structure 1.
+         */
+        internal val GENERATED = JsonFileFormat(strictJson(encodeDefaults = false), sorted = true, SchemaMigrations(current = 1))
+
         internal fun settings(migrations: SchemaMigrations): JsonFileFormat = JsonFileFormat(strictJson(encodeDefaults = true), sorted = false, migrations)
 
         internal fun permissions(migrations: SchemaMigrations): JsonFileFormat = JsonFileFormat(strictJson(encodeDefaults = false), sorted = true, migrations)

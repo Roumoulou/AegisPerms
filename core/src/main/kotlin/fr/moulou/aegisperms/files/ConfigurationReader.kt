@@ -32,7 +32,7 @@ internal class ConfigurationReader(private val settings: FileReader<Settings>, p
 
         val configuration = Configuration(settingsRead.data, permissionsRead.data)
         val texts = mapOf(ConfigurationFile.SETTINGS to settingsRead.text, ConfigurationFile.PERMISSIONS to permissionsRead.text)
-        val report = ValidationReport(ConfigurationValidator.validate(configuration, catalog).issues.map { texts.getValue(it.file).withLine(it) })
+        val report = ValidationReport(ConfigurationValidator.validate(configuration, catalog).issues.map { texts[it.file]?.withLine(it) ?: it })
         if (!report.isValid) return ConfigurationRead.Refused(report)
 
         val created = setOfNotNull(ConfigurationFile.SETTINGS.takeIf { settingsRead.created }, ConfigurationFile.PERMISSIONS.takeIf { permissionsRead.created })
