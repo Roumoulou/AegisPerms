@@ -24,9 +24,10 @@ class CommandIndex<S> private constructor(
     val owners: Map<String, Owner>,
     /** Ce que les réglages ont fait ajouter à l'arbre, avec le sort de chaque alias. */
     val plan: FormPlan<S>,
+    /** Le loader, tel que l'index l'interroge. */
+    val mods: ModLocator,
     private val keys: KeyIndex<S>,
     private val settings: Settings,
-    private val mods: ModLocator,
     private val requirements: RequirementReader,
 ) {
 
@@ -45,7 +46,7 @@ class CommandIndex<S> private constructor(
             val plan = CommandForms.plan(root, originals, owners, settings, mods)
             val forms = CommandForms.apply(root, plan)
             val keys = KeyIndexer.index(root, { owners.getValue(it.name).modId }, { requirements.read(it.requirement) }, forms)
-            return CommandIndex(root, originals, owners, plan, keys, settings, mods, requirements)
+            return CommandIndex(root, originals, owners, plan, mods, keys, settings, requirements)
         }
 
         /**
@@ -99,6 +100,15 @@ class CommandIndex<S> private constructor(
 
     /** Le mod propriétaire de la commande racine de nom [rootName], ou `null` quand l'arbre ne l'avait pas à sa construction. */
     fun ownerOf(rootName: String): Owner? = owners[rootName]
+
+    /**
+     * Le mod propriétaire qu'auraient les commandes racines de l'arbre sous les rattachements [assignedOwners] : ceux d'une configuration candidate, ou
+     * aucun, pour savoir ce que les classes disent seules.
+     */
+    fun ownersWith(assignedOwners: Map<String, String>): Map<String, Owner> {
+        val resolver = OwnerResolver(mods, assignedOwners)
+        return originals.associate { it.name to resolver.ownerOf(it) }
+    }
 
     /**
      * Ce que reçoit [node], commande racine enregistrée après l'index (3.8) : son mod propriétaire, sa fiche et celles de son sous-arbre, et sa forme
