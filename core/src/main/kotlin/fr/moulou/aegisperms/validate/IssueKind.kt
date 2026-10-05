@@ -1,0 +1,114 @@
+// SPDX-FileCopyrightText: 2026 roumoulou
+// SPDX-License-Identifier: LGPL-3.0-only
+
+package fr.moulou.aegisperms.validate
+
+/**
+ * La nature d'un constat (cahier des charges, 4.5), avec son niveau. Chaque nature dit les arguments que son texte attend, dans l'ordre : celui qui tient
+ * les fichiers de langue (5.7) s'y fie.
+ */
+enum class IssueKind(val severity: Severity) {
+
+    /** Le groupe `default` manque. Sans argument. */
+    MISSING_DEFAULT(Severity.ERROR),
+
+    /** Un nom de groupe qui porte autre chose que des minuscules, des chiffres, `_` et `-`. Argument : le nom. */
+    MALFORMED_GROUP_NAME(Severity.ERROR),
+
+    /** Un groupe hérite d'un groupe qui n'existe pas. Arguments : le groupe, le parent. */
+    UNKNOWN_PARENT(Severity.ERROR),
+
+    /** Un cycle d'héritage. Argument : le cycle, écrit `a > b > a`. */
+    INHERITANCE_CYCLE(Severity.ERROR),
+
+    /** Une clé de règle mal formée (2.4). Arguments : la clé telle qu'écrite, son défaut. */
+    MALFORMED_KEY(Severity.ERROR),
+
+    /** Une forme lisible qui n'a pas ses deux parts, ou dont l'UUID ne se lit pas. Argument : la forme telle qu'écrite. */
+    MALFORMED_READABLE_FORM(Severity.ERROR),
+
+    /** Un UUID qui se lit, sans être écrit en minuscules avec ses tirets. Arguments : l'UUID tel qu'écrit, sa forme canonique. */
+    NON_CANONICAL_UUID(Severity.ERROR),
+
+    /** Un UUID porté par deux joueurs. Arguments : l'UUID, la première forme lisible qui le porte, la seconde. */
+    DUPLICATE_UUID(Severity.ERROR),
+
+    /** Un joueur inscrit dans un groupe qui n'existe pas. Argument : le groupe. */
+    UNKNOWN_GROUP(Severity.ERROR),
+
+    /** Un nom d'alias vide, ou qui porte un blanc ou une barre oblique (3.6). Argument : le nom. */
+    MALFORMED_ALIAS_NAME(Severity.ERROR),
+
+    /** Un préfixe qui porte autre chose que des minuscules, des chiffres, `_` et `-` (3.3). Arguments : le modid, le préfixe. */
+    MALFORMED_PREFIX(Severity.ERROR),
+
+    /** Un préfixe donné à deux mods. Arguments : le préfixe, le premier modid, le second. */
+    DUPLICATE_PREFIX(Severity.ERROR),
+
+    /** Un groupe nomme deux fois le même parent. Arguments : le groupe, le parent. */
+    DUPLICATE_PARENT(Severity.WARNING),
+
+    /** Un groupe inscrit deux fois pour un joueur. Argument : le groupe. */
+    DUPLICATE_PLAYER_GROUP(Severity.WARNING),
+
+    /** `default` inscrit comme groupe direct d'un joueur, à qui il s'applique déjà. Sans argument. */
+    DEFAULT_AS_DIRECT_GROUP(Severity.WARNING),
+
+    /** `visible` écrit sur un `allow`, où il est ignoré. Argument : la clé de la règle. */
+    VISIBLE_ON_ALLOW(Severity.WARNING),
+
+    /** Un `allow` sans effet, sous le refus d'une clé de son chemin (2.7). Arguments : la clé de la règle, la clé refusée. */
+    ALLOW_UNDER_REFUSAL(Severity.WARNING),
+
+    /**
+     * Un `allow` de nœud qui ouvre des clés sensibles (2.9), une fois par raison. Arguments : la clé de la règle, les clés sensibles qu'elle ouvre pour
+     * cette raison, séparées par des virgules, la raison.
+     */
+    ALLOW_SENSITIVE(Severity.WARNING),
+
+    /**
+     * Deux groupes de départ de même poids décident différemment d'une clé chez un joueur, et l'ordre des noms tranche (2.6). Arguments : le groupe qui
+     * l'emporte, l'autre, leur poids, la première clé en désaccord.
+     */
+    WEIGHT_TIE(Severity.WARNING),
+
+    /** `require-prefix` activé sans les formes préfixées, où il est ignoré (3.5). Sans argument. */
+    REQUIRE_PREFIX_WITHOUT_FORMS(Severity.WARNING),
+
+    /** Une clé de commande que le catalogue ne connaît pas. Argument : la clé. */
+    UNKNOWN_COMMAND_KEY(Severity.WARNING),
+
+    /** La même, quand le catalogue propose une clé proche. Arguments : la clé, la plus proche. */
+    UNKNOWN_COMMAND_KEY_NEAR(Severity.WARNING),
+
+    /** Une clé d'API ni connue de vanilla ni jamais demandée. Argument : la clé. */
+    UNKNOWN_API_KEY(Severity.WARNING),
+
+    /** Une règle sur la clé d'un alias de vanilla, qui ne couvre rien (2.4). Arguments : la clé de l'alias, celle de sa cible. */
+    ALIAS_KEY(Severity.WARNING),
+
+    /** Un `allow` de nœud qui couvre un descendant plus exigeant (2.8). Arguments : la clé de la règle, celle du descendant, le niveau d'op qu'il demande. */
+    ALLOW_DEMANDING(Severity.WARNING),
+
+    /** Un `deny` dont la clé n'existe plus : ce qu'il fermait ne l'est peut-être plus. Argument : la clé. */
+    DENY_KEY_GONE(Severity.REINFORCED),
+
+    /** Le même, quand des clés sont apparues au même endroit du catalogue. Arguments : la clé, les clés apparues, séparées par des virgules. */
+    DENY_KEY_GONE_NEAR(Severity.REINFORCED);
+
+    /** La clé de traduction du texte du constat. */
+    val translationKey: String get() = "aegisperms.issue." + name.lowercase()
+}
+
+/** Le niveau d'un constat. */
+enum class Severity {
+
+    /** La configuration est refusée. */
+    ERROR,
+
+    /** La configuration s'applique, et le constat se dit. */
+    WARNING,
+
+    /** Un avertissement répété à chaque démarrage et à chaque connexion d'un op d'au moins `admin-level`, jusqu'à correction. */
+    REINFORCED,
+}

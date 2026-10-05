@@ -17,6 +17,10 @@ import fr.moulou.aegisperms.model.Rule
 import fr.moulou.aegisperms.model.Settings
 import fr.moulou.aegisperms.resolve.Resolver
 import fr.moulou.aegisperms.resolve.Subject
+import fr.moulou.aegisperms.validate.Catalog
+import fr.moulou.aegisperms.validate.ConfigurationValidator
+import fr.moulou.aegisperms.validate.Issue
+import fr.moulou.aegisperms.validate.IssueArgument
 import java.util.UUID
 
 /** Les briques des tests du cœur, et les personnages du cahier des charges (2.11), le jeu d'essai commun. */
@@ -64,7 +68,9 @@ object Fixtures {
 
     fun permissions(groups: Map<String, Group>, players: Map<String, Player> = emptyMap()): Permissions = Permissions(Permissions.SCHEMA_VERSION, groups, players)
 
-    fun state(permissions: Permissions, settings: Settings = Settings.DELIVERED, generation: Long = 1): EffectiveState = EffectiveState(generation, Configuration(settings, permissions))
+    fun configuration(permissions: Permissions, settings: Settings = Settings.DELIVERED): Configuration = Configuration(settings, permissions)
+
+    fun state(permissions: Permissions, settings: Settings = Settings.DELIVERED, generation: Long = 1): EffectiveState = EffectiveState(generation, configuration(permissions, settings))
 
     fun resolver(permissions: Permissions, settings: Settings = Settings.DELIVERED): Resolver = Resolver(state(permissions, settings))
 
@@ -74,4 +80,10 @@ object Fixtures {
     fun key(text: String): Key = Keys.parse(text)
 
     fun commandKey(text: String): CommandKey = Keys.parse(text) as CommandKey
+
+    /** Les constats de la validation de ces droits, sous les réglages livrés et sans catalogue, sauf mention. */
+    fun issues(permissions: Permissions, settings: Settings = Settings.DELIVERED, catalog: Catalog? = null): List<Issue> =
+        ConfigurationValidator.validate(configuration(permissions, settings), catalog).issues
+
+    fun literals(vararg texts: String): List<IssueArgument> = texts.map(IssueArgument::Literal)
 }
