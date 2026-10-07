@@ -163,14 +163,15 @@ class ConfigurationFiles internal constructor(val directory: Path, private val c
 
     /**
      * Écrit `catalog.json` (4.6) : les clés de commande de [commands] remplacent celles du catalogue précédent, et les clés d'API de [requestedApiKeys],
-     * une clé vers son type, s'ajoutent à celles qu'il gardait. Le catalogue précédent est relu d'abord, pour retrouver ses clés d'API et leur date, et
-     * pour dire les clés de commande apparues et disparues. Illisible, il est régénéré, et le résultat le signale.
+     * une clé vers son type, s'ajoutent à celles qu'il gardait, comme les chaînes à points refusées de [refusedApiKeys], un texte vers son type (6.4). Le
+     * catalogue précédent est relu d'abord, pour retrouver ses clés d'API et leur date, et pour dire les clés de commande apparues et disparues.
+     * Illisible, il est régénéré, et le résultat le signale.
      */
-    fun updateCatalog(commands: Map<String, CommandEntry>, requestedApiKeys: Map<String, String> = emptyMap()): CatalogUpdate {
+    fun updateCatalog(commands: Map<String, CommandEntry>, requestedApiKeys: Map<String, String> = emptyMap(), refusedApiKeys: Map<String, String> = emptyMap()): CatalogUpdate {
         val path = directory.resolve(CatalogFile.FILE_NAME)
         val existed = Files.exists(path)
         val previous = if (existed) CatalogFile.read(path) else null
-        val catalog = CatalogFile.succeeding(previous, commands, requestedApiKeys, now())
+        val catalog = CatalogFile.succeeding(previous, commands, requestedApiKeys, now(), refusedApiKeys)
         val changes = previous?.let { CatalogChanges.between(it, catalog) }
         return CatalogUpdate(catalog, changes, previousUnreadable = existed && previous == null, write = writeGenerated(CatalogFile.serializer(), catalog, path))
     }

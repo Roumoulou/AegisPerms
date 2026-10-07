@@ -50,8 +50,8 @@ class CatalogFileTest {
         "homes:command.home" to CommandEntry(NodeKind.LITERAL, executable = true, requirement = CommandRequirement.MOD_PREDICATE, owner = "homes", prefixedForm = "homes:home"),
     )
 
-    private fun update(clock: Clock, commands: Map<String, CommandEntry> = this.commands, apiKeys: Map<String, String> = emptyMap()): CatalogUpdate =
-        ConfigurationFiles(config, clock).use { files -> files.updateCatalog(commands, apiKeys) }
+    private fun update(clock: Clock, commands: Map<String, CommandEntry> = this.commands, apiKeys: Map<String, String> = emptyMap(), refused: Map<String, String> = emptyMap()): CatalogUpdate =
+        ConfigurationFiles(config, clock).use { files -> files.updateCatalog(commands, apiKeys, refused) }
 
     private fun readCatalog(): CatalogFile? = ConfigurationFiles(config, nextStart).use { it.readCatalog() }
 
@@ -159,6 +159,46 @@ class CatalogFileTest {
         val third = update(nextStart, apiKeys = mapOf("homes:home/limit" to "boolean")).catalog
         assertEquals(ApiKeyEntry("boolean", "2026-10-05T12:05:09Z"), third.apiKeys.getValue("homes:home/limit"))
         assertEquals(third, readCatalog())
+    }
+
+    @Test
+    fun `une clé dont le chemin porte un point est marquée, et une chaîne à points refusée entre sous son texte`() {
+        update(firstStart, commands = emptyMap(), apiKeys = mapOf("homes:home.limit" to "fabric", "homes:home/limit" to "lucko"), refused = mapOf("essentialcommands" to "lucko"))
+
+        val expected = """
+            {
+              "schema-version": 1,
+              "api-keys": {
+                "essentialcommands": {
+                  "first-requested": "2026-10-05T12:05:09Z",
+                  "refused": true,
+                  "type": "lucko"
+                },
+                "homes:home.limit": {
+                  "dotted-path": true,
+                  "first-requested": "2026-10-05T12:05:09Z",
+                  "type": "fabric"
+                },
+                "homes:home/limit": {
+                  "first-requested": "2026-10-05T12:05:09Z",
+                  "type": "lucko"
+                }
+              },
+              "commands": {}
+            }
+        """.trimIndent() + "\n"
+        assertEquals(expected, Files.readString(catalogPath))
+        assertEquals(ApiKeyEntry("fabric", "2026-10-05T12:05:09Z", dottedPath = true), readCatalog()?.apiKeys?.get("homes:home.limit"))
+    }
+
+    @Test
+    fun `une chaîne refusée se garde d'un démarrage à l'autre, avec sa première date`() {
+        update(firstStart, refused = mapOf("essentialcommands" to "lucko"))
+
+        val kept = update(nextStart).catalog.apiKeys
+        assertEquals(mapOf("essentialcommands" to ApiKeyEntry("lucko", "2026-10-05T12:05:09Z", refused = true)), kept)
+        assertEquals(kept, update(nextStart, refused = mapOf("essentialcommands" to "lucko")).catalog.apiKeys)
+        assertEquals(kept, readCatalog()?.apiKeys)
     }
 
     @Test

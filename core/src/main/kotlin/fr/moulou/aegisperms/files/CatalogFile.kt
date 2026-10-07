@@ -3,6 +3,8 @@
 
 package fr.moulou.aegisperms.files
 
+import fr.moulou.aegisperms.model.ApiKey
+import fr.moulou.aegisperms.model.Keys
 import fr.moulou.aegisperms.model.OpLevel
 import fr.moulou.aegisperms.model.SensitiveReason
 import kotlinx.serialization.EncodeDefault
@@ -41,13 +43,18 @@ data class CatalogFile(
 
         /**
          * Le catalogue qui succède à [previous] : les clés de commande sont celles de [commands], qui remplacent les anciennes ; les clés d'API sont
-         * celles de [previous], avec leur date, plus celles de [requestedApiKeys], une clé vers son type, datées de [now] quand elles sont nouvelles.
+         * celles de [previous], avec leur date, plus celles de [requestedApiKeys], une clé vers son type, datées de [now] quand elles sont nouvelles, et
+         * les chaînes à points de [refusedApiKeys], un texte vers son type, qui ne font pas une clé et entrent refusées (6.4). Une clé dont un segment
+         * porte un point est marquée : la chaîne à points de l'API de lucko ne la rend pas.
          */
-        fun succeeding(previous: CatalogFile?, commands: Map<String, CommandEntry>, requestedApiKeys: Map<String, String>, now: Instant): CatalogFile {
+        fun succeeding(previous: CatalogFile?, commands: Map<String, CommandEntry>, requestedApiKeys: Map<String, String>, now: Instant, refusedApiKeys: Map<String, String> = emptyMap()): CatalogFile {
             val known = previous?.apiKeys.orEmpty()
-            val requested = requestedApiKeys.mapValues { (key, type) -> ApiKeyEntry(type, known[key]?.firstRequested ?: now.toString()) }
-            return CatalogFile(SCHEMA_VERSION, commands, known + requested)
+            val requested = requestedApiKeys.mapValues { (key, type) -> ApiKeyEntry(type, known[key]?.firstRequested ?: now.toString(), dottedPath = hasDottedPath(key)) }
+            val refused = refusedApiKeys.mapValues { (text, type) -> ApiKeyEntry(type, known[text]?.firstRequested ?: now.toString(), refused = true) }
+            return CatalogFile(SCHEMA_VERSION, commands, known + requested + refused)
         }
+
+        private fun hasDottedPath(keyText: String): Boolean = (Keys.parseOrNull(keyText) as? ApiKey)?.segments?.any { '.' in it } == true
     }
 }
 
@@ -106,6 +113,16 @@ enum class CommandRequirement(val opLevel: OpLevel? = null) {
     }
 }
 
-/** Ce que le catalogue dit d'une clé d'API (4.6) : son type, et l'instant de sa première demande, en ISO 8601, à la seconde et en UTC. */
+/**
+ * Ce que le catalogue dit d'une clé d'API (4.6) : son type, l'instant de sa première demande, en ISO 8601, à la seconde et en UTC, et deux marques de 6.4.
+ * Ce qui vaut sa valeur par défaut ne s'écrit pas.
+ */
 @Serializable
-data class ApiKeyEntry(val type: String, @SerialName("first-requested") val firstRequested: String)
+data class ApiKeyEntry(
+    val type: String,
+    @SerialName("first-requested") val firstRequested: String,
+    /** Vrai pour une chaîne à points que l'API de lucko a donnée et qui ne fait pas une clé : l'entrée porte la chaîne telle quelle, et aucune règle ne peut la viser. */
+    val refused: Boolean = false,
+    /** Vrai pour une clé dont un segment porte un point : la chaîne à points de l'API de lucko ne la rend pas, et une règle sur elle ne répond qu'aux autres voies. */
+    @SerialName("dotted-path") val dottedPath: Boolean = false,
+)
