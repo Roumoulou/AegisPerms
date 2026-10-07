@@ -32,7 +32,11 @@ object ApiKeyRequests {
 
     private val routesByKey = ConcurrentHashMap<ApiKey, Set<ApiRoute>>()
 
-    /** Inscrit la demande de [key] par [route]. Vrai quand la clé, ou cette voie pour elle, est nouvelle : c'est alors au fil des fichiers d'écrire le catalogue. */
+    /** Ce que le fil des fichiers pose pour apprendre qu'une clé, ou une voie pour elle, est nouvelle : il écrit alors le catalogue (D12). */
+    @Volatile
+    internal var onNewKey: (() -> Unit)? = null
+
+    /** Inscrit la demande de [key] par [route]. Vrai quand la clé, ou cette voie pour elle, est nouvelle. */
     fun request(key: ApiKey, route: ApiRoute): Boolean {
         val known = routesByKey[key]
         if (known != null && route in known) return false
@@ -45,6 +49,7 @@ object ApiKeyRequests {
                 routes.orEmpty() + route
             }
         }
+        if (added) onNewKey?.invoke()
         return added
     }
 
