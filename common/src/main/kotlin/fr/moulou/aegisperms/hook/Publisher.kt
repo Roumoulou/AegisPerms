@@ -4,6 +4,7 @@
 package fr.moulou.aegisperms.hook
 
 import fr.moulou.aegisperms.model.EffectiveState
+import fr.moulou.aegisperms.model.Settings
 import fr.moulou.aegisperms.resolve.Resolver
 
 /**
@@ -23,6 +24,9 @@ object Publisher {
 
     /** La génération de l'état en vigueur, 0 tant que rien n'est publié. */
     fun generation(): Long = resolver?.state?.generation ?: 0
+
+    /** Les réglages de l'état en vigueur, ou les réglages livrés tant que rien n'est publié : ceux sur lesquels un `Commands` bâtit ses formes et son index. */
+    fun settings(): Settings = resolver?.state?.settings ?: Settings.DELIVERED
 
     /** Publie [state] : son résolveur remplace le précédent, et les décisions suivantes se prennent sur lui. */
     fun publish(state: EffectiveState): Resolver {

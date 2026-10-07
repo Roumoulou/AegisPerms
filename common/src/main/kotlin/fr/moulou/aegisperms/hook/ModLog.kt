@@ -19,6 +19,12 @@ object ModLog {
     /** L'événement d'une erreur interne dans une accroche (7.5). Arguments : l'accroche, la clé, la génération. */
     const val INTERNAL_ERROR = "internal_error"
 
+    /** L'index d'un `Commands` n'a pas pu se construire, et son arbre est fermé aux sources jugées (D3). Aucun argument, la trace. */
+    const val INDEX_FAILED = "index_failed"
+
+    /** Le mod est chargé. Aucun argument. */
+    const val LOADED = "loaded"
+
     private const val KEY_PREFIX = "aegisperms.log."
 
     private val logger: Logger = LoggerFactory.getLogger(AegisPerms.MOD_ID)
