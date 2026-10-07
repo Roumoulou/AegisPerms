@@ -51,11 +51,15 @@ object Hooks {
     // ── L'autorité ───────────────────────────────────────────────────────────────
 
     /**
-     * Le `PermissionSet` d'un joueur, enveloppé (6.2). L'ensemble d'origine reste quand il n'est pas celui d'un niveau, ce qu'aucune version ne fait sans un
-     * autre mod : c'est le contrôle à la connexion qui le dit (6.6).
+     * Le `PermissionSet` d'un joueur, enveloppé (6.2), et son niveau d'op retenu pour les demandes d'API par UUID. L'ensemble d'origine reste quand il n'est
+     * pas celui d'un niveau, ce qu'aucune version ne fait sans un autre mod : c'est le contrôle à la connexion qui le dit (6.6).
      */
     @JvmStatic
-    fun envelope(player: ServerPlayer, original: PermissionSet): PermissionSet = if (original is LevelBasedPermissionSet) Envelope(player.uuid, original) else original
+    fun envelope(player: ServerPlayer, original: PermissionSet): PermissionSet {
+        if (original !is LevelBasedPermissionSet) return original
+        OpLevels.record(player.uuid, original.level().id())
+        return Envelope(player.uuid, original)
+    }
 
     // ── La décision par nœud ─────────────────────────────────────────────────────
 

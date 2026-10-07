@@ -80,7 +80,7 @@ object FileThread {
             val start = files.start()
             createdAtStart = start.created
             Publisher.publish(EffectiveState(0, start.configuration))
-            ApiKeyRequests.seed(files.readCatalog()?.apiKeys.orEmpty().mapValues { it.value.type })
+            ApiKeyRequests.seed(files.readCatalog()?.apiKeys.orEmpty())
         }
     }
 
@@ -176,7 +176,7 @@ object FileThread {
 
     /** Écrit le catalogue de [adopted] (4.6) et rend celui que la validation lira, avec les clés apparues depuis le catalogue précédent. */
     private fun writeCatalog(adopted: CommandIndex<CommandSourceStack>, logChanges: Boolean): IndexCatalog<CommandSourceStack> {
-        val update = files.updateCatalog(IndexCatalog(adopted, ApiKeyRequests.keys()).commands(), ApiKeyRequests.types())
+        val update = files.updateCatalog(IndexCatalog(adopted, ApiKeyRequests.keys()).commands(), ApiKeyRequests.types(), ApiKeyRequests.refusedTypes())
         apiKeysDirty.set(false)
         if (update.previousUnreadable) ModLog.warn(ModLog.CATALOG_UNREADABLE)
         writeOrWarn(CatalogFile.FILE_NAME, update.write)
@@ -203,7 +203,7 @@ object FileThread {
     private fun writeApiKeys() {
         val adopted = index ?: return
         if (!apiKeysDirty.getAndSet(false)) return
-        writeOrWarn(CatalogFile.FILE_NAME, files.updateCatalog(IndexCatalog(adopted, ApiKeyRequests.keys()).commands(), ApiKeyRequests.types()).write)
+        writeOrWarn(CatalogFile.FILE_NAME, files.updateCatalog(IndexCatalog(adopted, ApiKeyRequests.keys()).commands(), ApiKeyRequests.types(), ApiKeyRequests.refusedTypes()).write)
     }
 
     private fun writeOrWarn(file: String, write: GeneratedWrite) {

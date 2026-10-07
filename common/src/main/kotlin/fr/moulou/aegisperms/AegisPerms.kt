@@ -4,6 +4,8 @@
 package fr.moulou.aegisperms
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import fr.moulou.aegisperms.api.FabricPermissionProvider
+import fr.moulou.aegisperms.api.LuckoPermissionProvider
 import fr.moulou.aegisperms.hook.FileThread
 import fr.moulou.aegisperms.hook.Lifecycle
 import fr.moulou.aegisperms.hook.ModLog
@@ -19,8 +21,8 @@ import net.minecraft.server.permissions.PermissionCheck
 import net.minecraft.server.permissions.PermissionLevel
 
 /**
- * Le point d'entrée du mod, sur un serveur dédié seulement. Il lit la configuration avant la création du serveur, enregistre la racine `/aegis` et branche
- * le cycle de vie ; les fournisseurs d'API viennent ensuite.
+ * Le point d'entrée du mod, sur un serveur dédié seulement. Il lit la configuration avant la création du serveur, enregistre la racine `/aegis`, branche le
+ * cycle de vie et s'inscrit comme fournisseur des deux API de permissions.
  */
 object AegisPerms : DedicatedServerModInitializer {
     const val MOD_ID = "aegisperms"
@@ -29,6 +31,8 @@ object AegisPerms : DedicatedServerModInitializer {
         FileThread.start(FabricLoader.getInstance().configDir.resolve(MOD_ID))
         CommandRegistrationCallback.EVENT.register { dispatcher, _, _ -> dispatcher.register(administrationRoot()) }
         Lifecycle.register()
+        FabricPermissionProvider.register()
+        LuckoPermissionProvider.register()
         ModLog.info(ModLog.LOADED)
     }
 

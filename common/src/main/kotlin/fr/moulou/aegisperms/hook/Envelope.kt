@@ -3,16 +3,12 @@
 
 package fr.moulou.aegisperms.hook
 
-import fr.moulou.aegisperms.model.ApiKey
 import fr.moulou.aegisperms.model.Decision
-import fr.moulou.aegisperms.model.Keys
-import net.minecraft.resources.Identifier
 import net.minecraft.server.permissions.LevelBasedPermissionSet
 import net.minecraft.server.permissions.Permission
 import net.minecraft.server.permissions.PermissionLevel
 import net.minecraft.server.permissions.PermissionSet
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * L'enveloppe (cahier des charges, 6.2) : le `PermissionSet` qu'AegisPerms substitue à celui d'un joueur. Elle porte l'UUID du joueur et l'ensemble vanilla
@@ -31,24 +27,6 @@ class Envelope(val subject: UUID, val vanilla: LevelBasedPermissionSet) : LevelB
     companion object {
         /** Le nom de l'accroche au journal. */
         const val HOOK = "envelope"
-
-        /** Ce que la table retient d'un identifiant qui ne fait pas une clé d'API : la table ne garde pas de `null`. */
-        private val NOT_A_KEY = Any()
-
-        /** La clé d'API de chaque atome déjà vu, pour que le chemin des atomes ne découpe aucune chaîne après la première demande. */
-        private val keysByAtom = ConcurrentHashMap<Identifier, Any>()
-
-        /**
-         * La clé d'API de l'identifiant [id] d'un atome (6.2), ou `null` quand il n'en fait pas une : le chemin `command` est celui d'une clé de commande
-         * (2.4), et un tel atome reste à vanilla.
-         */
-        fun apiKeyOf(id: Identifier): ApiKey? {
-            val known = keysByAtom[id]
-            if (known != null) return known as? ApiKey
-            val parsed = Keys.parseOrNull(id.toString()) as? ApiKey
-            keysByAtom.putIfAbsent(id, parsed ?: NOT_A_KEY)
-            return parsed
-        }
     }
 
     override fun level(): PermissionLevel = vanilla.level()
@@ -56,7 +34,7 @@ class Envelope(val subject: UUID, val vanilla: LevelBasedPermissionSet) : LevelB
     override fun hasPermission(permission: Permission): Boolean {
         if (permission !is Permission.Atom) return vanilla.hasPermission(permission)
         return try {
-            val key = apiKeyOf(permission.id()) ?: return vanilla.hasPermission(permission)
+            val key = ApiKeyRequests.keyOf(permission.id()) ?: return vanilla.hasPermission(permission)
             ApiKeyRequests.request(key, ApiRoute.ATOM)
             when (Publisher.current().decision(subject, level().id(), key)) {
                 Decision.ALLOW -> true
