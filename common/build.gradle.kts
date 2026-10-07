@@ -152,6 +152,16 @@ tasks.named("sourcesJar") { enabled = false }
 val testMC: SourceSet = sourceSets.create("testMC")
 val gametest: SourceSet = sourceSets.create("gametest")
 
+/*
+L'étage 1 est un module Kotlin à part : sans cette association, il ne voit pas les
+membres `internal` de main, et ce que `hook` réserve aux tests (l'écrivain du journal,
+l'oubli des demandes et de l'état publié) devrait être public. Le source set `test` la
+reçoit du plugin Kotlin tout seul ; `testMC` doit la demander.
+*/
+kotlin {
+    target.compilations.getByName("testMC").associateWith(target.compilations.getByName("main"))
+}
+
 configurations {
     named("testImplementation") { setExtendsFrom(emptyList()) }
     named("testRuntimeOnly") { setExtendsFrom(emptyList()) }
