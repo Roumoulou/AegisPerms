@@ -53,7 +53,7 @@ dependencies {
  *  SECTION 2 — LES ENVIRONNEMENTS DE DÉVELOPPEMENT : OUTFITTER
  * ════════════════════════════════════════════════════════════════════════════════
  *
- *  Même mécanique que mc-26.2 (voir son build) : deux environnements, le serveur de
+ *  Même mécanique que mc-26.2 (voir son build) : trois environnements, le serveur de
  *  test, une cible.
  *
  *  ── DEUX ENVIRONNEMENTS, VANILLA PURS ───────────────────────────────────────
@@ -62,6 +62,11 @@ dependencies {
  *  L'entrepôt C:\MC-Kit a les profils 26.3, `vanilla` et `dev`, et ses maps : le client
  *  reçoit la sélection de outfitter.maps, le serveur le monde que le profil `dev`
  *  désigne.
+ *
+ *  ── LE SERVEUR MODDÉ ────────────────────────────────────────────────────────
+ *  `serverModded`, déclaré comme dans mc-26.2 : les mods côté serveur du solo publié
+ *  de MDTK pour 26.3, l'instance de référence de ce module (son gradle.properties),
+ *  et le contenu du modpack par PackTool ; dans mc-26.3\run\server-modded.
  *
  *  ── LE SERVEUR DE TEST ──────────────────────────────────────────────────────
  *  `gameTest`, déclaré comme dans mc-26.2 : il tourne dans mc-26.3\run\game-test,
@@ -77,6 +82,7 @@ outfitter {
     environments {
         register("client") { client(); profile = "vanilla" }
         register("server") { server(); profile = "dev" }
+        register("serverModded") { server(); profile = "dev"; modded = true }
     }
     gameTests {
         register("gameTest")

@@ -56,7 +56,7 @@ dependencies {
  *  Le plugin Outfitter (pris sur Repsy : voir settings.gradle.kts) prépare chaque
  *  environnement avant son run, serveur de test compris, et déploie le jar. Ce bloc
  *  ne déclare que ce qui est propre à ce module : la version de Minecraft, qui
- *  choisit le dossier de l'entrepôt C:\MC-Kit, les deux environnements avec leur profil,
+ *  choisit le dossier de l'entrepôt C:\MC-Kit, les trois environnements avec leur profil,
  *  le serveur de test, la cible de déploiement et le panier du serveur dédié. Tout
  *  le reste vient des clés `outfitter.*` : gradle.properties de la racine pour ce
  *  qui vaut sur chaque poste (l'entrepôt C:\MC-Kit, les maps, le monde du serveur, les
@@ -71,6 +71,18 @@ dependencies {
  *  charge pas côté client, et c'est ce qu'a un joueur, un client vanilla. Le dossier
  *  est run\<nom-en-kebab-case> DANS ce module (mc-26.2\run\server) : les mondes
  *  d'une version ne se mélangent pas à ceux d'une autre.
+ *
+ *  ── UN ENVIRONNEMENT MODDÉ : LE MODPACK MDTK ────────────────────────────────
+ *  `serverModded`, profil `dev`, est le serveur de dev AVEC le modpack, là où le mod
+ *  se voit face à des mods tiers (cahier, 7.3). Outfitter y copie les mods côté
+ *  serveur de l'instance de référence de ce module, le solo publié de MDTK pour 26.2
+ *  dans le kit (outfitter.reference_instance_dir, dans le gradle.properties de ce
+ *  module), sauf Fabric API, FLK et le mod lui-même, que Loom porte déjà ; puis il y
+ *  pose le contenu du modpack par PackTool (outfitter.content_project dans le
+ *  gradle.properties de la racine ; le lanceur et l'atelier de l'outil, propres au
+ *  poste, dans machine.properties). Sans PackTool déclaré, le serveur démarre sans ce
+ *  contenu, et Outfitter le dit. Un environnement moddé ne reçoit pas les packs du
+ *  profil. Son dossier est mc-26.2\run\server-modded, et `runServerModded` le lance.
  *
  *  ── LE SERVEUR DE TEST : CRÉÉ PAR LE PLUGIN DE VERSION, DÉCLARÉ ICI ─────────
  *  `gameTest`, le serveur de l'étage 2, est le run que le plugin de version crée
@@ -103,6 +115,7 @@ outfitter {
     environments {
         register("client") { client(); profile = "vanilla" }
         register("server") { server(); profile = "dev" }
+        register("serverModded") { server(); profile = "dev"; modded = true }
     }
     gameTests {
         register("gameTest")
