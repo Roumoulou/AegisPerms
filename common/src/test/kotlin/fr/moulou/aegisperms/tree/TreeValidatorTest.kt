@@ -143,6 +143,17 @@ class TreeValidatorTest {
     }
 
     @Test
+    fun `une racine de vanilla sur laquelle un mod greffe une branche ne donne aucun constat`() {
+        val dispatcher = tree()
+        dispatcher.register(literal<Any>("list").then(literal<Any>("warps").executes(WarpsMod.command())))
+        val index = index(dispatcher)
+
+        // D21 : un rattachement ne peut pas viser une racine de vanilla, et sa clé ne dépend pas de l'ordre de chargement ; le catalogue garde le co-propriétaire.
+        assertEquals(Owner("minecraft", OwnerSource.DETECTED, listOf("warps")), index.ownerOf("list"))
+        assertTrue(issues(index).isEmpty())
+    }
+
+    @Test
     fun `une règle qui porte l'ancienne clé d'une commande rattachée est une erreur, qui donne la clé attendue`() {
         val dispatcher = tree()
         dispatcher.register(literal<Any>("orphan").then(literal<Any>("sub").executes(OrphanCommand())))

@@ -52,8 +52,10 @@ object TreeValidator {
         for ((rootName, owner) in owners.sorted()) {
             when {
                 owner.source == OwnerSource.UNKNOWN -> issues += Issue(IssueKind.COMMAND_WITHOUT_OWNER, ConfigurationFile.SETTINGS, OWNERS_PATH, literals(rootName))
-                // Un rattachement fixe le mod propriétaire d'une racine partagée : c'est le remède que le constat demande, il se tait alors.
-                owner.source == OwnerSource.DETECTED && owner.coOwners.isNotEmpty() -> {
+                // Un rattachement fixe le mod propriétaire d'une racine partagée : c'est le remède que le constat demande, il se tait alors. Il se tait aussi
+                // pour une racine de vanilla sur laquelle un mod greffe une branche (D21, cahier 10.6) : un rattachement ne peut pas la viser, et sa clé ne
+                // dépend pas de l'ordre de chargement, vanilla s'enregistrant le premier ; le catalogue garde les co-propriétaires.
+                owner.source == OwnerSource.DETECTED && owner.coOwners.isNotEmpty() && owner.modId != Keys.MINECRAFT -> {
                     issues += Issue(IssueKind.SHARED_ROOT, ConfigurationFile.SETTINGS, OWNERS_PATH, literals(rootName, owner.modId, owner.coOwners.joinToString(", ")))
                 }
             }
