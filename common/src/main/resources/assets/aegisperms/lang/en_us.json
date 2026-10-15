@@ -260,5 +260,11 @@
 
   "aegisperms.log.observe_deviation": "Observation: for %s, %s would be %s, and vanilla answers %s",
   "aegisperms.log.observe_suppressed": "Observation: %s more deviations in the past minute, not detailed",
-  "aegisperms.why.observe": "Observe mode: the decision is computed, not applied"
+  "aegisperms.why.observe": "Observe mode: the decision is computed, not applied",
+
+  "aegisperms.log.player_renamed": "%s comes back under the name of %s: the readable form is rewritten",
+  "aegisperms.notice.fallback": "AegisPerms: startup fallback on %s; fix the file, then /aegis reload",
+  "aegisperms.notice.reinforced": "AegisPerms: %s",
+  "aegisperms.notice.watch_applied": "AegisPerms: files changed outside the game, generation %s applied, %s rules changed, %s warnings",
+  "aegisperms.notice.watch_refused": "AegisPerms: files changed outside the game and refused (%s errors); the effective state stays, and command modifications wait for a valid configuration"
 }

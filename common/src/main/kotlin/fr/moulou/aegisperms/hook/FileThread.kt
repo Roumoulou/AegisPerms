@@ -28,8 +28,9 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
@@ -40,7 +41,8 @@ import kotlin.streams.toList
  * publication lui revient par la référence du `Publisher`.
  *
  * `reload`, `write`, `check`, `backup` et `restore` sont les travaux que `/aegis` et la surveillance lui confient : chacun rend, dans une `CompletableFuture`,
- * son résultat et ce qu'il a publié (E8), et la commande répond sur le fil serveur quand il a fini.
+ * son résultat et ce qu'il a publié (E8), et la commande répond sur le fil serveur quand il a fini. La surveillance des deux fichiers (4.8) tourne sur ce
+ * même fil, par un exécuteur planifié.
  */
 object FileThread {
 
@@ -53,11 +55,23 @@ object FileThread {
     private const val BACKUPS = "backups"
 
     private lateinit var files: ConfigurationFiles
-    private lateinit var executor: ExecutorService
+    private lateinit var executor: ScheduledExecutorService
+
+    /** La période de la surveillance (4.8) et le délai qui laisse un éditeur finir d'écrire, en millisecondes ; un test les raccourcit. */
+    internal var watchPeriodMillis = 2_000L
+    internal var watchDelayMillis = 1_000L
+
+    /** Ce qui reçoit le résultat d'un rechargement par la surveillance, sur le fil des fichiers : le cycle de vie le porte aux ops (E12). */
+    internal var watchListener: (Outcome<ConfigurationRead>) -> Unit = {}
+
+    private var watching: ScheduledFuture<*>? = null
 
     // ── Le fil des fichiers seulement ──────────────────────────────────────────
 
     private var generation = 0L
+
+    /** Vrai entre la détection d'un changement extérieur et la fin du rechargement qu'il déclenche : un seul rechargement par changement. */
+    private var reloadPending = false
 
     /** L'index adopté, et le catalogue qu'il donne à la validation ; `null` tant qu'aucun index n'est adopté, ou quand il a manqué. */
     private var index: CommandIndex<CommandSourceStack>? = null
@@ -77,10 +91,16 @@ object FileThread {
     fun start(directory: Path) {
         Files.createDirectories(directory)
         files = ConfigurationFiles(directory)
-        executor = Executors.newSingleThreadExecutor { runnable -> Thread(runnable, THREAD_NAME).apply { isDaemon = true } }
+        // À l'arrêt, un rechargement différé par la surveillance s'annule au lieu de courir sur des stores fermés.
+        executor = ScheduledThreadPoolExecutor(1) { runnable -> Thread(runnable, THREAD_NAME).apply { isDaemon = true } }.apply {
+            executeExistingDelayedTasksAfterShutdownPolicy = false
+            removeOnCancelPolicy = true
+        }
+        watching = null
         ApiKeyRequests.onNewKey = ::onNewApiKey
         await {
             generation = 0
+            reloadPending = false
             index = null
             catalog = null
             apiKeysDirty.set(false)
@@ -109,8 +129,30 @@ object FileThread {
                 ConfigurationFile.PERMISSIONS.takeIf { start.permissionsSource != ConfigurationSource.FILE },
             )
             publish(start.configuration, start.report, PublicationSource.STARTUP, start.readOnly, lastGood = start.settingsSource == ConfigurationSource.FILE && !start.readOnly, fallback)
+            watching = executor.scheduleWithFixedDelay(::watch, watchPeriodMillis, watchPeriodMillis, TimeUnit.MILLISECONDS)
         } catch (error: Throwable) {
             ModLog.once(HOOK, "startup", error)
+        }
+    }
+
+    /**
+     * La surveillance (4.8), toutes les deux secondes sur le fil : quand `watch-files` le dit, un fichier qu'un autre que le mod a écrit déclenche un
+     * rechargement de source `watch`, après le délai qui laisse un éditeur finir d'écrire. Une lecture refusée ne se recharge pas deux fois :
+     * `ConfigurationFiles` retient son empreinte.
+     */
+    private fun watch() {
+        try {
+            if (reloadPending || !Publisher.settings().watchFiles || files.changedOutside().isEmpty()) return
+            reloadPending = true
+            executor.schedule(Runnable {
+                reload(PublicationSource.WATCH).whenComplete { outcome, error ->
+                    reloadPending = false
+                    if (error != null) ModLog.once(HOOK, "watch", error) else watchListener(outcome)
+                }
+            }, watchDelayMillis, TimeUnit.MILLISECONDS)
+        } catch (error: Throwable) {
+            reloadPending = false
+            ModLog.once(HOOK, "watch", error)
         }
     }
 
@@ -182,6 +224,8 @@ object FileThread {
     /** À `SERVER_STOPPING` : les clés d'API en attente s'écrivent, les stores se ferment, le fil s'arrête sous un délai borné. */
     fun stop() {
         if (!::executor.isInitialized || executor.isShutdown) return
+        watching?.cancel(false)
+        watching = null
         executor.execute {
             writeApiKeys()
             files.close()

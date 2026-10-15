@@ -234,4 +234,15 @@ object TextKeys {
         const val CHECK_ABSENT = WHY_PREFIX + "check.absent"
         const val CHECK_API_ABSENT = WHY_PREFIX + "check.api_absent"
     }
+
+    /** Ce que le mod dit aux ops d'au moins `admin-level` (4.8, 4.9), `aegisperms.notice.*`. */
+    object Notice {
+
+        const val NOTICE_PREFIX = PREFIX + "notice."
+
+        const val FALLBACK = NOTICE_PREFIX + "fallback"
+        const val REINFORCED = NOTICE_PREFIX + "reinforced"
+        const val WATCH_APPLIED = NOTICE_PREFIX + "watch_applied"
+        const val WATCH_REFUSED = NOTICE_PREFIX + "watch_refused"
+    }
 }

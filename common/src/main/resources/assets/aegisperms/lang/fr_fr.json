@@ -260,5 +260,11 @@
 
   "aegisperms.log.observe_deviation": "Observation : pour %s, %s vaudrait %s, et vanilla répond %s",
   "aegisperms.log.observe_suppressed": "Observation : %s écarts de plus dans la minute écoulée, non détaillés",
-  "aegisperms.why.observe": "Mode observation : la décision est calculée, pas appliquée"
+  "aegisperms.why.observe": "Mode observation : la décision est calculée, pas appliquée",
+
+  "aegisperms.log.player_renamed": "%s revient sous le pseudo de %s : sa forme lisible se réécrit",
+  "aegisperms.notice.fallback": "AegisPerms : repli du démarrage sur %s ; corrigez le fichier, puis /aegis reload",
+  "aegisperms.notice.reinforced": "AegisPerms : %s",
+  "aegisperms.notice.watch_applied": "AegisPerms : fichiers modifiés hors du jeu, génération %s appliquée, %s règles changées, %s avertissements",
+  "aegisperms.notice.watch_refused": "AegisPerms : fichiers modifiés hors du jeu et refusés (%s erreurs) ; l'état en vigueur reste, et les modifications par commande attendent une configuration valide"
 }

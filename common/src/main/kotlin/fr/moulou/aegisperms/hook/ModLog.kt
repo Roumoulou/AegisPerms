@@ -72,6 +72,9 @@ object ModLog {
     /** Les écarts de la minute écoulée que le plafond a tus (5.8). Argument : leur nombre. */
     const val OBSERVE_SUPPRESSED = "observe_suppressed"
 
+    /** Un joueur du fichier revenu sous un nouveau pseudo, dont la forme lisible se réécrit (4.4). Arguments : l'ancienne forme, la nouvelle. */
+    const val PLAYER_RENAMED = "player_renamed"
+
     private val logger: Logger = LoggerFactory.getLogger(AegisPerms.MOD_ID)
 
     /** Ce qui écrit les lignes : le logger du mod, ou ce qu'un test de l'étage 1 pose à sa place pour les lire. */

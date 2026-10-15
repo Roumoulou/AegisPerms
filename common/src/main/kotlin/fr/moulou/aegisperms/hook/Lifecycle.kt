@@ -3,6 +3,9 @@
 
 package fr.moulou.aegisperms.hook
 
+import fr.moulou.aegisperms.files.ConfigurationWrite
+import fr.moulou.aegisperms.files.PublicationSource
+import fr.moulou.aegisperms.model.ReadableForm
 import fr.moulou.aegisperms.tree.CommandIndex
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
@@ -13,7 +16,8 @@ import net.minecraft.server.level.ServerPlayer
 
 /**
  * Le cycle de vie du mod sur le serveur (cahier des charges, 7.5) : l'adoption de l'index au démarrage et après un `/reload` réussi, le renvoi des arbres à
- * la fin du tick, le contrôle de l'enveloppe à la connexion (6.6), l'oubli du cache à la déconnexion, et l'arrêt du fil des fichiers.
+ * la fin du tick, le contrôle de l'enveloppe, les messages aux ops et le renommage à la connexion (6.6, 4.9, 4.4), l'oubli du cache à la déconnexion, le
+ * résultat de la surveillance aux ops (4.8), et l'arrêt du fil des fichiers.
  */
 object Lifecycle {
 
@@ -24,14 +28,19 @@ object Lifecycle {
 
     private const val HOOK = "lifecycle"
 
+    /** Le serveur en service, de `SERVER_STARTING` à `SERVER_STOPPING` : ce que les messages aux ops ont à connaître. */
+    @Volatile
+    private var server: MinecraftServer? = null
+
     fun register() {
         ServerLifecycleEvents.SERVER_STARTING.register { server -> guarded("starting") { onServerStarting(server) } }
         ServerLifecycleEvents.SERVER_STARTED.register { server -> guarded("started") { OpLevels.readOps(server) } }
         ServerLifecycleEvents.END_DATA_PACK_RELOAD.register { server, _, success -> guarded("reload") { onDataPackReloaded(server, success) } }
-        ServerLifecycleEvents.SERVER_STOPPING.register { guarded("stopping") { FileThread.stop() } }
+        ServerLifecycleEvents.SERVER_STOPPING.register { guarded("stopping") { onServerStopping() } }
         ServerTickEvents.END_SERVER_TICK.register(TreeResend::flush)
         ServerPlayConnectionEvents.JOIN.register { handler, _, _ -> guarded("join") { onJoin(handler.player) } }
         ServerPlayConnectionEvents.DISCONNECT.register { handler, _ -> guarded("disconnect") { onDisconnect(handler.player) } }
+        FileThread.watchListener = { outcome -> server?.let { current -> current.execute { guarded("watch") { Notices.watch(current, outcome) } } } }
     }
 
     /**
@@ -39,7 +48,13 @@ object Lifecycle {
      * La liste des ops n'existe pas encore : l'événement part juste avant `initServer()`, qui crée la liste des joueurs, et c'est `SERVER_STARTED` qui la lit.
      */
     private fun onServerStarting(server: MinecraftServer) {
+        this.server = server
         FileThread.startup(indexOf(server))
+    }
+
+    private fun onServerStopping() {
+        server = null
+        FileThread.stop()
     }
 
     /** À la fin d'un `/reload` : l'index du nouveau `Commands` devient courant, et tous les arbres repartent. Un `/reload` raté garde l'ancien dispatcher et son index. */
@@ -58,15 +73,37 @@ object Lifecycle {
         }
     }
 
-    /** À la connexion : l'autorité du joueur est relue, et une autorité qui n'est pas l'enveloppe est une erreur au journal, avec le joueur et la classe trouvée (6.6). */
+    /**
+     * À la connexion : l'autorité du joueur est relue, et une autorité qui n'est pas l'enveloppe est une erreur au journal, avec le joueur et la classe
+     * trouvée (6.6) ; un op d'au moins `admin-level` reçoit le repli du démarrage et les avertissements renforcés (4.9, 4.5) ; un joueur du fichier qui
+     * revient sous un nouveau pseudo voit sa forme lisible réécrite (4.4).
+     */
     private fun onJoin(player: ServerPlayer) {
         val authority = player.permissions()
         if (authority is Envelope) {
-            OpLevels.record(player.uuid, authority.level().id())
-            return
+            val level = authority.level().id()
+            OpLevels.record(player.uuid, level)
+            Notices.onJoin(player, level)
+        } else {
+            foreignAuthoritySeen = true
+            ModLog.error(ModLog.FOREIGN_AUTHORITY, player.nameAndId().name(), player.uuid, authority.javaClass.name)
         }
-        foreignAuthoritySeen = true
-        ModLog.error(ModLog.FOREIGN_AUTHORITY, player.nameAndId().name(), player.uuid, authority.javaClass.name)
+        renameIfNeeded(player)
+    }
+
+    /**
+     * Un joueur du fichier qui se connecte sous un nouveau pseudo : sa forme lisible se réécrit, par le fil des fichiers, comme toute écriture du mod (4.4,
+     * 4.8). Le journal le dit quand c'est écrit ; un fichier en lecture seule ou qui a bougé garde l'ancienne forme, et la connexion suivante réessaiera.
+     */
+    private fun renameIfNeeded(player: ServerPlayer) {
+        val state = Publisher.currentOrNull()?.state ?: return
+        val known = state.players[player.uuid] ?: return
+        val name = player.nameAndId().name()
+        if (known.name == name) return
+        val renamed = ReadableForm.of(name, player.uuid)
+        FileThread.write(Renaming.renamed(state.permissions, player.uuid, name), PublicationSource.COMMAND).thenAccept { outcome ->
+            if (outcome.result is ConfigurationWrite.Written) ModLog.info(ModLog.PLAYER_RENAMED, known.readableForm, renamed)
+        }
     }
 
     private fun onDisconnect(player: ServerPlayer) {
