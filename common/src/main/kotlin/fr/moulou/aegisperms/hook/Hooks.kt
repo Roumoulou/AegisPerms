@@ -11,6 +11,8 @@ import com.mojang.brigadier.tree.CommandNode
 import fr.moulou.aegisperms.files.CommandRequirement
 import fr.moulou.aegisperms.resolve.NodeJudgment
 import fr.moulou.aegisperms.resolve.Resolver
+import fr.moulou.aegisperms.text.Messages
+import fr.moulou.aegisperms.text.TextKeys
 import fr.moulou.aegisperms.tree.CommandIndex
 import fr.moulou.aegisperms.tree.LoaderMods
 import fr.moulou.aegisperms.tree.NodeEntry
@@ -42,8 +44,8 @@ object Hooks {
     const val CLIENT_TREE = "clientTree"
     const val LATE_NODE = "lateNode"
 
-    /** La clé de traduction du refus visible, sans repli jusqu'à la session 5 (D18). */
-    const val REFUSAL_KEY = "aegisperms.refusal"
+    /** La clé de traduction du refus visible (D18), envoyée avec son repli dans la langue du joueur (5.7). */
+    const val REFUSAL_KEY = TextKeys.REFUSAL
 
     private const val UNKNOWN_COMMAND = "command.unknown.command"
     private const val UNKNOWN_ARGUMENT = "command.unknown.argument"
@@ -118,7 +120,10 @@ object Hooks {
         }
         val message = when {
             !refusal.visible -> Component.translatable(if (refusal.deep) UNKNOWN_ARGUMENT else UNKNOWN_COMMAND)
-            else -> Publisher.settings().refusalMessage?.let { Component.literal(it) } ?: Component.translatable(REFUSAL_KEY)
+            else -> {
+                val settings = Publisher.settings()
+                settings.refusalMessage?.let { Component.literal(it) } ?: Messages.component(REFUSAL_KEY, Messages.languageOf(source, settings.language))
+            }
         }
         source.sendFailure(message)
         return false

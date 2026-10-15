@@ -4,6 +4,10 @@
 package fr.moulou.aegisperms.hook
 
 import fr.moulou.aegisperms.AegisPerms
+import fr.moulou.aegisperms.text.Lang
+import fr.moulou.aegisperms.text.Messages
+import fr.moulou.aegisperms.text.TextKeys
+import fr.moulou.aegisperms.text.Texts
 import fr.moulou.aegisperms.validate.Issue
 import fr.moulou.aegisperms.validate.IssueArgument
 import fr.moulou.aegisperms.validate.Severity
@@ -14,8 +18,9 @@ import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Le journal du mod (cahier des charges, 5.9), sous le nom `aegisperms`, où Storify range aussi ses lignes. Une seule entrée : une clé de traduction
- * `aegisperms.log.<événement>` et ses arguments, sans fragment de phrase hors clé, parce que les deux langues s'écrivent à la session 5 (5.7). Jusque-là, la
- * ligne écrite est la clé suivie de ses arguments. Un constat s'écrit sous sa propre clé, `aegisperms.issue.<nature>`.
+ * `aegisperms.log.<événement>` et ses arguments, résolus en texte dans la langue de la console (5.7). Un constat s'écrit sous sa propre clé,
+ * `aegisperms.issue.<nature>`, précédé de son fichier, de son chemin et de sa ligne. Ce qui écrit la ligne reçoit aussi la clé et les arguments : c'est
+ * ce que les tests comparent.
  */
 object ModLog {
 
@@ -31,7 +36,7 @@ object ModLog {
     /** Le mod est chargé. Aucun argument. */
     const val LOADED = "loaded"
 
-    /** Les fichiers que le premier démarrage vient d'écrire avec les valeurs livrées (4.2). Arguments : leurs noms. */
+    /** Les fichiers que le premier démarrage vient d'écrire avec les valeurs livrées (4.2). Argument : leurs noms, séparés par des virgules. */
     const val FILES_CREATED = "files_created"
 
     /** Un fichier remplacé au démarrage par la copie `last-good` ou par les valeurs livrées (4.9). Arguments : le fichier, la source qui s'applique. */
@@ -43,10 +48,10 @@ object ModLog {
     /** Une publication refusée, l'état en vigueur reste (4.8). Arguments : la source, la génération qui reste, les constats. */
     const val REFUSED = "refused"
 
-    /** Les clés de commande apparues au catalogue depuis le précédent (4.6). Arguments : leur nombre, puis les clés. */
+    /** Les clés de commande apparues au catalogue depuis le précédent (4.6). Arguments : leur nombre, les clés séparées par des virgules. */
     const val CATALOG_APPEARED = "catalog_appeared"
 
-    /** Les clés de commande disparues du catalogue depuis le précédent (4.6). Arguments : leur nombre, puis les clés. */
+    /** Les clés de commande disparues du catalogue depuis le précédent (4.6). Arguments : leur nombre, les clés séparées par des virgules. */
     const val CATALOG_DISAPPEARED = "catalog_disappeared"
 
     /** Le catalogue précédent ne se lisait pas : il est régénéré, sans ses clés d'API ni leurs dates (4.6). Aucun argument. */
@@ -61,17 +66,14 @@ object ModLog {
     /** Le fil des fichiers ne s'est pas arrêté dans le délai. Argument : le délai, en secondes. */
     const val STOP_TIMEOUT = "stop_timeout"
 
-    private const val KEY_PREFIX = "aegisperms.log."
-    private const val ISSUE_PREFIX = "aegisperms.issue."
-
     private val logger: Logger = LoggerFactory.getLogger(AegisPerms.MOD_ID)
 
-    /** Ce qui écrit les lignes : le logger du mod, ou ce qu'un test de l'étage 1 pose à sa place pour les compter. */
-    internal var writer: LogWriter = LogWriter { level, line, cause ->
-        when (level) {
-            LogLevel.INFO -> logger.info(line)
-            LogLevel.WARN -> logger.warn(line)
-            LogLevel.ERROR -> if (cause == null) logger.error(line) else logger.error(line, cause)
+    /** Ce qui écrit les lignes : le logger du mod, ou ce qu'un test de l'étage 1 pose à sa place pour les lire. */
+    internal var writer: LogWriter = LogWriter { line ->
+        when (line.level) {
+            LogLevel.INFO -> logger.info(line.text)
+            LogLevel.WARN -> logger.warn(line.text)
+            LogLevel.ERROR -> if (line.cause == null) logger.error(line.text) else logger.error(line.text, line.cause)
         }
     }
 
@@ -87,20 +89,22 @@ object ModLog {
 
     fun error(event: String, cause: Throwable, vararg arguments: Any?) = write(LogLevel.ERROR, event, cause, arguments.asList())
 
-    /** Un constat (4.5), sous sa clé : `WARN` pour un avertissement, `ERROR` pour une erreur (5.9). Arguments : le fichier, le chemin et la ligne, puis les siens. */
+    /**
+     * Un constat (4.5), sous sa clé : `WARN` pour un avertissement, `ERROR` pour une erreur (5.9). Le texte commence par le fichier, le chemin et la ligne ;
+     * la clé est suivie de ce même repère, puis des arguments du constat.
+     */
     fun issue(issue: Issue) {
-        val where = buildString {
-            append(issue.file.fileName)
-            if (issue.path.isNotEmpty()) append(':').append(issue.path.joinToString("."))
-            issue.line?.let { append(':').append(it) }
-        }
+        val lang = language()
+        val where = Messages.whereOf(issue)
         val arguments = issue.arguments.map {
             when (it) {
                 is IssueArgument.Literal -> it.text
-                is IssueArgument.Translatable -> it.translationKey
+                is IssueArgument.Translatable -> Texts.text(it.translationKey, lang)
             }
         }
-        writeKey(if (issue.severity == Severity.ERROR) LogLevel.ERROR else LogLevel.WARN, ISSUE_PREFIX + issue.kind.name.lowercase(), null, listOf(where) + arguments)
+        val level = if (issue.severity == Severity.ERROR) LogLevel.ERROR else LogLevel.WARN
+        val key = issue.kind.translationKey
+        writer.write(LogLine(level, key, listOf(where) + arguments, "$where : ${Texts.text(key, lang, *arguments.toTypedArray())}", null))
     }
 
     /**
@@ -120,15 +124,13 @@ object ModLog {
         reportedGeneration.set(-1)
     }
 
-    private fun write(level: LogLevel, event: String, cause: Throwable?, arguments: List<Any?>) = writeKey(level, KEY_PREFIX + event, cause, arguments)
-
-    private fun writeKey(level: LogLevel, key: String, cause: Throwable?, arguments: List<Any?>) {
-        val line = buildString {
-            append(key)
-            for (argument in arguments) append(' ').append(argument)
-        }
-        writer.write(level, line, cause)
+    private fun write(level: LogLevel, event: String, cause: Throwable?, arguments: List<Any?>) {
+        val key = TextKeys.LOG_PREFIX + event
+        writer.write(LogLine(level, key, arguments, Texts.text(key, language(), *arguments.toTypedArray()), cause))
     }
+
+    /** La langue du journal : celle de la console (5.7), sous le réglage `language` des réglages publiés. */
+    private fun language(): Lang = Messages.consoleLanguage(Publisher.settings().language)
 }
 
 /** Le niveau d'une ligne du journal. */
@@ -138,8 +140,15 @@ enum class LogLevel {
     ERROR,
 }
 
+/** Une ligne du journal : son niveau, sa clé et ses arguments, son texte résolu, et la cause quand il y en a une. */
+class LogLine(val level: LogLevel, val key: String, val arguments: List<Any?>, val text: String, val cause: Throwable?) {
+
+    /** La clé suivie de ses arguments, séparés par des espaces : la forme que les tests comparent. */
+    fun keyAndArguments(): String = (listOf(key) + arguments).joinToString(" ")
+}
+
 /** Ce qui reçoit une ligne du journal. */
 fun interface LogWriter {
 
-    fun write(level: LogLevel, line: String, cause: Throwable?)
+    fun write(line: LogLine)
 }

@@ -53,7 +53,7 @@ class LuckoPermissionProviderTest {
 
     @BeforeEach
     fun publishPersonas() {
-        ModLog.writer = LogWriter { _, line, _ -> lines += line }
+        ModLog.writer = LogWriter { lines += it.keyAndArguments() }
         ModLog.forgetReported()
         ApiKeyRequests.clear()
         OpLevels.clear()

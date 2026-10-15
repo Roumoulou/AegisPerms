@@ -94,7 +94,7 @@ object FileThread {
             index = adopted
             catalog = adopted?.let { writeCatalog(it, logChanges = true) }
             val start = files.start(catalog)
-            if (createdAtStart.isNotEmpty()) ModLog.info(ModLog.FILES_CREATED, *createdAtStart.map { it.fileName }.toTypedArray())
+            if (createdAtStart.isNotEmpty()) ModLog.info(ModLog.FILES_CREATED, createdAtStart.joinToString(", ") { it.fileName })
             if (start.settingsSource != ConfigurationSource.FILE) ModLog.error(ModLog.FALLBACK, ConfigurationFile.SETTINGS.fileName, start.settingsSource.name.lowercase())
             if (start.permissionsSource != ConfigurationSource.FILE) ModLog.error(ModLog.FALLBACK, ConfigurationFile.PERMISSIONS.fileName, start.permissionsSource.name.lowercase())
             publish(start.configuration, start.report, PublicationSource.STARTUP, start.readOnly, lastGood = start.settingsSource == ConfigurationSource.FILE && !start.readOnly)
@@ -182,8 +182,8 @@ object FileThread {
         writeOrWarn(CatalogFile.FILE_NAME, update.write)
         val changes = update.changes
         if (logChanges && changes != null) {
-            if (changes.appeared.isNotEmpty()) ModLog.info(ModLog.CATALOG_APPEARED, changes.appeared.size, *changes.appeared.toTypedArray())
-            if (changes.disappeared.isNotEmpty()) ModLog.info(ModLog.CATALOG_DISAPPEARED, changes.disappeared.size, *changes.disappeared.toTypedArray())
+            if (changes.appeared.isNotEmpty()) ModLog.info(ModLog.CATALOG_APPEARED, changes.appeared.size, changes.appeared.joinToString(", "))
+            if (changes.disappeared.isNotEmpty()) ModLog.info(ModLog.CATALOG_DISAPPEARED, changes.disappeared.size, changes.disappeared.joinToString(", "))
         }
         return IndexCatalog(adopted, ApiKeyRequests.keys(), changes?.appeared.orEmpty())
     }

@@ -42,7 +42,7 @@ class FileThreadTest {
 
     @BeforeEach
     fun capture() {
-        ModLog.writer = LogWriter { _, line, _ -> lines += line }
+        ModLog.writer = LogWriter { lines += it.keyAndArguments() }
         ModLog.forgetReported()
         ApiKeyRequests.clear()
         Publisher.clear()
@@ -68,7 +68,7 @@ class FileThreadTest {
         assertTrue(Files.exists(directory.resolve("last-good").resolve("manifest.json")))
         val catalog = checkNotNull(ConfigurationFiles(directory).readCatalog())
         assertTrue(catalog.commands.containsKey("unknown:command.teleport"), catalog.commands.keys.toString())
-        assertTrue("aegisperms.log.files_created settings.json permissions.json" in lines, lines.toString())
+        assertTrue("aegisperms.log.files_created settings.json, permissions.json" in lines, lines.toString())
         // Quatre constats : teleport sans mod propriétaire, et les trois clés que default ouvre, absentes de cet arbre réduit.
         assertTrue("aegisperms.log.published 1 startup enforce false 2 0 5 4" in lines, lines.toString())
         assertTrue(lines.any { it.startsWith("aegisperms.issue.command_without_owner settings.json:namespaces.owners:") && it.endsWith(" teleport") }, lines.toString())
