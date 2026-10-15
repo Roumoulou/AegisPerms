@@ -5,6 +5,7 @@ package fr.moulou.aegisperms.hook
 
 import fr.moulou.aegisperms.files.PublicationSource
 import fr.moulou.aegisperms.model.EffectiveState
+import fr.moulou.aegisperms.model.Mode
 import fr.moulou.aegisperms.model.Settings
 import fr.moulou.aegisperms.resolve.Resolver
 import fr.moulou.aegisperms.validate.ConfigurationFile
@@ -36,20 +37,34 @@ object Publisher {
     /** La génération de l'état en vigueur, 0 tant que rien n'est publié. */
     fun generation(): Long = resolver?.state?.generation ?: 0
 
+    /** Le mode posé en mémoire par `/aegis mode`, jusqu'à la publication suivante (5.8) ; `null` quand c'est celui des réglages qui vaut. */
+    @Volatile
+    private var modeOverride: Mode? = null
+
     /** Les réglages de l'état en vigueur, ou les réglages livrés tant que rien n'est publié : ceux sur lesquels un `Commands` bâtit ses formes et son index. */
     fun settings(): Settings = resolver?.state?.settings ?: Settings.DELIVERED
 
-    /** Publie [state] d'un bloc et rend l'état qu'il remplace, pour dire ce qui change ; `null` à la première publication. */
+    /** Le mode en vigueur (5.8) : celui que `/aegis mode` a posé, sinon celui des réglages publiés. */
+    fun mode(): Mode = modeOverride ?: settings().mode
+
+    /** Pose [mode] en mémoire, tout de suite ; la publication suivante reprend le mode du fichier (5.8). */
+    fun setMode(mode: Mode) {
+        modeOverride = mode
+    }
+
+    /** Publie [state] d'un bloc et rend l'état qu'il remplace, pour dire ce qui change ; `null` à la première publication. Le mode posé en mémoire s'efface. */
     fun publish(state: EffectiveState): EffectiveState? {
         val previous = resolver?.state
         resolver = Resolver(state)
+        modeOverride = null
         return previous
     }
 
-    /** Retire l'état publié et la dernière publication, comme avant la première publication. Réservé aux tests. */
+    /** Retire l'état publié, la dernière publication et le mode posé, comme avant la première publication. Réservé aux tests. */
     internal fun clear() {
         resolver = null
         lastPublication = null
+        modeOverride = null
     }
 }
 

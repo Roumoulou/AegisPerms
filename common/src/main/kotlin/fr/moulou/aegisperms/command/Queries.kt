@@ -52,7 +52,7 @@ internal object Queries {
         val lines = buildList {
             add(reply.text(Command.STATUS_VERSION, AegisPerms.version()))
             if (last != null) add(reply.text(Command.STATUS_GENERATION, last.generation, last.source.name.lowercase(), DATE.format(last.date)))
-            add(reply.text(Command.STATUS_MODE, reply.text(modeKey(state.settings.mode))))
+            add(reply.text(Command.STATUS_MODE, reply.text(modeKey(Publisher.mode()))))
             add(reply.text(Command.STATUS_READ_ONLY, reply.yesNo(last?.readOnly == true)))
             add(reply.text(Command.STATUS_WATCH, reply.yesNo(state.settings.watchFiles)))
             add(reply.text(if (Lifecycle.foreignAuthoritySeen) Command.STATUS_ENVELOPE_REPLACED else Command.STATUS_ENVELOPE_OK))

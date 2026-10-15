@@ -3,11 +3,15 @@
 
 package fr.moulou.aegisperms.command
 
+import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import com.mojang.brigadier.builder.RequiredArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
+import fr.moulou.aegisperms.command.PermissionsEdits.RuleVerb
 import fr.moulou.aegisperms.hook.Publisher
 import fr.moulou.aegisperms.model.Keys
+import fr.moulou.aegisperms.model.Mode
 import fr.moulou.aegisperms.text.TextKeys.Command
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
@@ -24,9 +28,15 @@ import net.minecraft.server.permissions.PermissionLevel
 object AegisCommand {
 
     private const val GROUP = "group"
+    private const val NAME = "name"
+    private const val PARENT = "parent"
+    private const val WEIGHT = "weight"
+    private const val LEVEL = "level"
     private const val PLAYER = "player"
     private const val KEY = "key"
     private const val LINE = "command"
+    private const val TEXT = "text"
+    private const val FOLDER = "folder"
 
     /** L'arbre de `/aegis`, bâti sur l'`admin-level` des réglages publiés à cet instant : un `admin-level` changé prend effet à la construction suivante. */
     fun tree(): LiteralArgumentBuilder<CommandSourceStack> {
@@ -51,28 +61,80 @@ object AegisCommand {
                     ),
                 ),
             )
+            .then(Commands.literal("search").then(Commands.argument(KEY, StringArgumentType.greedyString()).suggests(Suggestions.KEYS).executes { context -> run(context) { Queries.search(it, string(context, KEY)) } }))
             .then(
                 Commands.literal("catalog")
                     .executes { context -> run(context) { Queries.catalog(it, context.source.server, "") } }
                     .then(Commands.argument("prefix", StringArgumentType.greedyString()).suggests(Suggestions.KEYS).executes { context -> run(context) { Queries.catalog(it, context.source.server, string(context, "prefix")) } }),
             )
-            .then(Commands.literal("search").then(Commands.argument(KEY, StringArgumentType.greedyString()).suggests(Suggestions.KEYS).executes { context -> run(context) { Queries.search(it, string(context, KEY)) } }))
             .then(groupBranch())
             .then(playerBranch())
+            .then(Commands.literal("reload").executes { context -> run(context) { Modifications.reload(it) } })
             .then(Commands.literal("validate").executes { context -> run(context) { Queries.validate(it) } })
+            .then(
+                Commands.literal("backup")
+                    .executes { context -> run(context) { Modifications.backup(it, null) } }
+                    .then(Commands.argument(NAME, StringArgumentType.word()).executes { context -> run(context) { Modifications.backup(it, string(context, NAME)) } }),
+            )
+            .then(Commands.literal("restore").then(Commands.argument(FOLDER, StringArgumentType.word()).suggests(Suggestions.BACKUPS).executes { context -> run(context) { Modifications.restore(it, string(context, FOLDER)) } }))
+            .then(
+                Commands.literal("mode")
+                    .then(Commands.literal("observe").executes { context -> run(context) { Modifications.mode(it, Mode.OBSERVE) } })
+                    .then(Commands.literal("enforce").executes { context -> run(context) { Modifications.mode(it, Mode.ENFORCE) } }),
+            )
     }
 
     private fun groupBranch(): LiteralArgumentBuilder<CommandSourceStack> {
         val named = Commands.argument(GROUP, StringArgumentType.word()).suggests(Suggestions.GROUPS)
             .then(Commands.literal("info").executes { context -> run(context) { Queries.groupInfo(it, string(context, GROUP)) } })
+            .then(
+                Commands.literal("create")
+                    .executes { context -> run(context) { Modifications.groupCreate(it, string(context, GROUP), 0) } }
+                    .then(Commands.argument(WEIGHT, IntegerArgumentType.integer()).executes { context -> run(context) { Modifications.groupCreate(it, string(context, GROUP), IntegerArgumentType.getInteger(context, WEIGHT)) } }),
+            )
+            .then(Commands.literal("delete").executes { context -> run(context) { Modifications.groupDelete(it, string(context, GROUP)) } })
+            .then(Commands.literal("rename").then(Commands.argument(NAME, StringArgumentType.word()).executes { context -> run(context) { Modifications.groupRename(it, string(context, GROUP), string(context, NAME)) } }))
+            .then(Commands.literal("clone").then(Commands.argument(NAME, StringArgumentType.word()).executes { context -> run(context) { Modifications.groupClone(it, string(context, GROUP), string(context, NAME)) } }))
+            .then(Commands.literal("weight").then(Commands.argument(WEIGHT, IntegerArgumentType.integer()).executes { context -> run(context) { Modifications.groupWeight(it, string(context, GROUP), IntegerArgumentType.getInteger(context, WEIGHT)) } }))
+            .then(
+                Commands.literal("parent")
+                    .then(Commands.literal("add").then(Commands.argument(PARENT, StringArgumentType.word()).suggests(Suggestions.GROUPS).executes { context -> run(context) { Modifications.groupParent(it, string(context, GROUP), string(context, PARENT), add = true) } }))
+                    .then(Commands.literal("remove").then(Commands.argument(PARENT, StringArgumentType.word()).suggests(Suggestions.GROUPS).executes { context -> run(context) { Modifications.groupParent(it, string(context, GROUP), string(context, PARENT), add = false) } })),
+            )
+            .then(Commands.literal("include-ops").then(Commands.argument(LEVEL, StringArgumentType.word()).suggests(Suggestions.LEVELS).executes { context -> run(context) { Modifications.groupIncludeOps(it, string(context, GROUP), string(context, LEVEL)) } }))
+            .then(
+                Commands.literal("note").then(
+                    Commands.argument(TEXT, StringArgumentType.string())
+                        .executes { context -> run(context) { Modifications.groupNote(it, string(context, GROUP), string(context, TEXT), null) } }
+                        .then(Commands.argument(KEY, StringArgumentType.greedyString()).suggests(Suggestions.KEYS).executes { context -> run(context) { Modifications.groupNote(it, string(context, GROUP), string(context, TEXT), string(context, KEY)) } }),
+                ),
+            )
+        for (verb in RuleVerb.entries) {
+            named.then(Commands.literal(verb.literal).then(Commands.argument(KEY, StringArgumentType.greedyString()).suggests(Suggestions.KEYS).executes { context -> run(context) { Modifications.groupRule(it, string(context, GROUP), verb, string(context, KEY)) } }))
+        }
         return Commands.literal("group")
             .then(Commands.literal("list").executes { context -> run(context) { Queries.groupList(it) } })
             .then(named)
     }
 
     private fun playerBranch(): LiteralArgumentBuilder<CommandSourceStack> {
-        val target = Commands.argument(PLAYER, StringArgumentType.word()).suggests(Suggestions.PLAYERS)
+        val target: RequiredArgumentBuilder<CommandSourceStack, String> = Commands.argument(PLAYER, StringArgumentType.word()).suggests(Suggestions.PLAYERS)
             .then(Commands.literal("info").executes { context -> run(context) { reply -> withTarget(context, reply) { Queries.playerInfo(reply, context.source.server, it) } } })
+            .then(
+                Commands.literal("group")
+                    .then(Commands.literal("add").then(Commands.argument(GROUP, StringArgumentType.word()).suggests(Suggestions.GROUPS).executes { context -> run(context) { reply -> withTarget(context, reply) { Modifications.playerGroup(reply, it, string(context, GROUP), add = true) } } }))
+                    .then(Commands.literal("remove").then(Commands.argument(GROUP, StringArgumentType.word()).suggests(Suggestions.GROUPS).executes { context -> run(context) { reply -> withTarget(context, reply) { Modifications.playerGroup(reply, it, string(context, GROUP), add = false) } } })),
+            )
+            .then(
+                Commands.literal("note").then(
+                    Commands.argument(TEXT, StringArgumentType.string())
+                        .executes { context -> run(context) { reply -> withTarget(context, reply) { Modifications.playerNote(reply, it, string(context, TEXT), null) } } }
+                        .then(Commands.argument(KEY, StringArgumentType.greedyString()).suggests(Suggestions.KEYS).executes { context -> run(context) { reply -> withTarget(context, reply) { Modifications.playerNote(reply, it, string(context, TEXT), string(context, KEY)) } } }),
+                ),
+            )
+        for (verb in RuleVerb.entries) {
+            target.then(Commands.literal(verb.literal).then(Commands.argument(KEY, StringArgumentType.greedyString()).suggests(Suggestions.KEYS).executes { context -> run(context) { reply -> withTarget(context, reply) { Modifications.playerRule(reply, it, verb, string(context, KEY)) } } }))
+        }
         return Commands.literal("player").then(target)
     }
 

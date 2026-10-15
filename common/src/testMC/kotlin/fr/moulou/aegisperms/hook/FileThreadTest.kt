@@ -97,14 +97,14 @@ class FileThreadTest {
         val permissions = directory.resolve("permissions.json")
 
         Files.writeString(permissions, "{ pas du json")
-        val refused = FileThread.reload(PublicationSource.RELOAD).get()
+        val refused = FileThread.reload(PublicationSource.RELOAD).get().result
         assertTrue(refused is ConfigurationRead.Refused)
         assertEquals(1, Publisher.generation())
         assertEquals(PublicationResult.REFUSED, ConfigurationFiles(directory).readState()?.result)
         assertTrue(lines.any { it.startsWith("aegisperms.log.refused reload 1 ") }, lines.toString())
 
         Files.writeString(permissions, "{\n  \"schema-version\": 1,\n  \"groups\": {\n    \"default\": {}\n  },\n  \"players\": {}\n}\n")
-        val valid = FileThread.reload(PublicationSource.RELOAD).get()
+        val valid = FileThread.reload(PublicationSource.RELOAD).get().result
         assertTrue(valid is ConfigurationRead.Valid)
         assertEquals(2, Publisher.generation())
         assertEquals(PublicationResult.APPLIED, ConfigurationFiles(directory).readState()?.result)

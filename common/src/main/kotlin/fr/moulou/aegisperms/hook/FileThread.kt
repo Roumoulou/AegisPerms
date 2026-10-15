@@ -3,6 +3,7 @@
 
 package fr.moulou.aegisperms.hook
 
+import fr.moulou.aegisperms.files.BackupResult
 import fr.moulou.aegisperms.files.CatalogFile
 import fr.moulou.aegisperms.files.ConfigurationFiles
 import fr.moulou.aegisperms.files.ConfigurationRead
@@ -11,6 +12,7 @@ import fr.moulou.aegisperms.files.ConfigurationWrite
 import fr.moulou.aegisperms.files.GeneratedWrite
 import fr.moulou.aegisperms.files.PublicationResult
 import fr.moulou.aegisperms.files.PublicationSource
+import fr.moulou.aegisperms.files.RestoreResult
 import fr.moulou.aegisperms.files.StateFile
 import fr.moulou.aegisperms.model.Configuration
 import fr.moulou.aegisperms.model.EffectiveState
@@ -30,14 +32,15 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.streams.toList
 
 /**
  * Le fil des fichiers (cahier des charges, 7.4) : un exécuteur à un fil, démon, seul à appeler `ConfigurationFiles` et à compter les générations. Il
- * sérialise lectures, validations, écritures, catalogue et état ; le fil serveur ne l'attend qu'au démarrage, en deux temps (D9), et une publication lui
- * revient par la référence du `Publisher`.
+ * sérialise lectures, validations, écritures, sauvegardes, catalogue et état ; le fil serveur ne l'attend qu'au démarrage, en deux temps (D9), et une
+ * publication lui revient par la référence du `Publisher`.
  *
- * `reload` et `write` sont les points d'appel de `/aegis reload`, de la surveillance et des modifications par commande : prêts, sans appelant à cette
- * session.
+ * `reload`, `write`, `check`, `backup` et `restore` sont les travaux que `/aegis` et la surveillance lui confient : chacun rend, dans une `CompletableFuture`,
+ * son résultat et ce qu'il a publié (E8), et la commande répond sur le fil serveur quand il a fini.
  */
 object FileThread {
 
@@ -45,6 +48,9 @@ object FileThread {
     private const val STOP_TIMEOUT_SECONDS = 5L
     private const val HOOK = "files"
     private const val LAST_GOOD = "last-good"
+
+    /** Le dossier des sauvegardes sous celui de la configuration (4.10), le même nom que `files` lui donne. */
+    private const val BACKUPS = "backups"
 
     private lateinit var files: ConfigurationFiles
     private lateinit var executor: ExecutorService
@@ -125,28 +131,53 @@ object FileThread {
     }
 
     /** Un rechargement de source [source] (4.8) : relit, valide, et publie une génération nouvelle, ou laisse l'état en vigueur et dit le refus. */
-    fun reload(source: PublicationSource): CompletableFuture<ConfigurationRead> = CompletableFuture.supplyAsync({
+    fun reload(source: PublicationSource): CompletableFuture<Outcome<ConfigurationRead>> = CompletableFuture.supplyAsync({
+        val before = Publisher.lastPublication
         val read = files.reload(catalog)
-        when (read) {
+        val published = when (read) {
             is ConfigurationRead.Valid -> publish(read.configuration, read.report, source, readOnly = false, lastGood = true)
             is ConfigurationRead.Refused -> refuse(source, read.report)
         }
-        read
+        Outcome(read, published, before)
     }, executor)
 
     /** La lecture des deux fichiers tels qu'ils sont, sans rien créer, retenir ni appliquer : `/aegis validate` (5.3). */
     fun check(): CompletableFuture<ConfigurationRead> = CompletableFuture.supplyAsync({ files.check(catalog) }, executor)
 
     /** Une écriture des droits (4.8), la seule que le mod fasse : écrit, relit, et publie une génération nouvelle, ou dit pourquoi rien ne s'est écrit. */
-    fun write(permissions: Permissions, source: PublicationSource = PublicationSource.COMMAND): CompletableFuture<ConfigurationWrite> = CompletableFuture.supplyAsync({
+    fun write(permissions: Permissions, source: PublicationSource = PublicationSource.COMMAND): CompletableFuture<Outcome<ConfigurationWrite>> = CompletableFuture.supplyAsync({
+        val before = Publisher.lastPublication
         val write = files.write(permissions, catalog)
-        when (write) {
+        val published = when (write) {
             is ConfigurationWrite.Written -> publish(write.configuration, write.report, source, readOnly = false, lastGood = true)
             is ConfigurationWrite.Refused -> refuse(source, write.report)
-            ConfigurationWrite.FileMoved, ConfigurationWrite.ReadOnly, is ConfigurationWrite.Failed -> {}
+            ConfigurationWrite.FileMoved, ConfigurationWrite.ReadOnly, is ConfigurationWrite.Failed -> null
         }
-        write
+        Outcome(write, published, before)
     }, executor)
+
+    /** Une sauvegarde des deux fichiers en place (4.10), sous [name] quand il est donné. */
+    fun backup(name: String?): CompletableFuture<BackupResult> = CompletableFuture.supplyAsync({ files.backup(name) }, executor)
+
+    /** Une restauration (4.10) : les fichiers en place remplacés par ceux de la sauvegarde [folder], relus et publiés de source `restore`. */
+    fun restore(folder: String): CompletableFuture<Outcome<RestoreResult>> = CompletableFuture.supplyAsync({
+        val before = Publisher.lastPublication
+        val result = files.restore(folder, catalog)
+        val published = when (result) {
+            is RestoreResult.Restored -> publish(result.configuration, result.report, PublicationSource.RESTORE, readOnly = false, lastGood = true)
+            is RestoreResult.Refused -> refuse(PublicationSource.RESTORE, result.report)
+            RestoreResult.UnknownBackup, RestoreResult.IncompleteBackup, is RestoreResult.Failed -> null
+        }
+        Outcome(result, published, before)
+    }, executor)
+
+    /** Les sauvegardes présentes, par le nom de leur dossier, triées : ce que `restore` complète. Lu sans passer par les stores, depuis n'importe quel fil. */
+    fun backupNames(): List<String> {
+        if (!::files.isInitialized) return emptyList()
+        val root = files.directory.resolve(BACKUPS)
+        if (!Files.isDirectory(root)) return emptyList()
+        return Files.list(root).use { stream -> stream.filter { Files.isDirectory(it) }.map { it.fileName.toString() }.sorted().toList() }
+    }
 
     /** À `SERVER_STOPPING` : les clés d'API en attente s'écrivent, les stores se ferment, le fil s'arrête sous un délai borné. */
     fun stop() {
@@ -162,7 +193,7 @@ object FileThread {
     /** Attend que le fil ait fini ce qu'il a en cours. Réservé aux tests. */
     internal fun drain() = await {}
 
-    private fun publish(configuration: Configuration, report: ValidationReport, source: PublicationSource, readOnly: Boolean, lastGood: Boolean, fallback: Set<ConfigurationFile> = emptySet()): EffectiveState {
+    private fun publish(configuration: Configuration, report: ValidationReport, source: PublicationSource, readOnly: Boolean, lastGood: Boolean, fallback: Set<ConfigurationFile> = emptySet()): Published {
         generation++
         val state = EffectiveState(generation, configuration)
         val previous = Publisher.publish(state)
@@ -174,13 +205,15 @@ object FileThread {
         writeOrWarn(StateFile.FILE_NAME, files.writeState(generation, source, PublicationResult.APPLIED, report))
         if (lastGood) writeOrWarn(LAST_GOOD, files.writeLastGood(configuration, generation))
         TreeResend.afterPublication(previous, state)
-        return state
+        return Published(previous, state)
     }
 
-    private fun refuse(source: PublicationSource, report: ValidationReport) {
+    /** Une publication refusée : l'état en vigueur reste, le journal et `state.json` le disent. Rend `null`, rien n'étant publié. */
+    private fun refuse(source: PublicationSource, report: ValidationReport): Published? {
         ModLog.error(ModLog.REFUSED, source.name.lowercase(), generation, report.issues.size)
         report.issues.forEach(ModLog::issue)
         writeOrWarn(StateFile.FILE_NAME, files.writeState(generation, source, PublicationResult.REFUSED, report))
+        return null
     }
 
     /** Écrit le catalogue de [adopted] (4.6) et rend celui que la validation lira, avec les clés apparues depuis le catalogue précédent. */
@@ -221,3 +254,9 @@ object FileThread {
 
     private fun <T> await(block: () -> T): T = executor.submit(Callable(block)).get()
 }
+
+/** Une publication faite : l'état publié et celui qu'il remplace, `null` à la première. */
+class Published(val previous: EffectiveState?, val state: EffectiveState)
+
+/** Ce qu'un travail du fil des fichiers rend à qui l'a demandé : son [result], ce qu'il a publié, et la dernière publication d'avant lui. */
+class Outcome<T>(val result: T, val published: Published?, val before: LastPublication?)
