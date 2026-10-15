@@ -23,6 +23,7 @@ import fr.moulou.aegisperms.validate.ValidationReport
 import net.minecraft.commands.CommandSourceStack
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.Instant
 import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
@@ -97,7 +98,11 @@ object FileThread {
             if (createdAtStart.isNotEmpty()) ModLog.info(ModLog.FILES_CREATED, createdAtStart.joinToString(", ") { it.fileName })
             if (start.settingsSource != ConfigurationSource.FILE) ModLog.error(ModLog.FALLBACK, ConfigurationFile.SETTINGS.fileName, start.settingsSource.name.lowercase())
             if (start.permissionsSource != ConfigurationSource.FILE) ModLog.error(ModLog.FALLBACK, ConfigurationFile.PERMISSIONS.fileName, start.permissionsSource.name.lowercase())
-            publish(start.configuration, start.report, PublicationSource.STARTUP, start.readOnly, lastGood = start.settingsSource == ConfigurationSource.FILE && !start.readOnly)
+            val fallback = setOfNotNull(
+                ConfigurationFile.SETTINGS.takeIf { start.settingsSource != ConfigurationSource.FILE },
+                ConfigurationFile.PERMISSIONS.takeIf { start.permissionsSource != ConfigurationSource.FILE },
+            )
+            publish(start.configuration, start.report, PublicationSource.STARTUP, start.readOnly, lastGood = start.settingsSource == ConfigurationSource.FILE && !start.readOnly, fallback)
         } catch (error: Throwable) {
             ModLog.once(HOOK, "startup", error)
         }
@@ -129,6 +134,9 @@ object FileThread {
         read
     }, executor)
 
+    /** La lecture des deux fichiers tels qu'ils sont, sans rien créer, retenir ni appliquer : `/aegis validate` (5.3). */
+    fun check(): CompletableFuture<ConfigurationRead> = CompletableFuture.supplyAsync({ files.check(catalog) }, executor)
+
     /** Une écriture des droits (4.8), la seule que le mod fasse : écrit, relit, et publie une génération nouvelle, ou dit pourquoi rien ne s'est écrit. */
     fun write(permissions: Permissions, source: PublicationSource = PublicationSource.COMMAND): CompletableFuture<ConfigurationWrite> = CompletableFuture.supplyAsync({
         val write = files.write(permissions, catalog)
@@ -154,10 +162,11 @@ object FileThread {
     /** Attend que le fil ait fini ce qu'il a en cours. Réservé aux tests. */
     internal fun drain() = await {}
 
-    private fun publish(configuration: Configuration, report: ValidationReport, source: PublicationSource, readOnly: Boolean, lastGood: Boolean): EffectiveState {
+    private fun publish(configuration: Configuration, report: ValidationReport, source: PublicationSource, readOnly: Boolean, lastGood: Boolean, fallback: Set<ConfigurationFile> = emptySet()): EffectiveState {
         generation++
         val state = EffectiveState(generation, configuration)
         val previous = Publisher.publish(state)
+        Publisher.lastPublication = LastPublication(generation, source, Instant.now(), readOnly, fallback, report)
         val permissions = configuration.permissions
         val rules = permissions.groups.values.sumOf { it.rules.size } + permissions.players.values.sumOf { it.rules.size }
         ModLog.info(ModLog.PUBLISHED, generation, source.name.lowercase(), configuration.settings.mode.name.lowercase(), readOnly, permissions.groups.size, permissions.players.size, rules, report.issues.size)

@@ -3,6 +3,7 @@
 
 package fr.moulou.aegisperms.text
 
+import fr.moulou.aegisperms.model.KeyDefect
 import fr.moulou.aegisperms.validate.IssueKind
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -20,11 +21,13 @@ class TextsTest {
 
         private val tables: Map<Lang, Map<String, String>> = Lang.entries.associateWith { Texts.parse(Files.readString(LANG_DIRECTORY.resolve(it.fileName + ".json"))) }
 
-        /** Les clés que `TextKeys` nomme : ses constantes qui ne sont pas des préfixes. */
-        private val namedKeys: List<String> = TextKeys::class.java.declaredFields
+        /** Les clés que `TextKeys` nomme, objets imbriqués compris : ses constantes qui ne sont pas des préfixes. */
+        private val namedKeys: List<String> = constantsOf(TextKeys::class.java)
+
+        private fun constantsOf(type: Class<*>): List<String> = type.declaredFields
             .filter { Modifier.isStatic(it.modifiers) && it.type == String::class.java }
-            .map { it.get(null) as String }
-            .filter { !it.endsWith(".") }
+            .map { it.isAccessible = true; it.get(null) as String }
+            .filter { !it.endsWith(".") } + type.declaredClasses.flatMap { constantsOf(it) }
     }
 
     @Test
@@ -39,8 +42,11 @@ class TextsTest {
     }
 
     @Test
-    fun `chaque nature de constat a son texte dans les deux langues`() {
-        for (lang in Lang.entries) for (kind in IssueKind.entries) assertTrue(kind.translationKey in tables.getValue(lang), "$lang : ${kind.translationKey}")
+    fun `chaque nature de constat et chaque défaut de clé ont leur texte dans les deux langues`() {
+        for (lang in Lang.entries) {
+            for (kind in IssueKind.entries) assertTrue(kind.translationKey in tables.getValue(lang), "$lang : ${kind.translationKey}")
+            for (defect in KeyDefect.entries) assertTrue(defect.translationKey in tables.getValue(lang), "$lang : ${defect.translationKey}")
+        }
     }
 
     @Test

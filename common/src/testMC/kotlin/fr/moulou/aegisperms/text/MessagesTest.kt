@@ -7,6 +7,7 @@ import fr.moulou.aegisperms.hook.HookFixtures
 import fr.moulou.aegisperms.hook.LogLine
 import fr.moulou.aegisperms.hook.LogWriter
 import fr.moulou.aegisperms.hook.ModLog
+import fr.moulou.aegisperms.model.KeyDefect
 import fr.moulou.aegisperms.model.Language
 import fr.moulou.aegisperms.validate.ConfigurationFile
 import fr.moulou.aegisperms.validate.Issue
@@ -57,10 +58,14 @@ class MessagesTest {
 
     @Test
     fun `aucune clé des fichiers n'est orpheline`() {
-        val named = TextKeys::class.java.declaredFields.filter { Modifier.isStatic(it.modifiers) && it.type == String::class.java }.map { it.get(null) as String }.filter { !it.endsWith(".") }
-        val known = IssueKind.entries.map { it.translationKey } + logEvents.map { TextKeys.LOG_PREFIX + it } + named
+        val known = IssueKind.entries.map { it.translationKey } + KeyDefect.entries.map { it.translationKey } + logEvents.map { TextKeys.LOG_PREFIX + it } + constantsOf(TextKeys::class.java)
         assertEquals(emptySet<String>(), Texts.keys(Lang.FR) - known.toSet())
     }
+
+    private fun constantsOf(type: Class<*>): List<String> = type.declaredFields
+        .filter { Modifier.isStatic(it.modifiers) && it.type == String::class.java }
+        .map { it.isAccessible = true; it.get(null) as String }
+        .filter { !it.endsWith(".") } + type.declaredClasses.flatMap { constantsOf(it) }
 
     @Test
     fun `le réglage language impose la langue, et auto suit la machine pour la console`() {
