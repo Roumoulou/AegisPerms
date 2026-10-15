@@ -81,7 +81,7 @@ class JsonFileFormat private constructor(private val json: Json, private val sor
 
         val decoded = json.decodeFromJsonElement(deserializer, migrations.migrate(root, version.number))
         // L'arbre ne garde que la dernière d'une clé écrite deux fois : le doublon se cherche sur le texte, comme le lecteur strict le fait.
-        JsonDuplicateKeys.firstDuplicate(text)?.let { throw DuplicateKeyException(it.key, it.line) }
+        JsonDuplicateKeys.firstDuplicate(text)?.let { throw DuplicateKeyException(it.key, it.line, it.path) }
         return decoded
     }
 

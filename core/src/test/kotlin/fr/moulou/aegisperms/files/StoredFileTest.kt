@@ -138,8 +138,9 @@ class StoredFileTest {
                 assertEquals(ConfigurationFile.SETTINGS, issue.file, name)
                 assertEquals(emptyList<String>(), issue.path, name)
                 assertTrue((issue.arguments.single() as IssueArgument.Literal).text.isNotBlank(), name)
-                // Un fichier vide n'a pas de ligne fautive à dire.
-                if (text.isNotEmpty()) assertNotNull(issue.line, name)
+                // Un fichier vide a pour ligne fautive celle où il s'arrête, la première (Storify, C-56).
+                assertNotNull(issue.line, name)
+                if (text.isEmpty()) assertEquals(1, issue.line, name)
                 assertFalse(settings.isOpen, name)
                 assertNull(settings.data, name)
             }
@@ -154,11 +155,11 @@ class StoredFileTest {
     }
 
     @Test
-    fun `une clé écrite deux fois est refusée, avec la ligne de la seconde`() {
+    fun `une clé écrite deux fois est refusée, avec son chemin et la ligne de la seconde`() {
         val text = "{\n  \"schema-version\": 1,\n  \"groups\": {\n    \"default\": {},\n    \"vip\": { \"weight\": 1 },\n    \"vip\": { \"weight\": 2 }\n  }\n}\n"
         put(permissionsPath, text)
         Stores.permissions(config).use { permissions ->
-            assertEquals(listOf(Issue(IssueKind.DUPLICATE_KEY, ConfigurationFile.PERMISSIONS, emptyList(), literals("vip"), line = 6)), permissions.read().issues())
+            assertEquals(listOf(Issue(IssueKind.DUPLICATE_KEY, ConfigurationFile.PERMISSIONS, listOf("groups", "vip"), literals("vip"), line = 6)), permissions.read().issues())
             assertFalse(permissions.isOpen)
         }
         assertUntouched(permissionsPath, text)

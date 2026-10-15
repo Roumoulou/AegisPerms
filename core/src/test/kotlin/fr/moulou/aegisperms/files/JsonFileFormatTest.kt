@@ -6,6 +6,7 @@ package fr.moulou.aegisperms.files
 import fr.moulou.aegisperms.model.Group
 import fr.moulou.aegisperms.model.Permissions
 import fr.moulou.storify.validation.DuplicateKeyException
+import fr.moulou.storify.validation.PathSegment
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -52,11 +53,12 @@ class JsonFileFormatTest {
     }
 
     @Test
-    fun `une clé écrite deux fois est refusée dans un fichier à migrer comme dans un autre`() {
+    fun `une clé écrite deux fois est refusée dans un fichier à migrer comme dans un autre, avec son chemin`() {
         val twice = "{\n  \"schema-version\": 1,\n  \"ranks\": {\n    \"vip\": {},\n    \"vip\": {}\n  }\n}"
         val duplicate = assertThrows(DuplicateKeyException::class.java) { read(twice, migrating) }
         assertEquals("vip", duplicate.key)
         assertEquals(5, duplicate.line)
+        assertEquals(listOf(PathSegment.Key("ranks"), PathSegment.Key("vip")), duplicate.path)
         assertEquals(5, assertThrows(DuplicateKeyException::class.java) { read(twice.replace("ranks", "groups")) }.line)
     }
 

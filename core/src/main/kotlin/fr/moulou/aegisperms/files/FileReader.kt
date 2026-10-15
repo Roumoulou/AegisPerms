@@ -9,6 +9,7 @@ import fr.moulou.aegisperms.validate.IssueArgument
 import fr.moulou.aegisperms.validate.IssueKind
 import fr.moulou.storify.StoreDecodeException
 import fr.moulou.storify.validation.DuplicateKeyException
+import fr.moulou.storify.validation.PathSegment
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
 import java.nio.file.Path
@@ -48,7 +49,7 @@ internal class FileReader<DATA : Any>(val file: ConfigurationFile, private val f
     fun issueOf(source: Path, failure: Exception): Issue {
         val cause = (failure as? StoreDecodeException)?.cause ?: failure
         return when (cause) {
-            is DuplicateKeyException -> Issue(IssueKind.DUPLICATE_KEY, file, emptyList(), literals(cause.key), cause.line)
+            is DuplicateKeyException -> Issue(IssueKind.DUPLICATE_KEY, file, pathOf(cause.path), literals(cause.key), cause.line)
             // Le filet du format : l'inspection a déjà refusé ce numéro, sauf si le fichier a changé entre les deux lectures.
             is SchemaVersionException -> inspection.versionIssue(cause.version) ?: malformed(source, failure, cause)
             is SerializationException -> malformed(source, failure, cause)
@@ -57,10 +58,19 @@ internal class FileReader<DATA : Any>(val file: ConfigurationFile, private val f
     }
 
     private fun malformed(source: Path, failure: Exception, cause: Throwable): Issue {
-        // La ligne est celle que Storify tire du message du parseur ; sans store, la même exception se construit pour la lui demander.
+        // La ligne est celle que Storify tire du message du parseur, du chemin qu'il nomme ou de la fin du fichier atteinte (C-56) ; sans store, la même
+        // exception se construit pour la lui demander.
         val line = (failure as? StoreDecodeException ?: StoreDecodeException(source, format, cause)).line
         val said = cause.message?.lineSequence()?.firstOrNull()?.trim().orEmpty().ifEmpty { cause.javaClass.simpleName }
         return Issue(IssueKind.MALFORMED_FILE, file, emptyList(), literals(said), line)
+    }
+
+    /** Le chemin d'un doublon, que Storify donne depuis sa 0.6.0 (C-55), dans la forme des constats : la clé en dernier segment, un rang de liste en chiffres. */
+    private fun pathOf(segments: List<PathSegment>): List<String> = segments.map {
+        when (it) {
+            is PathSegment.Key -> it.name
+            is PathSegment.Index -> it.index.toString()
+        }
     }
 
     private fun unreadable(cause: Throwable): Issue = Issue(IssueKind.UNREADABLE_FILE, file, emptyList(), literals(listOfNotNull(cause.javaClass.simpleName, cause.message).joinToString(": ")))

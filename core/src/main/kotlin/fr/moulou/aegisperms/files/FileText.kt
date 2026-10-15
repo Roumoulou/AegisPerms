@@ -45,37 +45,36 @@ internal class FileText private constructor(private val content: String, private
     /** Le constat avec la ligne de son chemin, s'il n'en porte pas déjà une et qu'elle se trouve. */
     fun withLine(issue: Issue): Issue = if (issue.line != null) issue else issue.copy(line = lineOf(issue.path))
 
-    /** La ligne, à partir de 1, de ce que [path] désigne, ou de son plus proche ancêtre écrit ; `null` quand rien du chemin n'est écrit, ou sans arbre. */
+    /**
+     * La ligne, à partir de 1, de ce que [path] désigne, ou de son plus proche ancêtre écrit ; `null` quand rien du chemin n'est écrit, ou sans arbre. C'est le
+     * localisateur qui rend la ligne de l'ancêtre : borné à son parent depuis Storify 0.6.0 (C-53), il s'arrête au dernier segment retrouvé, sans aller
+     * chercher une clé absente chez les voisins.
+     */
     fun lineOf(path: List<String>): Int? {
-        val segments = writtenSegments(path)
-        for (length in segments.size downTo 1) {
-            val line = try {
-                locator.lineOf(lines, segments.subList(0, length))
-            } catch (_: RuntimeException) {
-                null
-            }
-            if (line != null) return line
+        if (tree == null) return null
+        return try {
+            locator.lineOf(lines, segmentsOf(path))
+        } catch (_: RuntimeException) {
+            null
         }
-        return null
     }
 
     /**
-     * Les segments de [path] que l'arbre écrit, jusqu'au premier qui manque. Le localisateur ne reçoit qu'eux : il ne sait pas où finit un objet, et
-     * chercherait une clé absente jusque chez les voisins de son parent. C'est aussi l'arbre qui dit lequel est un rang de liste, qu'un chemin de constat
-     * écrit en chiffres comme une clé, un groupe pouvant s'appeler `123`.
+     * Les segments de [path] dans la forme du localisateur. C'est l'arbre qui dit lequel est un rang de liste, qu'un chemin de constat écrit en chiffres comme
+     * une clé, un groupe pouvant s'appeler `123` ; au-delà du premier segment que l'arbre n'écrit pas, les suivants sont des clés.
      */
-    private fun writtenSegments(path: List<String>): List<PathSegment> {
+    private fun segmentsOf(path: List<String>): List<PathSegment> {
         val segments = mutableListOf<PathSegment>()
-        var container: JsonElement = tree ?: return segments
+        var container: JsonElement? = tree
         for (segment in path) {
             val parent = container
             val index = if (parent is JsonArray) segment.toIntOrNull() else null
-            container = when {
-                parent is JsonArray -> index?.let { parent.getOrNull(it) }
-                parent is JsonObject -> parent[segment]
-                else -> null
-            } ?: break
             segments += if (index != null) PathSegment.Index(index) else PathSegment.Key(segment)
+            container = when (parent) {
+                is JsonArray -> index?.let { parent.getOrNull(it) }
+                is JsonObject -> parent[segment]
+                else -> null
+            }
         }
         return segments
     }
