@@ -6,7 +6,7 @@ out/
 
 # ═══ Environnement de développement Loom ════════════════════════════════════
 # run/ porte les mondes, les réglages faits en jeu et les logs. Tout se
-# régénère par les tâches prepare<Env> d'Outfitter, depuis l'entrepôt S:\18.
+# régénère par les tâches prepare<Env> d'Outfitter, depuis le kit C:\MC-Kit.
 #
 # logs/, mods/ et .fabric/ ne sont PAS ignorés, exprès : un dossier de jeu vit
 # sous run/ ou sous build/, et ces trois-là à la racine d'un module disent qu'un
