@@ -179,6 +179,7 @@ object TextKeys {
         const val WHY_PREFIX = PREFIX + "why."
 
         const val TITLE = WHY_PREFIX + "title"
+        const val OBSERVE = WHY_PREFIX + "observe"
         const val LEADS_TO = WHY_PREFIX + "leads_to"
         const val ROW = WHY_PREFIX + "row"
         const val OFFLINE = WHY_PREFIX + "offline"

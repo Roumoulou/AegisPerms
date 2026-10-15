@@ -9,6 +9,8 @@ import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.context.CommandContextBuilder
 import com.mojang.brigadier.tree.CommandNode
 import fr.moulou.aegisperms.files.CommandRequirement
+import fr.moulou.aegisperms.model.Decision
+import fr.moulou.aegisperms.model.Mode
 import fr.moulou.aegisperms.resolve.NodeJudgment
 import fr.moulou.aegisperms.resolve.Resolver
 import fr.moulou.aegisperms.text.Messages
@@ -78,6 +80,8 @@ object Hooks {
      * d'un arbre privé, et sous `unset` ; un arbre sans index est fermé ; un refus visible garde le nœud vu, et c'est la porte qui le refuse.
      */
     internal fun decide(mark: NodeMark?, node: CommandNode<*>, envelope: Envelope, source: CommandSourceStack, original: Boolean): Boolean {
+        // En observation (5.8), l'arbre, les complétions et la forme exigée sont ceux de vanilla ; l'écart ne se note qu'à l'exécution.
+        if (Publisher.mode() == Mode.OBSERVE) return original
         val entry = when (mark) {
             null, is RootMark -> return original
             Unindexed -> return false
@@ -104,19 +108,31 @@ object Hooks {
 
     // ── La porte d'exécution ─────────────────────────────────────────────────────
 
-    /** Un refus à la porte : visible ou masqué, sur la commande racine ou sur un nœud plus profond, ce qui choisit le message de vanilla. */
-    internal class GateRefusal(val visible: Boolean, val deep: Boolean)
+    /** Un refus à la porte : visible ou masqué, sur la commande racine ou sur un nœud plus profond, ce qui choisit le message de vanilla, et la clé qui refuse. */
+    internal class GateRefusal(val visible: Boolean, val deep: Boolean, val key: String)
 
     /** La porte d'exécution (7.5). Vrai si la commande analysée dans [parse] peut s'exécuter ; sinon la source reçoit le message du refus. */
     @JvmStatic
-    fun allowsExecution(parse: ParseResults<*>): Boolean {
+    fun allowsExecution(parse: ParseResults<*>): Boolean = allowsExecution(parse, ::markOf)
+
+    /**
+     * La même, les marques lues par [markOf]. En observation (5.8), la commande s'exécute quoi qu'il en soit, la forme exigée ne retire rien, et le refus
+     * que le mod aurait opposé se journalise comme un écart (E11).
+     */
+    internal fun allowsExecution(parse: ParseResults<*>, markOf: (CommandNode<*>) -> NodeMark?): Boolean {
         val source = parse.context.source as? CommandSourceStack ?: return true
         val envelope = source.permissions() as? Envelope ?: return true
+        val observing = Publisher.mode() == Mode.OBSERVE
         val refusal = try {
-            gateRefusal(parse, envelope, ::markOf) ?: return true
+            gateRefusal(parse, envelope, markOf, requirePrefix = !observing && Publisher.settings().namespaces.requirePrefix) ?: return true
         } catch (error: Throwable) {
             ModLog.once(GATE, parse.context.nodes.firstOrNull()?.node?.name ?: "?", error)
-            GateRefusal(visible = false, deep = false)
+            if (observing) return true
+            GateRefusal(visible = false, deep = false, key = "?")
+        }
+        if (observing) {
+            ObservationLog.deviation(envelope.subject, refusal.key, if (refusal.visible) Decision.DENY_VISIBLE else Decision.DENY_HIDDEN, ObservationLog.VANILLA_EXECUTES)
+            return true
         }
         val message = when {
             !refusal.visible -> Component.translatable(if (refusal.deep) UNKNOWN_ARGUMENT else UNKNOWN_COMMAND)
@@ -134,16 +150,18 @@ object Hooks {
      * chaque nœud lu par sa clé (2.7). La cible d'une redirection n'est pas tapée : la forme exigée ne la vise pas, sans quoi `/mc:execute as ... run`
      * s'arrêterait sur la forme nue d'`execute`, où ses sous-commandes redirigent (3.5).
      */
-    internal fun gateRefusal(parse: ParseResults<*>, envelope: Envelope, markOf: (CommandNode<*>) -> NodeMark?): GateRefusal? {
+    internal fun gateRefusal(parse: ParseResults<*>, envelope: Envelope, markOf: (CommandNode<*>) -> NodeMark?): GateRefusal? =
+        gateRefusal(parse, envelope, markOf, Publisher.current().state.settings.namespaces.requirePrefix)
+
+    private fun gateRefusal(parse: ParseResults<*>, envelope: Envelope, markOf: (CommandNode<*>) -> NodeMark?, requirePrefix: Boolean): GateRefusal? {
         val resolver = Publisher.current()
-        val requirePrefix = resolver.state.settings.namespaces.requirePrefix
         var context: CommandContextBuilder<*>? = parse.context
         var first = true
         var deep = false
         while (context != null) {
-            if (!first) refusalOf(markOf(context.rootNode), typed = false, requirePrefix, resolver, envelope)?.let { return GateRefusal(it, deep) }
+            if (!first) refusalOf(context.rootNode, markOf, typed = false, requirePrefix, resolver, envelope)?.let { return GateRefusal(it.visible, deep, it.key) }
             for (parsed in context.nodes) {
-                refusalOf(markOf(parsed.node), typed = true, requirePrefix, resolver, envelope)?.let { return GateRefusal(it, deep) }
+                refusalOf(parsed.node, markOf, typed = true, requirePrefix, resolver, envelope)?.let { return GateRefusal(it.visible, deep, it.key) }
                 deep = true
             }
             context = context.child
@@ -152,18 +170,21 @@ object Hooks {
         return null
     }
 
-    /** Vrai pour un refus visible, faux pour un refus masqué, `null` sans refus : une commande s'utilise sans aucun refus sur son chemin (2.7). */
-    private fun refusalOf(mark: NodeMark?, typed: Boolean, requirePrefix: Boolean, resolver: Resolver, envelope: Envelope): Boolean? {
-        val entry = when (mark) {
+    /** Ce qu'un nœud oppose à l'exécution : un refus visible ou masqué, avec la clé qui le porte. */
+    private class Refusing(val visible: Boolean, val key: String)
+
+    /** Le refus d'un nœud, ou `null` sans refus : une commande s'utilise sans aucun refus sur son chemin (2.7). */
+    private fun refusalOf(node: CommandNode<*>, markOf: (CommandNode<*>) -> NodeMark?, typed: Boolean, requirePrefix: Boolean, resolver: Resolver, envelope: Envelope): Refusing? {
+        val entry = when (val mark = markOf(node)) {
             null, is RootMark -> return null
-            Unindexed -> return false
+            Unindexed -> return Refusing(visible = false, key = node.name)
             is NodeEntry -> mark
         }
-        if (typed && entry.hiddenUnderRequirePrefix && requirePrefix) return false
+        if (typed && entry.hiddenUnderRequirePrefix && requirePrefix) return Refusing(visible = false, key = entry.key.text)
         val judgment = resolver.judgment(envelope.subject, envelope.level().id(), entry.key)
         return when {
-            judgment == NodeJudgment.HIDDEN -> false
-            judgment.hasVisibleRefusal -> true
+            judgment == NodeJudgment.HIDDEN -> Refusing(visible = false, key = entry.key.text)
+            judgment.hasVisibleRefusal -> Refusing(visible = true, key = entry.key.text)
             else -> null
         }
     }

@@ -16,6 +16,7 @@ import fr.moulou.aegisperms.model.ApiKey
 import fr.moulou.aegisperms.model.CommandKey
 import fr.moulou.aegisperms.model.Decision
 import fr.moulou.aegisperms.model.Keys
+import fr.moulou.aegisperms.model.Mode
 import fr.moulou.aegisperms.model.RuleSetOwner
 import fr.moulou.aegisperms.resolve.DecisionTrace
 import fr.moulou.aegisperms.resolve.NodeJudgment
@@ -73,6 +74,7 @@ internal object Explain {
 
         val lines = ArrayList<Component>()
         lines += reply.text(Why.TITLE, target.readableForm, command)
+        if (Publisher.mode() == Mode.OBSERVE) lines += reply.text(Why.OBSERVE)
         report.headline?.let { lines += reply.text(Why.LEADS_TO, it.typed, it.target, it.owner) }
         for (row in report.rows) lines += reply.text(Why.ROW, row.name, reply.text(statusKey(row.status)), decisionOf(reply, row), originOf(reply, row))
         report.deciding?.trace?.own?.let { trace ->

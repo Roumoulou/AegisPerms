@@ -4,10 +4,12 @@
 package fr.moulou.aegisperms.api
 
 import fr.moulou.aegisperms.hook.Envelope
+import fr.moulou.aegisperms.hook.ObservationLog
 import fr.moulou.aegisperms.hook.OpLevels
 import fr.moulou.aegisperms.hook.Publisher
 import fr.moulou.aegisperms.model.ApiKey
 import fr.moulou.aegisperms.model.Decision
+import fr.moulou.aegisperms.model.Mode
 import fr.moulou.aegisperms.resolve.Subject
 import net.minecraft.server.permissions.PermissionSet
 import java.util.UUID
@@ -22,10 +24,18 @@ sealed interface RequestSubject {
     /** La décision du sujet pour [key] (2.6), ou `null` quand le fournisseur ne répond pas et laisse le consommateur à son repli. */
     fun decision(key: ApiKey): Decision?
 
-    /** Une source jugée, par l'enveloppe qu'elle porte, ou un joueur désigné par UUID : la décision répond. */
+    /**
+     * Une source jugée, par l'enveloppe qu'elle porte, ou un joueur désigné par UUID : la décision répond. En observation (6.5), le fournisseur ne répond pas
+     * et le consommateur suit son repli, mais une décision autre qu'`unset` se journalise comme un écart.
+     */
     class Judged(val subject: Subject) : RequestSubject {
 
-        override fun decision(key: ApiKey): Decision = Publisher.current().decision(subject, key)
+        override fun decision(key: ApiKey): Decision? {
+            val decision = Publisher.current().decision(subject, key)
+            if (Publisher.mode() != Mode.OBSERVE) return decision
+            if (decision != Decision.UNSET) ObservationLog.deviation(subject.uuid, key.text, decision, ObservationLog.VANILLA_DEFAULT)
+            return null
+        }
     }
 
     /** La source à tous droits (6.1) : oui à tout. */

@@ -256,5 +256,9 @@
   "aegisperms.command.restore.refused": "Restauration refusée, la sauvegarde ne fait pas une configuration valide (%s erreurs) :",
   "aegisperms.command.restore.failed": "Restauration impossible, %s : un rechargement dit ce qui s'applique.",
   "aegisperms.command.mode.set": "Mode %s posé en mémoire ; les arbres sont renvoyés",
-  "aegisperms.command.mode.until_reload": "Le fichier des réglages ne change pas : le prochain rechargement ou démarrage reprend son mode, %s."
+  "aegisperms.command.mode.until_reload": "Le fichier des réglages ne change pas : le prochain rechargement ou démarrage reprend son mode, %s.",
+
+  "aegisperms.log.observe_deviation": "Observation : pour %s, %s vaudrait %s, et vanilla répond %s",
+  "aegisperms.log.observe_suppressed": "Observation : %s écarts de plus dans la minute écoulée, non détaillés",
+  "aegisperms.why.observe": "Mode observation : la décision est calculée, pas appliquée"
 }

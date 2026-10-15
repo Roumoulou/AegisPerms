@@ -66,6 +66,12 @@ object ModLog {
     /** Le fil des fichiers ne s'est pas arrêté dans le délai. Argument : le délai, en secondes. */
     const val STOP_TIMEOUT = "stop_timeout"
 
+    /** Un écart du mode observation (5.8). Arguments : le sujet, la clé, la décision du mod, la réponse de vanilla. */
+    const val OBSERVE_DEVIATION = "observe_deviation"
+
+    /** Les écarts de la minute écoulée que le plafond a tus (5.8). Argument : leur nombre. */
+    const val OBSERVE_SUPPRESSED = "observe_suppressed"
+
     private val logger: Logger = LoggerFactory.getLogger(AegisPerms.MOD_ID)
 
     /** Ce qui écrit les lignes : le logger du mod, ou ce qu'un test de l'étage 1 pose à sa place pour les lire. */

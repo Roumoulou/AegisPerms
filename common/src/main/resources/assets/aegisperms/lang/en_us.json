@@ -256,5 +256,9 @@
   "aegisperms.command.restore.refused": "Restore refused, the backup is not a valid configuration (%s errors):",
   "aegisperms.command.restore.failed": "Could not restore, %s: a reload says what applies.",
   "aegisperms.command.mode.set": "Mode %s set in memory; the trees are resent",
-  "aegisperms.command.mode.until_reload": "The settings file does not change: the next reload or startup takes its mode back, %s."
+  "aegisperms.command.mode.until_reload": "The settings file does not change: the next reload or startup takes its mode back, %s.",
+
+  "aegisperms.log.observe_deviation": "Observation: for %s, %s would be %s, and vanilla answers %s",
+  "aegisperms.log.observe_suppressed": "Observation: %s more deviations in the past minute, not detailed",
+  "aegisperms.why.observe": "Observe mode: the decision is computed, not applied"
 }

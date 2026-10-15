@@ -4,6 +4,7 @@
 package fr.moulou.aegisperms.hook
 
 import fr.moulou.aegisperms.model.Decision
+import fr.moulou.aegisperms.model.Mode
 import net.minecraft.server.permissions.LevelBasedPermissionSet
 import net.minecraft.server.permissions.Permission
 import net.minecraft.server.permissions.PermissionLevel
@@ -36,7 +37,19 @@ class Envelope(val subject: UUID, val vanilla: LevelBasedPermissionSet) : LevelB
         return try {
             val key = ApiKeyRequests.keyOf(permission.id()) ?: return vanilla.hasPermission(permission)
             ApiKeyRequests.request(key, ApiRoute.ATOM)
-            when (Publisher.current().decision(subject, level().id(), key)) {
+            val decision = Publisher.current().decision(subject, level().id(), key)
+            if (Publisher.mode() == Mode.OBSERVE) {
+                // En observation (6.5), l'ensemble vanilla répond, et un écart avec la décision se journalise.
+                val answer = vanilla.hasPermission(permission)
+                val applied = when (decision) {
+                    Decision.ALLOW -> true
+                    Decision.DENY_VISIBLE, Decision.DENY_HIDDEN -> false
+                    Decision.UNSET -> answer
+                }
+                if (applied != answer) ObservationLog.deviation(subject, key.text, decision, if (answer) ObservationLog.VANILLA_EXECUTES else ObservationLog.VANILLA_REFUSES)
+                return answer
+            }
+            when (decision) {
                 Decision.ALLOW -> true
                 Decision.DENY_VISIBLE, Decision.DENY_HIDDEN -> false
                 Decision.UNSET -> vanilla.hasPermission(permission)
