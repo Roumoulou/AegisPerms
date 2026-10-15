@@ -59,10 +59,10 @@ dependencies {
  *  choisit le dossier de l'entrepôt C:\MC-Kit, les deux environnements avec leur profil,
  *  le serveur de test, la cible de déploiement et le panier du serveur dédié. Tout
  *  le reste vient des clés `outfitter.*` : gradle.properties de la racine pour ce
- *  qui est propre au projet (maps, monde du serveur, logs), machine.properties pour
- *  ce qui est propre au poste ou à la personne (l'entrepôt C:\MC-Kit, le joueur).
- *  Outfitter lit le machine.properties de la racine, puis celui de ce module s'il
- *  existe, qui le surcharge clé par clé.
+ *  qui vaut sur chaque poste (l'entrepôt C:\MC-Kit, les maps, le monde du serveur, les
+ *  logs), machine.properties pour ce qui est propre à la personne (le joueur), ou à un
+ *  poste qui range le kit ailleurs. Outfitter lit le machine.properties de la racine,
+ *  puis celui de ce module s'il existe, qui le surcharge clé par clé.
  *
  *  ── DEUX ENVIRONNEMENTS, VANILLA PURS ───────────────────────────────────────
  *  `server`, profil `dev`, est le serveur dédié de développement : Loom y charge le
