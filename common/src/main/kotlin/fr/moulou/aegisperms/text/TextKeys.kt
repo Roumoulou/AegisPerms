@@ -119,4 +119,65 @@ object TextKeys {
         const val VALIDATE_NO_CHANGE = COMMAND_PREFIX + "validate.no_change"
         const val CHANGE_RULE = COMMAND_PREFIX + "change.rule"
     }
+
+    /** Les statuts et les verdicts de `why`, et les lignes de `check` (5.5), `aegisperms.why.*`. */
+    object Why {
+
+        const val WHY_PREFIX = PREFIX + "why."
+
+        const val TITLE = WHY_PREFIX + "title"
+        const val LEADS_TO = WHY_PREFIX + "leads_to"
+        const val ROW = WHY_PREFIX + "row"
+        const val OFFLINE = WHY_PREFIX + "offline"
+        const val SET_ASIDE = WHY_PREFIX + "set_aside"
+        const val SET_ASIDE_ENTRY = WHY_PREFIX + "set_aside.entry"
+        const val TIE = WHY_PREFIX + "tie"
+
+        const val STATUS_SEEN = WHY_PREFIX + "status.seen"
+        const val STATUS_HIDDEN = WHY_PREFIX + "status.hidden"
+        const val STATUS_VISIBLE_REFUSAL = WHY_PREFIX + "status.visible_refusal"
+        const val STATUS_SEEN_UNDER_VISIBLE_REFUSAL = WHY_PREFIX + "status.seen_under_visible_refusal"
+        const val STATUS_UNSEEN_MOD = WHY_PREFIX + "status.unseen_mod"
+        const val STATUS_UNSEEN_VANILLA = WHY_PREFIX + "status.unseen_vanilla"
+        const val STATUS_OUT_OF_CATALOG = WHY_PREFIX + "status.out_of_catalog"
+        const val STATUS_NOT_EVALUATED = WHY_PREFIX + "status.not_evaluated"
+        const val STATUS_INEFFECTIVE = WHY_PREFIX + "status.ineffective"
+        const val STATUS_BARE_FORM = WHY_PREFIX + "status.bare_form"
+
+        const val DECISION_ALLOW = WHY_PREFIX + "decision.allow"
+        const val DECISION_DENY_VISIBLE = WHY_PREFIX + "decision.deny_visible"
+        const val DECISION_DENY_HIDDEN = WHY_PREFIX + "decision.deny_hidden"
+        const val DECISION_UNSET = WHY_PREFIX + "decision.unset"
+        const val DECISION_VANILLA = WHY_PREFIX + "decision.vanilla"
+
+        const val ORIGIN_STEP0 = WHY_PREFIX + "origin.step0"
+        const val ORIGIN_PLAYER = WHY_PREFIX + "origin.player"
+        const val ORIGIN_GROUP = WHY_PREFIX + "origin.group"
+        const val ORIGIN_NONE = WHY_PREFIX + "origin.none"
+        const val ORIGIN_ANCESTOR = WHY_PREFIX + "origin.ancestor"
+        const val ORIGIN_VANILLA = WHY_PREFIX + "origin.vanilla"
+        const val ORIGIN_REQUIREMENT_NONE = WHY_PREFIX + "origin.requirement_none"
+        const val ORIGIN_REQUIREMENT_LEVEL = WHY_PREFIX + "origin.requirement_level"
+        const val ORIGIN_REQUIREMENT_MOD = WHY_PREFIX + "origin.requirement_mod"
+
+        const val VERDICT_PERMITTED = WHY_PREFIX + "verdict.permitted"
+        const val VERDICT_REFUSED_HIDDEN = WHY_PREFIX + "verdict.refused_hidden"
+        const val VERDICT_REFUSED_VISIBLE = WHY_PREFIX + "verdict.refused_visible"
+        const val VERDICT_REFUSED_VANILLA = WHY_PREFIX + "verdict.refused_vanilla"
+        const val VERDICT_INCOMPLETE = WHY_PREFIX + "verdict.incomplete"
+
+        const val CHECK_TITLE = WHY_PREFIX + "check.title"
+        const val CHECK_ALIAS = WHY_PREFIX + "check.alias"
+        const val CHECK_DECISION = WHY_PREFIX + "check.decision"
+        const val CHECK_RULE = WHY_PREFIX + "check.rule"
+        const val CHECK_STEP0 = WHY_PREFIX + "check.step0"
+        const val CHECK_SET_ASIDE = WHY_PREFIX + "check.set_aside"
+        const val CHECK_NODE_PERMITTED = WHY_PREFIX + "check.node_permitted"
+        const val CHECK_NODE_PERMITTED_VANILLA = WHY_PREFIX + "check.node_permitted_vanilla"
+        const val CHECK_NODE_CLOSED = WHY_PREFIX + "check.node_closed"
+        const val CHECK_NODE_REFUSED = WHY_PREFIX + "check.node_refused"
+        const val CHECK_NODE_HIDDEN = WHY_PREFIX + "check.node_hidden"
+        const val CHECK_ABSENT = WHY_PREFIX + "check.absent"
+        const val CHECK_API_ABSENT = WHY_PREFIX + "check.api_absent"
+    }
 }

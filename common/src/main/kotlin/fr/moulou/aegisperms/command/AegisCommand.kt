@@ -26,6 +26,7 @@ object AegisCommand {
     private const val GROUP = "group"
     private const val PLAYER = "player"
     private const val KEY = "key"
+    private const val LINE = "command"
 
     /** L'arbre de `/aegis`, bâti sur l'`admin-level` des réglages publiés à cet instant : un `admin-level` changé prend effet à la construction suivante. */
     fun tree(): LiteralArgumentBuilder<CommandSourceStack> {
@@ -34,6 +35,22 @@ object AegisCommand {
             .requires(Commands.hasPermission<CommandSourceStack>(PermissionCheck.Require(Permission.HasCommandLevel(level))))
             .executes { context -> run(context) { reply -> reply.line(reply.text(Command.USAGE)) } }
             .then(Commands.literal("status").executes { context -> run(context) { Queries.status(it) } })
+            .then(
+                Commands.literal("why").then(
+                    Commands.argument(PLAYER, StringArgumentType.word()).suggests(Suggestions.PLAYERS).then(
+                        Commands.argument(LINE, StringArgumentType.greedyString()).suggests(Suggestions.ROOTS)
+                            .executes { context -> run(context) { reply -> withTarget(context, reply) { Explain.why(reply, context.source.server, it, string(context, LINE)) } } },
+                    ),
+                ),
+            )
+            .then(
+                Commands.literal("check").then(
+                    Commands.argument(PLAYER, StringArgumentType.word()).suggests(Suggestions.PLAYERS).then(
+                        Commands.argument(KEY, StringArgumentType.greedyString()).suggests(Suggestions.KEYS)
+                            .executes { context -> run(context) { reply -> withTarget(context, reply) { Explain.check(reply, context.source.server, it, string(context, KEY)) } } },
+                    ),
+                ),
+            )
             .then(
                 Commands.literal("catalog")
                     .executes { context -> run(context) { Queries.catalog(it, context.source.server, "") } }

@@ -100,7 +100,7 @@ object Hooks {
 
     /** Évalue le prédicat de mod de [node] comme si la source avait tous les droits (2.8) : la seule branche du chemin chaud qui alloue (D6). */
     @Suppress("UNCHECKED_CAST")
-    private fun testWithAllRights(node: CommandNode<*>, source: CommandSourceStack): Boolean = (node.requirement as Predicate<CommandSourceStack>).test(source.withPermission(AllRights))
+    internal fun testWithAllRights(node: CommandNode<*>, source: CommandSourceStack): Boolean = (node.requirement as Predicate<CommandSourceStack>).test(source.withPermission(AllRights))
 
     // ── La porte d'exécution ─────────────────────────────────────────────────────
 
@@ -276,7 +276,8 @@ object Hooks {
         }
     }
 
-    private fun markOf(node: CommandNode<*>): NodeMark? = (node as NodeMarkHolder).`aegisperms$getMark`()
+    /** La marque d'un nœud du serveur, posée par le mixin ; `null` pour un nœud d'un arbre que le mod n'a pas indexé. */
+    internal fun markOf(node: CommandNode<*>): NodeMark? = (node as NodeMarkHolder).`aegisperms$getMark`()
 
     private fun setMark(node: CommandNode<*>, mark: NodeMark) = (node as NodeMarkHolder).`aegisperms$setMark`(mark)
 }
