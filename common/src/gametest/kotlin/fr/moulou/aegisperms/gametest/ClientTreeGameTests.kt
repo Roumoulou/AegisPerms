@@ -81,4 +81,44 @@ class ClientTreeGameTests : AegisGameTests() {
         TreeResend.requestAll()
         helper.succeedWhen { helper.assertTrue(Packets.commandsPackets(player).size > before, "un arbre de plus est envoyé après la demande") }
     }
+
+    /**
+     * Prouve que le paquet repart après une modification par `/aegis` : la publication qui suit l'écriture demande l'arbre des joueurs que la règle touche, et
+     * le renvoi, fait ici à la main plutôt qu'à la fin du tick, porte la commande ouverte. Le fichier des droits revient d'abord aux groupes livrés.
+     */
+    @GameTest
+    fun treeIsResentAfterAnAegisModification(helper: GameTestHelper) {
+        val server = helper.server
+        ConfigurationOnDisk.restoreDelivered()
+        val player = helper.judgedPlayer()
+        server.commands.sendCommands(player)
+        val before = Packets.commandsPackets(player).size
+        helper.assertTrue(Packets.lastTree(server, player).getChild("mc:seed") == null, "avant la modification, /mc:seed manque à l'arbre du joueur")
+        Console.perform(server, Console.source(server, Recorder()), "aegis group default allow minecraft:command.seed")
+        Console.settle(server)
+        TreeResend.flush(server)
+        helper.assertTrue(Packets.commandsPackets(player).size > before, "un arbre de plus est envoyé après la modification")
+        helper.assertTrue(Packets.lastTree(server, player).getChild("mc:seed") != null, "et il porte /mc:seed, que la règle ouvre")
+        helper.succeed()
+    }
+
+    /** Prouve que le paquet repart après `/aegis mode` : sous `observe`, l'arbre d'un joueur suit vanilla et montre ce que `command` à `deny` masquait ; sous `enforce`, il le reperd. */
+    @GameTest
+    fun treeIsResentAfterAegisMode(helper: GameTestHelper) {
+        val server = helper.server
+        val player = helper.judgedPlayer()
+        server.commands.sendCommands(player)
+        val before = Packets.commandsPackets(player).size
+        helper.assertTrue(Packets.lastTree(server, player).getChild("mc:list") == null, "sous enforce, command à deny masque /mc:list")
+        val console = Console.source(server, Recorder())
+        Console.perform(server, console, "aegis mode observe")
+        TreeResend.flush(server)
+        helper.assertTrue(Packets.commandsPackets(player).size > before, "un arbre de plus est envoyé après /aegis mode observe")
+        helper.assertTrue(Packets.lastTree(server, player).getChild("mc:list") != null, "et il montre /mc:list, que vanilla ouvre à tous")
+        Console.perform(server, console, "aegis mode enforce")
+        TreeResend.flush(server)
+        helper.assertTrue(Packets.commandsPackets(player).size > before + 1, "un autre après /aegis mode enforce")
+        helper.assertTrue(Packets.lastTree(server, player).getChild("mc:list") == null, "qui remasque /mc:list")
+        helper.succeed()
+    }
 }

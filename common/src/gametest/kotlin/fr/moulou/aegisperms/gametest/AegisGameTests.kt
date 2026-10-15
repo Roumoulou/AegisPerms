@@ -16,12 +16,30 @@ import java.lang.reflect.Method
 abstract class AegisGameTests : CustomTestMethodInvoker {
 
     override fun invokeTestMethod(helper: GameTestHelper, method: Method) {
-        TestStates.reset()
-        Ops.deopAll(helper.server)
+        reset(helper)
         try {
             method.invoke(this, helper)
         } catch (failure: InvocationTargetException) {
             throw failure.targetException as? RuntimeException ?: failure
         }
+    }
+
+    /** Ce qui se remet avant chaque test : l'état publié en mémoire et les ops. Une classe qui passe par les fichiers y ajoute le disque. */
+    protected open fun reset(helper: GameTestHelper) {
+        TestStates.reset()
+        Ops.deopAll(helper.server)
+    }
+}
+
+/**
+ * Les tests qui passent par les fichiers du serveur de test : avant chacun, le fichier des droits revient aux deux groupes livrés, écrit et publié par le fil
+ * des fichiers, si bien que l'état en vigueur est celui du disque et que la publication suivante se compare à lui. Les tests d'un lot courent l'un après
+ * l'autre dans le même tick : seul un test qui attend des ticks va dans l'environnement `serial`, et il n'y touche aux fichiers que par la surveillance.
+ */
+abstract class FileGameTests : AegisGameTests() {
+
+    override fun reset(helper: GameTestHelper) {
+        super.reset(helper)
+        ConfigurationOnDisk.restoreDelivered()
     }
 }

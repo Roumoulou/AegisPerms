@@ -9,7 +9,8 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "fr.moulou.aegisperms.gametest.GameTestCommands"
+      "fr.moulou.aegisperms.gametest.GameTestCommands",
+      "fr.moulou.aegisperms.gametest.ReloadPoison"
     ],
     "fabric-gametest": [
       "fr.moulou.aegisperms.gametest.WitnessGameTests",
@@ -18,7 +19,9 @@
       "fr.moulou.aegisperms.gametest.ClientTreeGameTests",
       "fr.moulou.aegisperms.gametest.KeysAndOwnersGameTests",
       "fr.moulou.aegisperms.gametest.ModelGameTests",
-      "fr.moulou.aegisperms.gametest.ApiGameTests"
+      "fr.moulou.aegisperms.gametest.ApiGameTests",
+      "fr.moulou.aegisperms.gametest.FilesAndCycleGameTests",
+      "fr.moulou.aegisperms.gametest.AdministrationGameTests"
     ]
   },
   "mixins": [

@@ -11,7 +11,11 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import com.mojang.brigadier.tree.CommandNode
 import com.mojang.brigadier.tree.RootCommandNode
+import fr.moulou.aegisperms.AegisPerms
+import fr.moulou.aegisperms.files.ConfigurationWrite
+import fr.moulou.aegisperms.files.PublicationSource
 import fr.moulou.aegisperms.hook.CommandsIndexHolder
+import fr.moulou.aegisperms.hook.FileThread
 import fr.moulou.aegisperms.hook.Hooks
 import fr.moulou.aegisperms.hook.NodeMarkHolder
 import fr.moulou.aegisperms.hook.Publisher
@@ -23,9 +27,12 @@ import fr.moulou.aegisperms.model.Player
 import fr.moulou.aegisperms.model.ReadableForm
 import fr.moulou.aegisperms.model.Rule
 import fr.moulou.aegisperms.model.Settings
+import fr.moulou.aegisperms.text.Messages
+import fr.moulou.aegisperms.text.Texts
 import fr.moulou.aegisperms.tree.CommandIndex
 import fr.moulou.aegisperms.tree.NodeMark
 import io.netty.channel.embedded.EmbeddedChannel
+import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.commands.CommandBuildContext
 import net.minecraft.commands.CommandSource
 import net.minecraft.commands.CommandSourceStack
@@ -41,7 +48,9 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.server.network.ServerCommonPacketListenerImpl
 import net.minecraft.server.permissions.LevelBasedPermissionSet
 import net.minecraft.server.permissions.PermissionLevel
+import java.nio.file.Path
 import java.util.Optional
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicLong
 
 /*
@@ -116,6 +125,92 @@ object Ops {
         for (player in server.playerList.players) {
             if (server.playerList.isOp(player.nameAndId())) server.playerList.deop(player.nameAndId())
         }
+    }
+}
+
+/** Le dossier de configuration du mod sur le serveur de test, celui que le fil des fichiers sert : `config\aegisperms` du run. */
+val configDirectory: Path get() = FabricLoader.getInstance().configDir.resolve(AegisPerms.MOD_ID)
+
+/**
+ * `/aegis` depuis la console, vu du fil serveur (cahier des charges, 5.2 et 8.5) : la source de la console avec un enregistreur, le texte qu'elle reçoit pour
+ * une clé, et l'attente du fil des fichiers avant de lire les réponses qu'il dépose.
+ */
+object Console {
+
+    /** La source de la console, ses réponses dans [recorder] : non jugée, sans entité, `OWNER`, non silencieuse. */
+    fun source(server: MinecraftServer, recorder: Recorder): CommandSourceStack = server.createCommandSourceStack().withSource(recorder)
+
+    /** Lance [line] depuis [source] et rend ce que la commande rend : 1 pour une réponse, 0 pour un refus, une ligne qui ne s'analyse pas comprise. */
+    fun perform(server: MinecraftServer, source: CommandSourceStack, line: String): Int = try {
+        server.commands.dispatcher.execute(line, source)
+    } catch (_: CommandSyntaxException) {
+        0
+    }
+
+    /** Le texte que la console reçoit pour [key] : résolu dans sa langue, celle du réglage `language` ou de la machine (5.7), comme `Recipient` le fait. */
+    fun text(key: String, vararg arguments: Any?): String = Texts.text(key, Messages.consoleLanguage(Publisher.settings().language), *arguments)
+
+    /**
+     * Fait courir ce que le fil serveur a en file, ce qu'un rechargement fini y a déposé par exemple, attend que le fil des fichiers ait fini ce qu'on lui a
+     * confié, puis fait courir les réponses qu'il y a déposées à son tour (`Reply.later`). Un travail de plus, sans effet, suffit à l'attente : le fil n'en a
+     * qu'un et les sert dans l'ordre, et chaque réponse se dépose avant le travail suivant. La file du serveur court par `managedBlock`, jusqu'à une tâche
+     * repère déposée derrière : c'est ce que le serveur offre de public pour la vider.
+     */
+    fun settle(server: MinecraftServer) {
+        runServerTasks(server)
+        FileThread.check().get()
+        runServerTasks(server)
+    }
+
+    /** Fait courir ce que la file du fil serveur porte à cet instant, jusqu'à une tâche repère déposée derrière. */
+    private fun runServerTasks(server: MinecraftServer) {
+        val marker = CompletableFuture<Void>()
+        server.schedule(server.wrapRunnable { marker.complete(null) })
+        server.managedBlock { marker.isDone }
+    }
+
+    /** Les messages de [recorder], en texte : ce que la console lit, résolu dans sa langue. */
+    fun texts(recorder: Recorder): List<String> = recorder.messages.map { it.string }
+}
+
+/** Les fichiers de configuration du serveur de test, entre deux tests qui les touchent. */
+object ConfigurationOnDisk {
+
+    /** Les droits d'un fichier écrit à la main : les deux groupes livrés, plus `vip`, de poids 80, qui ouvre `/seed`. */
+    val VIP_PERMISSIONS: String = """
+        {
+          "schema-version": 1,
+          "groups": {
+            "admin": {
+              "include-ops": "owners",
+              "rules": {
+                "command": "allow"
+              },
+              "weight": 100
+            },
+            "default": {
+              "rules": {
+                "command": "deny",
+                "minecraft:command.help": "allow",
+                "minecraft:command.me": "allow",
+                "minecraft:command.msg": "allow"
+              }
+            },
+            "vip": {
+              "rules": {
+                "minecraft:command.seed": "allow"
+              },
+              "weight": 80
+            }
+          },
+          "players": {}
+        }
+    """.trimIndent() + "\n"
+
+    /** Réécrit le fichier des droits avec les deux groupes livrés, par le fil des fichiers, qui publie ce que le disque porte ; lève si rien ne s'écrit. */
+    fun restoreDelivered() {
+        val outcome = FileThread.write(Permissions.DELIVERED, PublicationSource.COMMAND).get()
+        check(outcome.result is ConfigurationWrite.Written) { "The delivered permissions could not be written back: ${outcome.result}" }
     }
 }
 
