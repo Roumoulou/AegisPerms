@@ -8,10 +8,22 @@
   "license": "LGPL-3.0-only",
   "environment": "*",
   "entrypoints": {
+    "main": [
+      "fr.moulou.aegisperms.gametest.GameTestCommands"
+    ],
     "fabric-gametest": [
-      "fr.moulou.aegisperms.gametest.WitnessGameTests"
+      "fr.moulou.aegisperms.gametest.WitnessGameTests",
+      "fr.moulou.aegisperms.gametest.SubjectGameTests",
+      "fr.moulou.aegisperms.gametest.VisibilityGameTests",
+      "fr.moulou.aegisperms.gametest.ClientTreeGameTests",
+      "fr.moulou.aegisperms.gametest.KeysAndOwnersGameTests",
+      "fr.moulou.aegisperms.gametest.ModelGameTests",
+      "fr.moulou.aegisperms.gametest.ApiGameTests"
     ]
   },
+  "mixins": [
+    "aegisperms-gametest.mixins.json"
+  ],
   "depends": {
     "aegisperms": "*",
     "fabric-gametest-api-v1": "*"

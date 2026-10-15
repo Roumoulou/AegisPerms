@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "fr.moulou.aegisperms.gametest.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "ForeignAuthorityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
