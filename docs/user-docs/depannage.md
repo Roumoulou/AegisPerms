@@ -109,7 +109,7 @@ Le mod écrit dans le journal du serveur, sous le nom `aegisperms`, dans la lang
 | « L'autorité de X n'est pas l'enveloppe d'AegisPerms, mais ... : le mod ne juge plus ce joueur » | un autre mod a remplacé l'autorité des joueurs ; `/aegis status` le dit aussi ; retirez ce mod |
 | « X revient sous le pseudo de Y : sa forme lisible se réécrit » | un joueur du fichier a changé de pseudo |
 | « Observation : pour X, Y vaudrait Z, et vanilla répond W » | en mode observation, un écart entre la décision et vanilla, une fois par joueur et par clé |
-| « Observation : N écarts de plus dans la minute écoulée, non détaillés » | au-delà de soixante écarts dans la minute, le mod compte |
+| « Observation : N écarts de plus, non détaillés, depuis la dernière ligne » | au-delà de soixante écarts dans la minute, le mod compte, et dit le total avec la première ligne de la minute suivante |
 | « Erreur interne dans ... : refus » | une erreur du mod lui-même, dite une fois par clé et par génération avec sa trace ; pour un joueur, elle vaut un refus masqué ; signalez-la avec la trace |
 | « Le fil des fichiers ne s'est pas arrêté en N s » | à l'arrêt du serveur, une écriture n'a pas fini à temps |
 

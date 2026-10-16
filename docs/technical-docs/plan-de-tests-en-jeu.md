@@ -50,9 +50,10 @@ Un essai se joue tel qu'il est écrit ; ce qui s'écarte de l'attendu se note da
 | 19 | La surveillance vue d'un éditeur (4.8) | un op en ligne ; ajouter `"minecraft:command.list": "allow"` aux règles de `default` dans `permissions.json` et enregistrer, sans redémarrer ; puis casser le fichier et enregistrer | deux à trois secondes après, le journal dit `published <génération> watch`, l'op lit le message de la surveillance, et un non-op voit `/mc:list` sans se reconnecter ; le fichier cassé fait dire le refus à l'op et au journal, et l'état en vigueur reste |
 | 20 | `/aegis` depuis le jeu (5.3, 5.6) | op : `/aegis group vip create 80`, `/aegis group vip allow minecraft:command.seed`, `/aegis player <pseudo d'un non-op> group add vip`, puis `/aegis why <ce pseudo> mc:seed` ; le non-op tape `/` | chaque modification se diffuse aux ops en ligne et s'inscrit au journal du serveur, dans la langue de l'op ; le non-op voit `/mc:seed` arriver sans se reconnecter ; `why` raconte le chemin nœud par nœud et conclut « permise » |
 | 21 | Les deux langues (5.7) | un client en français puis en anglais (ses options), non op, privé de `/mc:seed` par un refus visible ; op : `/aegis status` dans chaque langue ; `language` à `fr` puis à `en` dans `settings.json`, `/aegis reload` | le message du refus et les réponses de `/aegis` suivent la langue du client sous `auto`, et la langue imposée sous `fr` ou `en` ; la console garde la langue de la machine |
+| 22 | Ce que l'étage 2 ne prouve pas (2.3, 6.8) | Bob de 2.11 : un non-op dans un groupe qui ouvre `minecraft:command.kick` et `minecraft:commands/entity_selectors` et ferme `minecraft:command.teleport`, un second joueur en ligne ; Bob : `/mc:teleport <l'autre>`, puis `/mc:kick @a` ; sur le serveur moddé de l'essai 17, une fonction de datapack qui appelle une commande d'un mod du modpack, lancée par `/mc:function` depuis la console | `/mc:teleport` est une commande inconnue pour Bob ; `/mc:kick @a` expulse les deux joueurs, Bob compris : l'atome des sélecteurs répond à l'exécution comme à l'analyse ; la fonction n'est pas jugée : la commande du mod passe ou échoue sur son seul prédicat, au niveau de la compilation |
 
-Les essais 2, 3, 7, 13 et 14 sont écrits pour `/aegis`, les messages et la surveillance de la session 5, et les essais 19 à 21 sont nés avec elle ; aucun
-n'a encore été joué dans cet état.
+Les essais 2, 3, 7, 13 et 14 sont écrits pour `/aegis`, les messages et la surveillance de la session 5, et les essais 19 à 21 sont nés avec elle ; l'essai 22
+est né à la session 6, pour ce que l'étage 2 ne prouve pas. Aucun n'a encore été joué dans cet état.
 
 ## 3. Les passages
 
@@ -66,5 +67,5 @@ Du plus récent au plus ancien : la date, la version du jeu, le commit du mod, l
 
 ---
 
-*Dernière vérification : 2026-10-15, les essais écrits d'après le cahier (2.3, 2.10, 3.5 à 3.7, 3.10, 4.8 à 4.10, 5.2, 5.3, 5.6, 5.7, 6.6, 7.3, 7.6,
+*Dernière vérification : 2026-10-16, les essais écrits d'après le cahier (2.3, 2.10, 3.5 à 3.7, 3.10, 4.8 à 4.10, 5.2, 5.3, 5.6, 5.7, 6.6, 6.8, 7.3, 7.6,
 8.6) ; aucun passage joué ce jour.*
