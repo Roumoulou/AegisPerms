@@ -11,6 +11,7 @@ import com.mojang.brigadier.tree.CommandNode
 import fr.moulou.aegisperms.command.Explanations.Evaluation
 import fr.moulou.aegisperms.command.Explanations.NodeStatus
 import fr.moulou.aegisperms.command.Explanations.Verdict
+import fr.moulou.aegisperms.files.CommandRequirement
 import fr.moulou.aegisperms.model.Configuration
 import fr.moulou.aegisperms.model.Decision
 import fr.moulou.aegisperms.model.EffectiveState
@@ -56,7 +57,7 @@ class ExplanationsTest {
                 Group.DEFAULT to Permissions.DELIVERED.groups.getValue(Group.DEFAULT),
                 "membre" to Group(weight = 10, rules = mapOf("minecraft:command.teleport" to Rule.ALLOW, "minecraft:command.teleport.location" to Rule.DENY, "minecraft:command.teleport.targets.location" to Rule.DENY)),
                 "moderateur" to Group(weight = 50, parents = listOf("membre"), rules = mapOf("minecraft:command.kick" to Rule.ALLOW, "minecraft:command.teleport" to Rule.DENY, "minecraft:commands/entity_selectors" to Rule.ALLOW)),
-                "vip" to Group(weight = 80, rules = mapOf("minecraft:command.teleport.targets.location" to Rule.ALLOW)),
+                "vip" to Group(weight = 80, rules = mapOf("minecraft:command.teleport.targets.location" to Rule.ALLOW, "minecraft:command.datapack" to Rule.ALLOW)),
             ),
             players = mapOf(
                 readableForm("Alice") to Player(groups = listOf("admin")),
@@ -67,7 +68,8 @@ class ExplanationsTest {
         )
     }
 
-    private val settings = Settings.DELIVERED
+    /** Les réglages livrés, plus un alias vers un littéral profond (3.6). */
+    private val settings = Settings.DELIVERED.copy(aliases = mapOf("wla" to "minecraft:whitelist add"))
 
     private val dispatcher: CommandDispatcher<Any> = CommandDispatcher<Any>().apply {
         register(
@@ -80,6 +82,9 @@ class ExplanationsTest {
         register(literal<Any>("help").executes(VanillaCommand()))
         register(literal<Any>("seed").requires(GAMEMASTERS).executes(VanillaCommand()))
         register(literal<Any>("aegis").requires(ADMINS).executes(AegisCommandFixture()))
+        // `datapack create` exige plus que `datapack` (2.8) ; `whitelist add <targets>` est la cible de l'alias `wla`.
+        register(literal<Any>("datapack").requires(GAMEMASTERS).then(literal<Any>("create").requires(ADMINS).executes(VanillaCommand())))
+        register(literal<Any>("whitelist").requires(ADMINS).then(literal<Any>("add").then(argument<Any, String>("targets", StringArgumentType.word()).executes(VanillaCommand()))))
     }
 
     private val index: CommandIndex<Any> = CommandIndex.build(dispatcher.root, settings, FakeMods(), FakeRequirements)
@@ -147,6 +152,36 @@ class ExplanationsTest {
         assertEquals(Decision.DENY_HIDDEN, row.decision)
         assertTrue(row.byAncestorKey)
         assertEquals(Verdict.REFUSED_HIDDEN, report.verdict)
+    }
+
+    @Test
+    fun `Joe ouvre datapack create par l'allow de datapack, et le récit dit le nœud plus exigeant que son ancêtre`() {
+        val report = report("Joe", 0, "mc:datapack create")
+
+        assertEquals(Verdict.PERMITTED, report.verdict, "l'allow répond de l'exigence des deux nœuds")
+        assertEquals(listOf("mc:datapack", "create"), report.rows.map { it.name })
+        assertFalse(report.rows[0].moreDemanding, "datapack porte l'allow lui-même")
+        assertTrue(report.rows[1].byAncestorKey)
+        assertTrue(report.rows[1].moreDemanding, "create exige le niveau admins, que datapack n'exige pas")
+        assertTrue(Explanations.isMoreDemanding(CommandRequirement.ADMINS, CommandRequirement.GAMEMASTERS))
+        assertFalse(Explanations.isMoreDemanding(CommandRequirement.GAMEMASTERS, CommandRequirement.ADMINS))
+        assertTrue(Explanations.isMoreDemanding(CommandRequirement.MODERATORS, CommandRequirement.NONE))
+        assertFalse(Explanations.isMoreDemanding(CommandRequirement.ADMINS, CommandRequirement.MOD_PREDICATE))
+        assertFalse(Explanations.isMoreDemanding(CommandRequirement.MOD_PREDICATE, CommandRequirement.NONE))
+    }
+
+    @Test
+    fun `la première ligne ramène un alias vers un littéral profond à sa cible, écrite comme on la tape`() {
+        val alice = report("Alice", 0, "wla Alice")
+
+        val headline = requireNotNull(alice.headline)
+        assertEquals(listOf("wla", "whitelist add", "minecraft"), listOf(headline.typed, headline.target, headline.owner))
+        assertEquals(listOf("wla", "targets"), alice.rows.map { it.name }, "l'alias remplace whitelist et add, puis l'argument de add")
+        assertEquals(Verdict.PERMITTED, alice.verdict, "command à allow répond de l'exigence de whitelist, que l'alias garde")
+
+        val joe = report("Joe", 0, "wla Joe")
+        assertEquals("whitelist add", joe.headline?.target, "la première ligne ne dépend pas du verdict")
+        assertEquals(Verdict.REFUSED_HIDDEN, joe.verdict, "command à deny ferme whitelist add à Joe")
     }
 
     @Test

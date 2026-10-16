@@ -36,6 +36,9 @@ object ModLog {
     /** Le mod est chargé. Aucun argument. */
     const val LOADED = "loaded"
 
+    /** Le serveur n'authentifie pas les joueurs (`online-mode=false`) : l'UUID d'un joueur se calcule depuis son pseudo (2.3, 5.4). Aucun argument. */
+    const val OFFLINE_MODE = "offline_mode"
+
     /** Les fichiers que le premier démarrage vient d'écrire avec les valeurs livrées (4.2). Argument : leurs noms, séparés par des virgules. */
     const val FILES_CREATED = "files_created"
 
@@ -60,7 +63,7 @@ object ModLog {
     /** Un fichier généré n'a pas pu s'écrire, et ce qui était en place reste. Argument : le fichier ; la trace. */
     const val WRITE_FAILED = "write_failed"
 
-    /** L'autorité d'un joueur qui se connecte n'est pas l'enveloppe (6.6, D20). Arguments : le pseudo, l'UUID, la classe trouvée. */
+    /** L'autorité d'un joueur qui se connecte n'est pas l'enveloppe (6.6). Arguments : le pseudo, l'UUID, la classe trouvée. */
     const val FOREIGN_AUTHORITY = "foreign_authority"
 
     /** Le fil des fichiers ne s'est pas arrêté dans le délai. Argument : le délai, en secondes. */
@@ -75,20 +78,32 @@ object ModLog {
     /** Un joueur du fichier revenu sous un nouveau pseudo, dont la forme lisible se réécrit (4.4). Arguments : l'ancienne forme, la nouvelle. */
     const val PLAYER_RENAMED = "player_renamed"
 
+    /** La décision de la porte d'exécution pour une ligne lancée par une source jugée, au niveau `DEBUG` seulement (5.9). Arguments : le sujet, la commande racine, l'issue. */
+    const val DECISION = "decision"
+
     private val logger: Logger = LoggerFactory.getLogger(AegisPerms.MOD_ID)
 
     /** Ce qui écrit les lignes : le logger du mod, ou ce qu'un test de l'étage 1 pose à sa place pour les lire. */
     internal var writer: LogWriter = LogWriter { line ->
         when (line.level) {
+            LogLevel.DEBUG -> logger.debug(line.text)
             LogLevel.INFO -> logger.info(line.text)
             LogLevel.WARN -> logger.warn(line.text)
             LogLevel.ERROR -> if (line.cause == null) logger.error(line.text) else logger.error(line.text, line.cause)
         }
     }
 
+    /** Vrai quand les lignes `DEBUG` s'écrivent : la décision ne se résout pas en texte pour rien sur le chemin chaud. Un test de l'étage 1 le pose. */
+    internal var debugEnabled: () -> Boolean = { logger.isDebugEnabled }
+
     /** Les erreurs internes déjà dites pour la génération [reportedGeneration], par accroche et par clé. */
     private val reported = ConcurrentHashMap.newKeySet<String>()
     private val reportedGeneration = AtomicLong(-1)
+
+    /** Une ligne `DEBUG`, écrite seulement quand ce niveau l'est (5.9). */
+    fun debug(event: String, vararg arguments: Any?) {
+        if (debugEnabled()) write(LogLevel.DEBUG, event, null, arguments.asList())
+    }
 
     fun info(event: String, vararg arguments: Any?) = write(LogLevel.INFO, event, null, arguments.asList())
 
@@ -144,6 +159,7 @@ object ModLog {
 
 /** Le niveau d'une ligne du journal. */
 enum class LogLevel {
+    DEBUG,
     INFO,
     WARN,
     ERROR,

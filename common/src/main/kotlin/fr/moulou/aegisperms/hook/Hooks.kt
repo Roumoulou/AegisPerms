@@ -22,6 +22,10 @@ import fr.moulou.aegisperms.tree.NodeMark
 import fr.moulou.aegisperms.tree.RootMark
 import fr.moulou.aegisperms.tree.Unindexed
 import fr.moulou.aegisperms.tree.identitySetOf
+import fr.moulou.aegisperms.validate.ConfigurationFile
+import fr.moulou.aegisperms.validate.Issue
+import fr.moulou.aegisperms.validate.IssueArgument
+import fr.moulou.aegisperms.validate.IssueKind
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.network.chat.Component
@@ -123,13 +127,17 @@ object Hooks {
         val source = parse.context.source as? CommandSourceStack ?: return true
         val envelope = source.permissions() as? Envelope ?: return true
         val observing = Publisher.mode() == Mode.OBSERVE
+        val root = parse.context.nodes.firstOrNull()?.node?.name ?: "?"
         val refusal = try {
-            gateRefusal(parse, envelope, markOf, requirePrefix = !observing && Publisher.settings().namespaces.requirePrefix) ?: return true
+            gateRefusal(parse, envelope, markOf, requirePrefix = !observing && Publisher.settings().namespaces.requirePrefix)
         } catch (error: Throwable) {
-            ModLog.once(GATE, parse.context.nodes.firstOrNull()?.node?.name ?: "?", error)
+            ModLog.once(GATE, root, error)
             if (observing) return true
             GateRefusal(visible = false, deep = false, key = "?")
         }
+        // La décision de la porte, au niveau DEBUG seulement (5.9) : une ligne par commande lancée par une source jugée.
+        ModLog.debug(ModLog.DECISION, envelope.subject, root, refusal?.let { (if (it.visible) "deny-visible " else "deny-hidden ") + it.key } ?: "allow")
+        if (refusal == null) return true
         if (observing) {
             ObservationLog.deviation(envelope.subject, refusal.key, if (refusal.visible) Decision.DENY_VISIBLE else Decision.DENY_HIDDEN, ObservationLog.VANILLA_EXECUTES)
             return true
@@ -158,9 +166,12 @@ object Hooks {
         var context: CommandContextBuilder<*>? = parse.context
         var first = true
         var deep = false
+        // Dans le dispatcher en service, marqué à sa racine, un nœud sans fiche est une anomalie, journalisée une fois (7.5) ; vanilla garde la décision.
+        val indexed = markOf(parse.context.rootNode) is RootMark
         while (context != null) {
             if (!first) refusalOf(context.rootNode, markOf, typed = false, requirePrefix, resolver, envelope)?.let { return GateRefusal(it.visible, deep, it.key) }
             for (parsed in context.nodes) {
+                if (indexed && markOf(parsed.node) == null) ModLog.once(GATE, parsed.node.name, IllegalStateException("Node '${parsed.node.name}' of the served dispatcher has no mark"))
                 refusalOf(parsed.node, markOf, typed = true, requirePrefix, resolver, envelope)?.let { return GateRefusal(it.visible, deep, it.key) }
                 deep = true
             }
@@ -272,6 +283,8 @@ object Hooks {
     private fun addLateRoot(mark: RootMark, child: CommandNode<*>) {
         val index = mark.index as CommandIndex<CommandSourceStack>
         val late = index.lateRoot(child as CommandNode<CommandSourceStack>, ::markOf) ?: return
+        // Une forme dont le nom est déjà pris se refuse avec le même constat qu'à la validation (3.8), la racine tardive n'y passant pas.
+        late.takenFormName?.let { ModLog.issue(Issue(IssueKind.PREFIXED_FORM_NAME_TAKEN, ConfigurationFile.SETTINGS, emptyList(), listOf(IssueArgument.Literal(child.name), IssueArgument.Literal(it)))) }
         for ((node, entry) in late.entries) setMark(node, entry)
         // La forme est marquée avant d'entrer dans l'arbre : son ajout repasse ici et s'arrête à la garde.
         late.form?.let { index.root.addChild(it) }

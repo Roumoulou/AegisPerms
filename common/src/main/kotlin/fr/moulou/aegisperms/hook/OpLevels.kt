@@ -29,8 +29,9 @@ object OpLevels {
     fun readOps(server: MinecraftServer) {
         val read = HashMap<UUID, Int>()
         for (entry in server.playerList.ops.entries) read[(entry.user ?: continue).id()] = entry.permissions().level().id()
-        levels.clear()
+        // Les nouveaux niveaux d'abord, les absents ensuite : une demande posée pendant la lecture ne voit jamais la table vide.
         levels.putAll(read)
+        levels.keys.retainAll(read.keys)
     }
 
     /** Oublie tout niveau. Réservé aux tests. */

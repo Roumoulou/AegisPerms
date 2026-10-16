@@ -58,7 +58,7 @@ internal object Explanations {
     }
 
     /** Une ligne du récit : le nœud, son statut, sa décision, et sa trace quand il a une fiche. */
-    class Row(val name: String, val status: NodeStatus, val decision: Decision?, val trace: NodeTrace?, val entry: NodeEntry?) {
+    class Row(val name: String, val status: NodeStatus, val decision: Decision?, val trace: NodeTrace?, val entry: NodeEntry?, val moreDemanding: Boolean = false) {
 
         /** Vrai quand la règle qui l'emporte porte une clé ancêtre, et non la clé du nœud. */
         val byAncestorKey: Boolean get() = trace != null && entry != null && trace.own.winner?.key?.let { it != entry.key } == true
@@ -159,7 +159,10 @@ internal object Explanations {
                             Evaluation.NOT_EVALUATED -> NodeStatus.NOT_EVALUATED
                         }
                     }
-                    row = Row(node.name, status, decision, trace, entry)
+                    // Un `allow` d'une clé ancêtre ouvre aussi un nœud qui exige plus qu'elle : le récit le signale (2.8).
+                    val winnerKey = trace.own.winner?.key
+                    val moreDemanding = decision == Decision.ALLOW && winnerKey != null && winnerKey != entry.key && isMoreDemanding(entry.requirement, ancestorRequirement(rows, winnerKey))
+                    row = Row(node.name, status, decision, trace, entry, moreDemanding)
                     if (status == NodeStatus.UNSEEN_MOD) refuse(row, Verdict.REFUSED_BY_VANILLA)
                 }
                 NodeJudgment.UNSET -> {
@@ -183,8 +186,21 @@ internal object Explanations {
     private fun headlineOf(first: Step?, markOf: (CommandNode<*>) -> NodeMark?): Headline? {
         val entry = first?.let { markOf(it.node) } as? NodeEntry ?: return null
         if (!entry.isForm && !entry.isVanillaAlias) return null
-        val target = entry.key.segments.firstOrNull() ?: return null
+        // La cible s'écrit comme on la tape, `whitelist add` pour un alias vers un littéral profond (3.6).
+        val target = entry.key.segments.takeIf { it.isNotEmpty() }?.joinToString(" ") ?: return null
         if (target == first.node.name) return null
         return Headline(first.node.name, target, entry.key.namespace ?: "?")
+    }
+
+    /** L'exigence du nœud dont la clé est [key] parmi [rows], sinon celle du dernier nœud lu : l'ancêtre qu'un nœud plus exigeant dépasse (2.8). */
+    private fun ancestorRequirement(rows: List<Row>, key: Any): CommandRequirement? =
+        (rows.lastOrNull { it.entry?.key == key } ?: rows.lastOrNull { it.entry != null })?.entry?.requirement
+
+    /** Vrai quand [requirement] exige un niveau d'op que [ancestor] n'exige pas, ou un niveau plus haut ; un prédicat de mod ne se compare pas. */
+    fun isMoreDemanding(requirement: CommandRequirement, ancestor: CommandRequirement?): Boolean {
+        val own = requirement.opLevel ?: return false
+        if (ancestor == CommandRequirement.MOD_PREDICATE) return false
+        val base = ancestor?.opLevel ?: return true
+        return own.level > base.level
     }
 }

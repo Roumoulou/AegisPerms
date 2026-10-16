@@ -75,8 +75,9 @@ class ApiKeyRequestsTest {
 
     @Test
     fun `un identifiant du jeu donne sa clé d'API, et un chemin de commande n'en donne pas`() {
-        assertSame(Keys.ENTITY_SELECTORS, ApiKeyRequests.keyOf(Identifier.fromNamespaceAndPath("minecraft", "commands/entity_selectors")))
-        assertNull(ApiKeyRequests.keyOf(Identifier.fromNamespaceAndPath("minecraft", "command.teleport")))
-        assertNull(ApiKeyRequests.keyOf(Identifier.fromNamespaceAndPath("minecraft", "command")))
+        assertSame(Keys.ENTITY_SELECTORS, ApiKeyRequests.keyOf(Identifier.fromNamespaceAndPath("minecraft", "commands/entity_selectors"), ApiRoute.ATOM))
+        assertNull(ApiKeyRequests.keyOf(Identifier.fromNamespaceAndPath("minecraft", "command.teleport"), ApiRoute.FABRIC))
+        assertNull(ApiKeyRequests.keyOf(Identifier.fromNamespaceAndPath("minecraft", "command"), ApiRoute.ATOM))
+        assertEquals(mapOf("minecraft:command.teleport" to "fabric", "minecraft:command" to "atom"), ApiKeyRequests.refusedTypes(), "un identifiant qui ne fait pas une clé entre au catalogue, refusé, avec sa voie")
     }
 }

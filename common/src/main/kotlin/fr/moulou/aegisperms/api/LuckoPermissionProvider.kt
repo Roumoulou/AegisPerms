@@ -34,18 +34,20 @@ object LuckoPermissionProvider {
      * La réponse à la demande de [dotted] pour [subject] (6.4) : la chaîne à points se lit comme un identifiant, le premier segment pour espace de noms, et
      * entre au catalogue par la voie `lucko` ; une chaîne qui ne fait pas une clé reçoit `DEFAULT`, et le catalogue la signale refusée.
      */
-    internal fun check(subject: RequestSubject, dotted: String): TriState {
-        val key = ApiKeyRequests.keyOfDottedString(dotted) ?: return TriState.DEFAULT
-        return try {
+    internal fun check(subject: RequestSubject, dotted: String): TriState = try {
+        val key = ApiKeyRequests.keyOfDottedString(dotted)
+        if (key == null) {
+            TriState.DEFAULT
+        } else {
             ApiKeyRequests.request(key, ApiRoute.LUCKO)
             when (subject.decision(key)) {
                 Decision.ALLOW -> TriState.TRUE
                 Decision.DENY_VISIBLE, Decision.DENY_HIDDEN -> TriState.FALSE
                 Decision.UNSET, null -> TriState.DEFAULT
             }
-        } catch (error: Throwable) {
-            ModLog.once(HOOK, key.text, error)
-            TriState.DEFAULT
         }
+    } catch (error: Throwable) {
+        ModLog.once(HOOK, dotted, error)
+        TriState.DEFAULT
     }
 }

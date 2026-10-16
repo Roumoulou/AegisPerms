@@ -40,21 +40,29 @@ object ApiKeyRequests {
     private val routesByKey = ConcurrentHashMap<ApiKey, Set<ApiRoute>>()
     private val keysByIdentifier = ConcurrentHashMap<Identifier, Any>()
     private val keysByDottedString = ConcurrentHashMap<String, Any>()
-    private val refused = ConcurrentHashMap.newKeySet<String>()
+
+    /** Les textes qui ne font pas une clé d'API, chacun avec les voies qui l'ont demandé : le catalogue les dit refusés (4.6, 6.4). */
+    private val refused = ConcurrentHashMap<String, Set<ApiRoute>>()
 
     /** Ce que le fil des fichiers pose pour apprendre qu'une clé, une voie pour elle ou une chaîne refusée est nouvelle : il écrit alors le catalogue (D12). */
     @Volatile
     internal var onNewKey: (() -> Unit)? = null
 
     /**
-     * La clé d'API de l'identifiant [id] d'un atome ou d'un nœud de l'API de Fabric (6.2, 6.3), ou `null` quand il n'en fait pas une : le chemin `command`
-     * est celui d'une clé de commande (2.4), et un tel identifiant reste à vanilla.
+     * La clé d'API de l'identifiant [id] d'un atome ou d'un nœud de l'API de Fabric (6.2, 6.3), demandé par [route], ou `null` quand il n'en fait pas une :
+     * le chemin `command` est celui d'une clé de commande (2.4), et un tel identifiant reste à vanilla ; le catalogue le dit refusé, comme une chaîne de
+     * l'API de lucko.
      */
-    fun keyOf(id: Identifier): ApiKey? {
+    fun keyOf(id: Identifier, route: ApiRoute): ApiKey? {
         val known = keysByIdentifier[id]
-        if (known != null) return known as? ApiKey
+        if (known != null) {
+            // Un identifiant déjà refusé l'est à nouveau par cette voie, que le catalogue doit connaître.
+            if (known !is ApiKey) refuse(id.toString(), route)
+            return known as? ApiKey
+        }
         val parsed = Keys.parseOrNull(id.toString()) as? ApiKey
         keysByIdentifier.putIfAbsent(id, parsed ?: NOT_A_KEY)
+        if (parsed == null) refuse(id.toString(), route)
         return parsed
     }
 
@@ -67,8 +75,22 @@ object ApiKeyRequests {
         if (known != null) return known as? ApiKey
         val parsed = Keys.fromDottedString(dotted)
         keysByDottedString.putIfAbsent(dotted, parsed ?: NOT_A_KEY)
-        if (parsed == null && refused.add(dotted)) onNewKey?.invoke()
+        if (parsed == null) refuse(dotted, ApiRoute.LUCKO)
         return parsed
+    }
+
+    /** Retient [text], qui ne fait pas une clé d'API, demandé par [route] ; le catalogue se réécrit quand le texte ou la voie est nouveau. */
+    fun refuse(text: String, route: ApiRoute) {
+        var added = false
+        refused.compute(text) { _, routes ->
+            if (routes != null && route in routes) {
+                routes
+            } else {
+                added = true
+                routes.orEmpty() + route
+            }
+        }
+        if (added) onNewKey?.invoke()
     }
 
     /** Inscrit la demande de [key] par [route]. Vrai quand la clé, ou cette voie pour elle, est nouvelle. */
@@ -91,13 +113,13 @@ object ApiKeyRequests {
     /** Reprend les entrées que le catalogue gardait : les clés d'API avec leurs voies, et les chaînes refusées. Ce qui n'est ni l'un ni l'autre est ignoré. */
     fun seed(entries: Map<String, ApiKeyEntry>) {
         for ((text, entry) in entries) {
+            val routes = entry.type.split(SEPARATOR).mapNotNullTo(LinkedHashSet()) { ApiRoute.ofCatalogName(it) }
             if (entry.refused) {
-                refused += text
+                refused.merge(text, routes.ifEmpty { setOf(ApiRoute.LUCKO) }) { known, read -> known + read }
                 keysByDottedString.putIfAbsent(text, NOT_A_KEY)
                 continue
             }
             val key = Keys.parseOrNull(text) as? ApiKey ?: continue
-            val routes = entry.type.split(SEPARATOR).mapNotNullTo(LinkedHashSet()) { ApiRoute.ofCatalogName(it) }
             if (routes.isNotEmpty()) routesByKey.merge(key, routes) { known, read -> known + read }
         }
     }
@@ -105,8 +127,8 @@ object ApiKeyRequests {
     /** Les clés demandées, chacune sous son texte avec son type, pour `catalog.json`. */
     fun types(): Map<String, String> = routesByKey.entries.associate { (key, routes) -> key.text to typeOf(routes) }
 
-    /** Les chaînes à points refusées, chacune vers la voie lucko, pour `catalog.json`. */
-    fun refusedTypes(): Map<String, String> = refused.associateWith { ApiRoute.LUCKO.catalogName }
+    /** Les textes refusés, chacun avec les voies qui l'ont demandé, pour `catalog.json`. */
+    fun refusedTypes(): Map<String, String> = refused.entries.associate { (text, routes) -> text to typeOf(routes) }
 
     /** Le type de [key] au catalogue, ou `null` quand elle n'a jamais été demandée. */
     fun typeOf(key: ApiKey): String? = routesByKey[key]?.let(::typeOf)
@@ -117,6 +139,7 @@ object ApiKeyRequests {
     /** Oublie toute demande et toute chaîne refusée. Réservé aux tests. */
     internal fun clear() {
         routesByKey.clear()
+        keysByIdentifier.clear()
         keysByDottedString.clear()
         refused.clear()
     }

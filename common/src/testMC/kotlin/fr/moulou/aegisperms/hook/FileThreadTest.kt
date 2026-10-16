@@ -6,16 +6,22 @@ package fr.moulou.aegisperms.hook
 import com.mojang.brigadier.CommandDispatcher
 import fr.moulou.aegisperms.files.ConfigurationFiles
 import fr.moulou.aegisperms.files.ConfigurationRead
+import fr.moulou.aegisperms.files.ConfigurationWrite
 import fr.moulou.aegisperms.files.PublicationResult
 import fr.moulou.aegisperms.files.PublicationSource
+import fr.moulou.aegisperms.model.Group
 import fr.moulou.aegisperms.model.Keys
+import fr.moulou.aegisperms.model.Mode
+import fr.moulou.aegisperms.model.Permissions
 import fr.moulou.aegisperms.model.Settings
+import fr.moulou.aegisperms.validate.ConfigurationFile
 import fr.moulou.aegisperms.tree.CommandIndex
 import fr.moulou.aegisperms.tree.LoaderMods
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
@@ -109,6 +115,40 @@ class FileThreadTest {
         assertEquals(2, Publisher.generation())
         assertEquals(PublicationResult.APPLIED, ConfigurationFiles(directory).readState()?.result)
         assertTrue(lines.any { it.startsWith("aegisperms.log.published 2 reload enforce false 1 0 0 ") }, lines.toString())
+    }
+
+    @Test
+    fun `une écriture du mod garde le mode posé en mémoire, et un rechargement le rend au fichier`(@TempDir directory: Path) {
+        FileThread.start(directory)
+        FileThread.startup(null)
+        Publisher.setMode(Mode.OBSERVE)
+
+        FileThread.write(Permissions.DELIVERED.copy(groups = Permissions.DELIVERED.groups + ("vip" to Group(weight = 80))), PublicationSource.COMMAND).get()
+        assertEquals(2, Publisher.generation())
+        assertEquals(Mode.OBSERVE, Publisher.mode(), "une écriture ne relit pas les réglages : le mode posé reste")
+
+        FileThread.reload(PublicationSource.RELOAD).get()
+        assertEquals(Mode.ENFORCE, Publisher.mode(), "un rechargement reprend le mode du fichier")
+    }
+
+    @Test
+    fun `le repli du démarrage se reconduit à une écriture du mod, et cesse à une relecture valide`(@TempDir directory: Path) {
+        val settings = directory.resolve("settings.json")
+        Files.writeString(settings, "{ pas du json")
+        FileThread.start(directory)
+        FileThread.startup(null)
+        assertEquals(setOf(ConfigurationFile.SETTINGS), checkNotNull(Publisher.lastPublication).fallback)
+        assertTrue(lines.any { it.startsWith("aegisperms.log.fallback settings.json delivered") }, lines.toString())
+
+        val outcome = FileThread.write(Permissions.DELIVERED.copy(groups = Permissions.DELIVERED.groups + ("vip" to Group(weight = 80))), PublicationSource.COMMAND).get()
+        assertTrue(outcome.result is ConfigurationWrite.Written, "des réglages venus du repli laissent les droits inscriptibles : ${outcome.result}")
+        assertEquals(setOf(ConfigurationFile.SETTINGS), checkNotNull(Publisher.lastPublication).fallback, "le repli dure tant que les réglages ne viennent pas de leur fichier")
+        assertFalse(Files.exists(directory.resolve("last-good")), "last-good ne s'écrit pas avec des réglages de repli")
+
+        Files.writeString(settings, "{\n  \"schema-version\": 1\n}\n")
+        FileThread.reload(PublicationSource.RELOAD).get()
+        assertTrue(checkNotNull(Publisher.lastPublication).fallback.isEmpty(), "une relecture valide des deux fichiers met fin au repli")
+        assertTrue(Files.isDirectory(directory.resolve("last-good")))
     }
 
     private fun index(): CommandIndex<CommandSourceStack> = CommandIndex.build(dispatcher.root, Settings.DELIVERED, LoaderMods, VanillaRequirements)

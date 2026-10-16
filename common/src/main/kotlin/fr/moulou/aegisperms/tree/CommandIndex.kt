@@ -124,7 +124,8 @@ class CommandIndex<S> private constructor(
         val key = aliasTarget?.key ?: ownKey
 
         // Un nom déjà pris à la racine refuse la forme : l'ajouter fusionnerait les deux nœuds (3.8).
-        val planned = CommandForms.prefixedFormOf(root, node, owner, settings, mods)?.takeIf { root.getChild(it.name) == null }
+        val wanted = CommandForms.prefixedFormOf(root, node, owner, settings, mods)
+        val planned = wanted?.takeIf { root.getChild(it.name) == null }
         val formKey = when {
             planned == null -> null
             planned.end === node -> key
@@ -149,7 +150,7 @@ class CommandIndex<S> private constructor(
         if (form != null && formKey != null) {
             entries += form to NodeEntry(formKey, ownKey = null, requirements.read(form.requirement), isRoot = true, inheritsKey = false, shared = false, isForm = true)
         }
-        return LateRoot(owner, entries, form)
+        return LateRoot(owner, entries, form, takenFormName = wanted?.name?.takeIf { planned == null })
     }
 }
 
@@ -160,4 +161,6 @@ class LateRoot<S>(
     val entries: List<Pair<CommandNode<S>, NodeEntry>>,
     /** La forme préfixée à ajouter à la racine de l'arbre, une fois les fiches posées ; `null` quand la commande n'en reçoit pas. */
     val form: LiteralCommandNode<S>?,
+    /** Le nom de la forme que la commande aurait reçue, quand un nœud de la racine le porte déjà et la refuse (3.8) ; `null` sinon. */
+    val takenFormName: String? = null,
 )

@@ -1,6 +1,5 @@
 {
   "aegisperms.refusal": "You are not allowed to use this command.",
-
   "aegisperms.issue.unreadable_file": "Unreadable file: %s",
   "aegisperms.issue.malformed_file": "Malformed file: %s",
   "aegisperms.issue.duplicate_key": "Key written twice in the same object: %s",
@@ -56,7 +55,6 @@
   "aegisperms.issue.shared_root": "Command %s is shared: %s owns it, with %s",
   "aegisperms.issue.deny_key_gone": "The deny of %s closes nothing anymore: its key no longer exists",
   "aegisperms.issue.deny_key_gone_near": "The deny of %s closes nothing anymore: its key no longer exists; appeared at the same place: %s",
-
   "aegisperms.log.internal_error": "Internal error in %s for %s, generation %s: refused",
   "aegisperms.log.index_failed": "The command index could not be built: the tree is closed to players",
   "aegisperms.log.index_missing": "The command index is missing at adoption: the tree is closed to players, and the catalog is not written",
@@ -71,7 +69,6 @@
   "aegisperms.log.write_failed": "%s could not be written: what was in place stays",
   "aegisperms.log.foreign_authority": "The authority of %s (%s) is not AegisPerms' envelope but %s: the mod no longer judges this player",
   "aegisperms.log.stop_timeout": "The file thread did not stop within %s s",
-
   "aegisperms.command.source_refused": "This source cannot run /aegis: the console, RCON and players only.",
   "aegisperms.command.not_published": "No effective state yet: the server is still starting.",
   "aegisperms.command.internal_error": "Internal error: nothing was done, the server log says more.",
@@ -156,7 +153,6 @@
   "aegisperms.command.validate.changes": "Rules that would change (%s):",
   "aegisperms.command.validate.no_change": "No rule would change",
   "aegisperms.command.change.rule": "  %s: %s, %s -> %s",
-
   "aegisperms.why.title": "/aegis why %s %s",
   "aegisperms.why.leads_to": "%s is a form or an alias of %s (mod %s)",
   "aegisperms.why.row": "  %s: %s, %s, %s",
@@ -206,7 +202,6 @@
   "aegisperms.why.check.node_hidden": "The node is refused, hidden",
   "aegisperms.why.check.absent": "This key is not in this server's catalog",
   "aegisperms.why.check.api_absent": "No mod requested this key, and it is not the selectors atom",
-
   "aegisperms.command.change.more": "  ... and %s more rules",
   "aegisperms.command.change.nothing": "Nothing to change: the configuration already says that.",
   "aegisperms.command.change.published": "Generation %s published",
@@ -257,14 +252,15 @@
   "aegisperms.command.restore.failed": "Could not restore, %s: a reload says what applies.",
   "aegisperms.command.mode.set": "Mode %s set in memory; the trees are resent",
   "aegisperms.command.mode.until_reload": "The settings file does not change: the next reload or startup takes its mode back, %s.",
-
   "aegisperms.log.observe_deviation": "Observation: for %s, %s would be %s, and vanilla answers %s",
-  "aegisperms.log.observe_suppressed": "Observation: %s more deviations in the past minute, not detailed",
+  "aegisperms.log.observe_suppressed": "Observation: %s more deviations, not detailed, since the last line",
   "aegisperms.why.observe": "Observe mode: the decision is computed, not applied",
-
   "aegisperms.log.player_renamed": "%s comes back under the name of %s: the readable form is rewritten",
   "aegisperms.notice.fallback": "AegisPerms: startup fallback on %s; fix the file, then /aegis reload",
   "aegisperms.notice.reinforced": "AegisPerms: %s",
   "aegisperms.notice.watch_applied": "AegisPerms: files changed outside the game, generation %s applied, %s rules changed, %s warnings",
-  "aegisperms.notice.watch_refused": "AegisPerms: files changed outside the game and refused (%s errors); the effective state stays, and command modifications wait for a valid configuration"
+  "aegisperms.notice.watch_refused": "AegisPerms: files changed outside the game and refused (%s errors); the effective state stays, and command modifications wait for a valid configuration",
+  "aegisperms.log.offline_mode": "online-mode=false: a player's UUID is computed from the name, and whoever joins under an administrator's name receives their rules",
+  "aegisperms.log.decision": "Execution gate: %s runs %s, %s",
+  "aegisperms.why.more_demanding": ", more demanding than its ancestor (level %s)"
 }

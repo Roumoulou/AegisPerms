@@ -74,7 +74,7 @@ Les clés apparues au même endroit du catalogue sont données ; réécrivez le 
 ## 4. Le repli au démarrage et la lecture seule
 
 Au démarrage, un fichier illisible ou invalide est remplacé par la copie `last-good\`, ou, sans copie valide, par les valeurs livrées. Le journal le dit en
-erreur, « settings.json remplacé par last_good : corrigez le fichier, puis /aegis reload », et chaque op d'au moins `admin-level` qui se connecte le lit tant
+erreur, « settings.json remplacé par last_good : corriger le fichier, puis /aegis reload », et chaque op d'au moins `admin-level` qui se connecte le lit tant
 que le repli dure.
 
 Quand ce sont les droits qui se replient, le mod passe en **lecture seule** : les règles s'appliquent, et toute modification par commande répond

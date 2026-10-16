@@ -16,7 +16,7 @@ import java.time.Instant
  * La publication de l'état en vigueur (cahier des charges, 7.4) : une référence vers le résolveur de l'état, posée d'un bloc. L'enveloppe, `canUse` et les
  * fournisseurs d'API ne lisent qu'elle, depuis n'importe quel fil. Un état nouveau arrive avec un résolveur neuf, donc un cache vide : un calcul fait sur
  * l'ancien ne peut rien y écrire. C'est le fil des fichiers qui publie et qui compte les générations ; il retient aussi la dernière publication appliquée,
- * que `/aegis status` dit et que la connexion d'un op rappelle (E13).
+ * que `/aegis status` dit et que la connexion d'un op rappelle (4.9).
  */
 object Publisher {
 
@@ -34,7 +34,7 @@ object Publisher {
     /** Le résolveur de l'état en vigueur, ou `null` tant que rien n'est publié. */
     fun currentOrNull(): Resolver? = resolver
 
-    /** La génération de l'état en vigueur, 0 tant que rien n'est publié. */
+    /** La génération de l'état en vigueur : 0 avant la première publication, et 0 aussi pour l'état provisoire du premier temps du démarrage (D9). */
     fun generation(): Long = resolver?.state?.generation ?: 0
 
     /** Le mode posé en mémoire par `/aegis mode`, jusqu'à la publication suivante (5.8) ; `null` quand c'est celui des réglages qui vaut. */
@@ -52,11 +52,15 @@ object Publisher {
         modeOverride = mode
     }
 
-    /** Publie [state] d'un bloc et rend l'état qu'il remplace, pour dire ce qui change ; `null` à la première publication. Le mode posé en mémoire s'efface. */
-    fun publish(state: EffectiveState): EffectiveState? {
+    /**
+     * Publie [state] d'un bloc et rend l'état qu'il remplace, pour dire ce qui change ; `null` à la première publication. Le mode posé en mémoire s'efface
+     * quand [resetMode] le dit : à une publication qui relit le fichier des réglages, démarrage, rechargement, restauration, pas à une écriture du mod, qui
+     * ne le relit pas (5.8).
+     */
+    fun publish(state: EffectiveState, resetMode: Boolean = true): EffectiveState? {
         val previous = resolver?.state
         resolver = Resolver(state)
-        modeOverride = null
+        if (resetMode) modeOverride = null
         return previous
     }
 

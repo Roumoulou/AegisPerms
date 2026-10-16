@@ -26,7 +26,8 @@ import net.minecraft.network.chat.MutableComponent
 /**
  * Les modifications de `/aegis` (cahier des charges, 5.3) : la candidate se bâtit sur l'état en vigueur par `PermissionsEdits`, le fil des fichiers l'écrit,
  * la relit et la publie (4.8), et la réponse dit ce qui a changé, la génération et les avertissements nouveaux ; une modification refusée dit pourquoi et ne
- * touche à rien. `reload`, `backup`, `restore` et `mode` suivent le même chemin, le fichier des réglages n'étant jamais écrit, sauf par `restore` (4.10).
+ * touche à rien. `reload`, `backup` et `restore` passent par le même fil, le fichier des réglages n'étant jamais écrit, sauf par `restore` (4.10) ; `mode`
+ * change `Publisher` en mémoire, sur le fil serveur (5.8).
  */
 internal object Modifications {
 
@@ -87,7 +88,8 @@ internal object Modifications {
                     val published = outcome.published
                     val changes = published?.previous?.let { PermissionsChanges.between(it, published.state).rules }.orEmpty()
                     reply.broadcast(reply.text(Command.RELOADED, published?.state?.generation ?: Publisher.generation(), changes.size, read.report.warnings.size))
-                    reply.lines(changeLines(reply, changes) + read.report.warnings.map(reply::issue))
+                    // Les constats, puis les règles qui changent : l'ordre de `validate` (5.3).
+                    reply.lines(read.report.warnings.map(reply::issue) + changeLines(reply, changes))
                 }
                 is ConfigurationRead.Refused -> refuseWithIssues(reply, reply.text(Command.RELOAD_REFUSED, read.report.errors.size), read.report.issues)
             }
@@ -159,8 +161,7 @@ internal object Modifications {
                 reply.broadcast(done())
                 val lines = ArrayList<Component>()
                 lines += reply.text(Command.CHANGE_PUBLISHED, outcome.published?.state?.generation ?: Publisher.generation())
-                val previousWarnings = outcome.before?.report?.warnings.orEmpty().toSet()
-                val newWarnings = write.report.warnings.filter { it !in previousWarnings }
+                val newWarnings = Warnings.newSince(outcome.before?.report?.warnings.orEmpty(), write.report.warnings)
                 if (newWarnings.isNotEmpty()) {
                     lines += reply.text(Command.CHANGE_WARNINGS, newWarnings.size)
                     lines += newWarnings.map(reply::issue)
@@ -179,7 +180,8 @@ internal object Modifications {
         reply.lines(issues.map(reply::issue))
     }
 
-    private fun changeLines(reply: Reply, changes: List<fr.moulou.aegisperms.model.RuleChange>): List<Component> {
+    /** Les règles qui changent, huit au plus et le compte du reste : ce que `reload` et `validate` répondent après les constats (5.3). */
+    internal fun changeLines(reply: Reply, changes: List<fr.moulou.aegisperms.model.RuleChange>): List<Component> {
         val lines = ArrayList<Component>()
         for (change in changes.take(CHANGES_SHOWN)) lines += reply.text(Command.CHANGE_RULE, Queries.ownerOf(reply, change.owner), change.key.text, Queries.valueOrNone(reply, change.before), Queries.valueOrNone(reply, change.after))
         if (changes.size > CHANGES_SHOWN) lines += reply.text(Command.CHANGES_MORE, changes.size - CHANGES_SHOWN)

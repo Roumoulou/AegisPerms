@@ -28,6 +28,7 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
@@ -113,7 +114,7 @@ object FileThread {
 
     /**
      * À `SERVER_STARTING`, l'index du `Commands` courant adopté, ou `null` quand il a manqué : écrit le catalogue, relit la configuration avec lui, ce qui
-     * rend le vrai verdict du démarrage, repli compris, publie la génération 1 de source `startup`, puis écrit `state.json` et `last-good` quand les deux
+     * rend le vrai verdict du démarrage, repli compris, publie la génération 1 de source `startup`, écrit `state.json`, et `last-good` quand les deux
      * fichiers viennent de leur place (4.9). Le fil serveur attend.
      */
     fun startup(adopted: CommandIndex<CommandSourceStack>?) = await {
@@ -186,12 +187,17 @@ object FileThread {
     /** La lecture des deux fichiers tels qu'ils sont, sans rien créer, retenir ni appliquer : `/aegis validate` (5.3). */
     fun check(): CompletableFuture<ConfigurationRead> = CompletableFuture.supplyAsync({ files.check(catalog) }, executor)
 
-    /** Une écriture des droits (4.8), la seule que le mod fasse : écrit, relit, et publie une génération nouvelle, ou dit pourquoi rien ne s'est écrit. */
+    /**
+     * Une écriture des droits (4.8), la seule que le mod fasse : écrit, relit, et publie une génération nouvelle, ou dit pourquoi rien ne s'est écrit. Le
+     * repli du démarrage se reconduit : il ne cesse qu'à une relecture valide des deux fichiers (4.9), et `last-good` ne s'écrit pas tant que les réglages
+     * viennent de lui.
+     */
     fun write(permissions: Permissions, source: PublicationSource = PublicationSource.COMMAND): CompletableFuture<Outcome<ConfigurationWrite>> = CompletableFuture.supplyAsync({
         val before = Publisher.lastPublication
+        val fallback = before?.fallback.orEmpty()
         val write = files.write(permissions, catalog)
         val published = when (write) {
-            is ConfigurationWrite.Written -> publish(write.configuration, write.report, source, readOnly = false, lastGood = true)
+            is ConfigurationWrite.Written -> publish(write.configuration, write.report, source, readOnly = false, lastGood = ConfigurationFile.SETTINGS !in fallback, fallback)
             is ConfigurationWrite.Refused -> refuse(source, write.report)
             ConfigurationWrite.FileMoved, ConfigurationWrite.ReadOnly, is ConfigurationWrite.Failed -> null
         }
@@ -240,7 +246,8 @@ object FileThread {
     private fun publish(configuration: Configuration, report: ValidationReport, source: PublicationSource, readOnly: Boolean, lastGood: Boolean, fallback: Set<ConfigurationFile> = emptySet()): Published {
         generation++
         val state = EffectiveState(generation, configuration)
-        val previous = Publisher.publish(state)
+        // Une écriture du mod ne relit pas le fichier des réglages : le mode posé par `/aegis mode` lui survit (5.8).
+        val previous = Publisher.publish(state, resetMode = source != PublicationSource.COMMAND)
         Publisher.lastPublication = LastPublication(generation, source, Instant.now(), readOnly, fallback, report)
         val permissions = configuration.permissions
         val rules = permissions.groups.values.sumOf { it.rules.size } + permissions.players.values.sumOf { it.rules.size }
@@ -262,8 +269,9 @@ object FileThread {
 
     /** Écrit le catalogue de [adopted] (4.6) et rend celui que la validation lira, avec les clés apparues depuis le catalogue précédent. */
     private fun writeCatalog(adopted: CommandIndex<CommandSourceStack>, logChanges: Boolean): IndexCatalog<CommandSourceStack> {
-        val update = files.updateCatalog(IndexCatalog(adopted, ApiKeyRequests.keys()).commands(), ApiKeyRequests.types(), ApiKeyRequests.refusedTypes())
+        // Le drapeau tombe avant la lecture des tables : une clé inscrite pendant l'écriture le relève, et la prochaine écriture la prendra.
         apiKeysDirty.set(false)
+        val update = files.updateCatalog(IndexCatalog(adopted, ApiKeyRequests.keys()).commands(), ApiKeyRequests.types(), ApiKeyRequests.refusedTypes())
         if (update.previousUnreadable) ModLog.warn(ModLog.CATALOG_UNREADABLE)
         writeOrWarn(CatalogFile.FILE_NAME, update.write)
         val changes = update.changes
@@ -279,9 +287,14 @@ object FileThread {
         apiKeysDirty.set(true)
         if (!::executor.isInitialized || executor.isShutdown) return
         if (apiKeyWritePending.compareAndSet(false, true)) {
-            executor.execute {
+            try {
+                executor.execute {
+                    apiKeyWritePending.set(false)
+                    writeApiKeys()
+                }
+            } catch (_: RejectedExecutionException) {
+                // Le fil s'arrête entre le contrôle et le dépôt : l'arrêt écrit lui-même les clés en attente.
                 apiKeyWritePending.set(false)
-                writeApiKeys()
             }
         }
     }

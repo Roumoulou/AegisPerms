@@ -7,6 +7,7 @@ import fr.moulou.aegisperms.files.ConfigurationWrite
 import fr.moulou.aegisperms.files.PublicationSource
 import fr.moulou.aegisperms.model.ReadableForm
 import fr.moulou.aegisperms.tree.CommandIndex
+import fr.moulou.aegisperms.validate.ConfigurationFile
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents
@@ -21,7 +22,7 @@ import net.minecraft.server.level.ServerPlayer
  */
 object Lifecycle {
 
-    /** Vrai dès qu'un joueur s'est connecté avec une autorité qui n'est pas l'enveloppe (D20) : un pare-feu qui ne juge plus doit le dire, et `/aegis status` le lira. */
+    /** Vrai dès qu'un joueur s'est connecté avec une autorité qui n'est pas l'enveloppe (6.6) : un pare-feu qui ne juge plus doit le dire, et `/aegis status` le lira. */
     @Volatile
     var foreignAuthoritySeen: Boolean = false
         private set
@@ -34,7 +35,7 @@ object Lifecycle {
 
     fun register() {
         ServerLifecycleEvents.SERVER_STARTING.register { server -> guarded("starting") { onServerStarting(server) } }
-        ServerLifecycleEvents.SERVER_STARTED.register { server -> guarded("started") { OpLevels.readOps(server) } }
+        ServerLifecycleEvents.SERVER_STARTED.register { server -> guarded("started") { onServerStarted(server) } }
         ServerLifecycleEvents.END_DATA_PACK_RELOAD.register { server, _, success -> guarded("reload") { onDataPackReloaded(server, success) } }
         ServerLifecycleEvents.SERVER_STOPPING.register { guarded("stopping") { onServerStopping() } }
         ServerTickEvents.END_SERVER_TICK.register(TreeResend::flush)
@@ -50,6 +51,15 @@ object Lifecycle {
     private fun onServerStarting(server: MinecraftServer) {
         this.server = server
         FileThread.startup(indexOf(server))
+    }
+
+    /**
+     * À `SERVER_STARTED`, la liste des joueurs créée : la liste des ops se lit (6.3), et un serveur qui n'authentifie pas les joueurs le dit en avertissement
+     * (2.3, 5.4), parce que quiconque se connecte sous le pseudo d'un administrateur reçoit alors ses règles.
+     */
+    private fun onServerStarted(server: MinecraftServer) {
+        OpLevels.readOps(server)
+        if (!server.usesAuthentication()) ModLog.warn(ModLog.OFFLINE_MODE)
     }
 
     private fun onServerStopping() {
@@ -102,7 +112,11 @@ object Lifecycle {
         if (known.name == name) return
         val renamed = ReadableForm.of(name, player.uuid)
         FileThread.write(Renaming.renamed(state.permissions, player.uuid, name), PublicationSource.COMMAND).thenAccept { outcome ->
-            if (outcome.result is ConfigurationWrite.Written) ModLog.info(ModLog.PLAYER_RENAMED, known.readableForm, renamed)
+            when (val write = outcome.result) {
+                is ConfigurationWrite.Written -> ModLog.info(ModLog.PLAYER_RENAMED, known.readableForm, renamed)
+                is ConfigurationWrite.Failed -> ModLog.error(ModLog.WRITE_FAILED, write.cause, ConfigurationFile.PERMISSIONS.fileName)
+                else -> {}
+            }
         }
     }
 

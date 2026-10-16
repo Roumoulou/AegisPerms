@@ -8,6 +8,7 @@ import fr.moulou.aegisperms.command.Explanations.Evaluation
 import fr.moulou.aegisperms.command.Explanations.NodeStatus
 import fr.moulou.aegisperms.command.Explanations.Verdict
 import fr.moulou.aegisperms.files.CommandRequirement
+import fr.moulou.aegisperms.hook.AllRights
 import fr.moulou.aegisperms.hook.ApiKeyRequests
 import fr.moulou.aegisperms.hook.Envelope
 import fr.moulou.aegisperms.hook.Hooks
@@ -60,7 +61,10 @@ internal object Explain {
         val resolver = Publisher.currentOrNull() ?: return reply.refuse(fr.moulou.aegisperms.text.TextKeys.Command.NOT_PUBLISHED)
         val probe = probe(server, target)
         val command = line.trim().removePrefix("/")
-        val parse = server.commands.dispatcher.parse(command, server.createCommandSourceStack())
+        // La sonde qui voit tout (5.5) : la source du joueur en ligne, qui porte son entité, avec tous les droits, pour qu'un prédicat de mod qui demande
+        // un joueur s'analyse aussi ; hors ligne, la console, sans entité.
+        val seeing = if (probe.online) probe.source.withPermission(AllRights) else server.createCommandSourceStack()
+        val parse = server.commands.dispatcher.parse(command, seeing)
         val report = Explanations.why(
             steps = Explanations.steps(parse),
             complete = Explanations.isComplete(parse),
@@ -181,7 +185,9 @@ internal object Explain {
                 else -> reply.text(Why.ORIGIN_REQUIREMENT_LEVEL, entry.requirement.name.lowercase())
             }
         }
-        return originOf(reply, trace, !row.byAncestorKey)
+        val origin = originOf(reply, trace, !row.byAncestorKey)
+        if (row.moreDemanding) origin.append(reply.text(Why.MORE_DEMANDING, row.entry?.requirement?.name?.lowercase() ?: "?"))
+        return origin
     }
 
     private fun originOf(reply: Reply, trace: DecisionTrace, ownKey: Boolean): MutableComponent {

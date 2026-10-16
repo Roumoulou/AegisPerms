@@ -1,6 +1,5 @@
 {
   "aegisperms.refusal": "Cette commande vous est refusée.",
-
   "aegisperms.issue.unreadable_file": "Fichier illisible : %s",
   "aegisperms.issue.malformed_file": "Fichier mal formé : %s",
   "aegisperms.issue.duplicate_key": "Clé écrite deux fois dans le même objet : %s",
@@ -56,13 +55,12 @@
   "aegisperms.issue.shared_root": "La commande %s est partagée : %s en est le mod propriétaire, avec %s",
   "aegisperms.issue.deny_key_gone": "Le deny de %s ne ferme plus rien : sa clé n'existe plus",
   "aegisperms.issue.deny_key_gone_near": "Le deny de %s ne ferme plus rien : sa clé n'existe plus ; apparues au même endroit : %s",
-
   "aegisperms.log.internal_error": "Erreur interne dans %s pour %s, génération %s : refus",
   "aegisperms.log.index_failed": "L'index des commandes n'a pas pu se construire : l'arbre est fermé aux joueurs",
   "aegisperms.log.index_missing": "L'index des commandes manque à son adoption : l'arbre est fermé aux joueurs, et le catalogue ne s'écrit pas",
   "aegisperms.log.loaded": "AegisPerms est chargé",
   "aegisperms.log.files_created": "Fichiers créés avec les valeurs livrées : %s",
-  "aegisperms.log.fallback": "%s remplacé par %s : corrigez le fichier, puis /aegis reload",
+  "aegisperms.log.fallback": "%s remplacé par %s : corriger le fichier, puis /aegis reload",
   "aegisperms.log.published": "Génération %s appliquée (%s), mode %s, lecture seule %s : %s groupes, %s joueurs, %s règles, %s constats",
   "aegisperms.log.refused": "Publication refusée (%s) : la génération %s reste, %s constats",
   "aegisperms.log.catalog_appeared": "%s clés apparues au catalogue : %s",
@@ -71,7 +69,6 @@
   "aegisperms.log.write_failed": "%s n'a pas pu s'écrire : ce qui était en place reste",
   "aegisperms.log.foreign_authority": "L'autorité de %s (%s) n'est pas l'enveloppe d'AegisPerms, mais %s : le mod ne juge plus ce joueur",
   "aegisperms.log.stop_timeout": "Le fil des fichiers ne s'est pas arrêté en %s s",
-
   "aegisperms.command.source_refused": "Cette source ne lance pas /aegis : la console, le RCON et les joueurs seulement.",
   "aegisperms.command.not_published": "Aucun état en vigueur : le serveur démarre encore.",
   "aegisperms.command.internal_error": "Erreur interne : rien n'a été fait, le journal du serveur en dit plus.",
@@ -82,8 +79,8 @@
   "aegisperms.command.key_malformed": "Clé mal formée, %s : %s",
   "aegisperms.command.owner.group": "groupe %s",
   "aegisperms.command.owner.player": "joueur %s",
-  "aegisperms.command.mode.enforce": "application",
-  "aegisperms.command.mode.observe": "observation",
+  "aegisperms.command.mode.enforce": "enforce",
+  "aegisperms.command.mode.observe": "observe",
   "aegisperms.command.rule.entry": "  %s = %s",
   "aegisperms.command.rule.note": " « %s »",
   "aegisperms.command.rule.allow": "allow",
@@ -106,7 +103,7 @@
   "aegisperms.command.catalog.title": "Catalogue : %s clés de commande, %s clés d'API",
   "aegisperms.command.catalog.entry": "%s : %s",
   "aegisperms.command.catalog.api_key": "%s : clé d'API, voie %s",
-  "aegisperms.command.catalog.more": "... et %s clés de plus : précisez le début de clé",
+  "aegisperms.command.catalog.more": "... et %s clés de plus : préciser le début de clé",
   "aegisperms.command.catalog.requirement_none": "aucune exigence",
   "aegisperms.command.catalog.requirement_level": "niveau %s",
   "aegisperms.command.catalog.requirement_mod": "prédicat de mod",
@@ -138,7 +135,7 @@
   "aegisperms.command.group.info.members": "joueurs du fichier qui l'ont pour groupe direct : %s",
   "aegisperms.command.group.info.members_none": "aucun joueur du fichier ne l'a pour groupe direct",
   "aegisperms.command.player.unknown": "Joueur inconnu : %s. Un UUID écrit tel quel désigne aussi un joueur jamais venu.",
-  "aegisperms.command.player.ambiguous": "%s désigne plusieurs joueurs, %s : écrivez l'UUID.",
+  "aegisperms.command.player.ambiguous": "%s désigne plusieurs joueurs, %s : écrire l'UUID.",
   "aegisperms.command.player.info.title": "Joueur %s, UUID %s",
   "aegisperms.command.player.info.online": "en ligne, niveau d'op %s",
   "aegisperms.command.player.info.offline": "hors ligne, niveau d'op retenu %s",
@@ -156,7 +153,6 @@
   "aegisperms.command.validate.changes": "Règles qui changeraient (%s) :",
   "aegisperms.command.validate.no_change": "Aucune règle ne changerait",
   "aegisperms.command.change.rule": "  %s : %s, %s -> %s",
-
   "aegisperms.why.title": "/aegis why %s %s",
   "aegisperms.why.leads_to": "%s est une forme ou un alias de %s (mod %s)",
   "aegisperms.why.row": "  %s : %s, %s, %s",
@@ -206,7 +202,6 @@
   "aegisperms.why.check.node_hidden": "Le nœud est refusé, masqué",
   "aegisperms.why.check.absent": "Cette clé n'est pas au catalogue de ce serveur",
   "aegisperms.why.check.api_absent": "Aucun mod n'a demandé cette clé, et ce n'est pas l'atome des sélecteurs",
-
   "aegisperms.command.change.more": "  ... et %s autres règles",
   "aegisperms.command.change.nothing": "Rien à changer : la configuration dit déjà cela.",
   "aegisperms.command.change.published": "Génération %s publiée",
@@ -257,14 +252,15 @@
   "aegisperms.command.restore.failed": "Restauration impossible, %s : un rechargement dit ce qui s'applique.",
   "aegisperms.command.mode.set": "Mode %s posé en mémoire ; les arbres sont renvoyés",
   "aegisperms.command.mode.until_reload": "Le fichier des réglages ne change pas : le prochain rechargement ou démarrage reprend son mode, %s.",
-
   "aegisperms.log.observe_deviation": "Observation : pour %s, %s vaudrait %s, et vanilla répond %s",
-  "aegisperms.log.observe_suppressed": "Observation : %s écarts de plus dans la minute écoulée, non détaillés",
+  "aegisperms.log.observe_suppressed": "Observation : %s écarts de plus, non détaillés, depuis la dernière ligne",
   "aegisperms.why.observe": "Mode observation : la décision est calculée, pas appliquée",
-
   "aegisperms.log.player_renamed": "%s revient sous le pseudo de %s : sa forme lisible se réécrit",
-  "aegisperms.notice.fallback": "AegisPerms : repli du démarrage sur %s ; corrigez le fichier, puis /aegis reload",
+  "aegisperms.notice.fallback": "AegisPerms : repli du démarrage sur %s ; corriger le fichier, puis /aegis reload",
   "aegisperms.notice.reinforced": "AegisPerms : %s",
   "aegisperms.notice.watch_applied": "AegisPerms : fichiers modifiés hors du jeu, génération %s appliquée, %s règles changées, %s avertissements",
-  "aegisperms.notice.watch_refused": "AegisPerms : fichiers modifiés hors du jeu et refusés (%s erreurs) ; l'état en vigueur reste, et les modifications par commande attendent une configuration valide"
+  "aegisperms.notice.watch_refused": "AegisPerms : fichiers modifiés hors du jeu et refusés (%s erreurs) ; l'état en vigueur reste, et les modifications par commande attendent une configuration valide",
+  "aegisperms.log.offline_mode": "online-mode=false : l'UUID d'un joueur se calcule depuis son pseudo, et quiconque se connecte sous le pseudo d'un administrateur reçoit ses règles",
+  "aegisperms.log.decision": "Porte d'exécution : %s lance %s, %s",
+  "aegisperms.why.more_demanding": ", plus exigeant que son ancêtre (niveau %s)"
 }

@@ -126,10 +126,10 @@ internal object Queries {
         return reply.lines(lines)
     }
 
-    /** Les groupes par poids décroissant puis nom (2.6), avec le poids, les parents et les membres d'office. */
+    /** Les groupes par poids décroissant puis nom, `default` après les autres à poids égal (2.6), avec le poids, les parents et les membres d'office. */
     fun groupList(reply: Reply): Int {
         val state = state(reply) ?: return 0
-        val groups = state.permissions.groups.entries.sortedWith(compareByDescending<Map.Entry<String, Group>> { it.value.weight }.thenBy(CodePointOrder) { it.key })
+        val groups = state.permissions.groups.entries.sortedWith(compareByDescending<Map.Entry<String, Group>> { it.value.weight }.thenBy { it.key == Group.DEFAULT }.thenBy(CodePointOrder) { it.key })
         val lines = ArrayList<Component>()
         lines += reply.text(Command.GROUP_LIST_TITLE, groups.size)
         for ((name, group) in groups) {
@@ -178,7 +178,9 @@ internal object Queries {
         if (exOfficio.isNotEmpty()) lines += reply.text(Command.PLAYER_INFO_EX_OFFICIO, exOfficio.joinToString(", "))
         val order = resolver.order(subject).groups.map { it.name }
         val ownRules = known != null && known.player.rules.isNotEmpty()
-        lines += reply.text(Command.PLAYER_INFO_ORDER, (if (ownRules) listOf(reply.text(Command.PLAYER_INFO_OWN_RULES).string) else emptyList<String>()).plus(order).joinToString(", "))
+        // Chaque part reste un composant : un joueur lit « ses règles » dans sa langue, là où `.string` rendrait l'anglais du serveur (5.7).
+        val orderParts = (if (ownRules) listOf<Component>(reply.text(Command.PLAYER_INFO_OWN_RULES)) else emptyList()) + order.map { Component.literal(it) }
+        lines += reply.text(Command.PLAYER_INFO_ORDER, Reply.join(orderParts, ", "))
         lines += rulesBlock(reply, known?.player?.rules.orEmpty(), Command.PLAYER_INFO_RULES, Command.PLAYER_INFO_RULES_NONE)
         for (ineffective in resolver.ineffectiveRules(subject).filter { it.hit.owner is RuleSetOwner.OfPlayer }) {
             lines += reply.text(Command.PLAYER_INFO_INEFFECTIVE, ineffective.hit.key.text, ruleValue(reply, ineffective.hit.rule), ineffective.closingKey.text)
@@ -200,7 +202,7 @@ internal object Queries {
                         lines += reply.text(Command.VALIDATE_NO_CHANGE)
                     } else {
                         lines += reply.text(Command.VALIDATE_CHANGES, changes.size)
-                        for (change in changes) lines += reply.text(Command.CHANGE_RULE, ownerOf(reply, change.owner), change.key.text, valueOrNone(reply, change.before), valueOrNone(reply, change.after))
+                        lines += Modifications.changeLines(reply, changes)
                     }
                 }
                 is ConfigurationRead.Refused -> {

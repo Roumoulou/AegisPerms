@@ -35,7 +35,7 @@ class Envelope(val subject: UUID, val vanilla: LevelBasedPermissionSet) : LevelB
     override fun hasPermission(permission: Permission): Boolean {
         if (permission !is Permission.Atom) return vanilla.hasPermission(permission)
         return try {
-            val key = ApiKeyRequests.keyOf(permission.id()) ?: return vanilla.hasPermission(permission)
+            val key = ApiKeyRequests.keyOf(permission.id(), ApiRoute.ATOM) ?: return vanilla.hasPermission(permission)
             ApiKeyRequests.request(key, ApiRoute.ATOM)
             val decision = Publisher.current().decision(subject, level().id(), key)
             if (Publisher.mode() == Mode.OBSERVE) {
@@ -55,9 +55,10 @@ class Envelope(val subject: UUID, val vanilla: LevelBasedPermissionSet) : LevelB
                 Decision.UNSET -> vanilla.hasPermission(permission)
             }
         } catch (error: Throwable) {
-            // Un serveur fermé vaut mieux qu'un serveur ouvert à vanilla par accident (7.5) : le refus, et la trace une fois.
+            // Un serveur fermé vaut mieux qu'un serveur ouvert à vanilla par accident (7.5) : le refus, et la trace une fois. En observation, rien ne
+            // s'applique, l'erreur non plus : vanilla répond, comme à la porte.
             ModLog.once(HOOK, "${permission.id()}", error)
-            false
+            if (Publisher.mode() == Mode.OBSERVE) vanilla.hasPermission(permission) else false
         }
     }
 

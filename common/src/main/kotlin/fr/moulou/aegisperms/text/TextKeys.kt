@@ -233,6 +233,7 @@ object TextKeys {
         const val CHECK_NODE_HIDDEN = WHY_PREFIX + "check.node_hidden"
         const val CHECK_ABSENT = WHY_PREFIX + "check.absent"
         const val CHECK_API_ABSENT = WHY_PREFIX + "check.api_absent"
+        const val MORE_DEMANDING = WHY_PREFIX + "more_demanding"
     }
 
     /** Ce que le mod dit aux ops d'au moins `admin-level` (4.8, 4.9), `aegisperms.notice.*`. */

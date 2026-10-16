@@ -14,6 +14,7 @@ import net.minecraft.server.permissions.LevelBasedPermissionSet
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Le renvoi des arbres de commandes (cahier des charges, 7.4 et 7.6) : les demandes s'accumulent et partent à la fin du tick, sur le fil serveur, une fois
@@ -23,8 +24,8 @@ object TreeResend {
 
     private const val HOOK = "treeResend"
 
-    @Volatile
-    private var everyone = false
+    /** Tout le monde est demandé ; lu et remis à zéro d'un seul geste au renvoi, pour qu'une demande posée entre les deux par un autre fil ne se perde pas. */
+    private val everyone = AtomicBoolean(false)
 
     private val players = ConcurrentHashMap.newKeySet<UUID>()
 
@@ -33,7 +34,7 @@ object TreeResend {
 
     /** Demande l'arbre de tous les joueurs en ligne : après un `/reload`, un changement des réglages ou un premier état. */
     fun requestAll() {
-        everyone = true
+        everyone.set(true)
     }
 
     /** Demande l'arbre d'un joueur. */
@@ -74,9 +75,8 @@ object TreeResend {
 
     /** À la fin du tick, sur le fil serveur : l'arbre des joueurs demandés et des joueurs concernés, une fois chacun. */
     fun flush(server: MinecraftServer) {
-        if (!everyone && players.isEmpty() && pending.isEmpty()) return
-        val all = everyone
-        everyone = false
+        if (!everyone.get() && players.isEmpty() && pending.isEmpty()) return
+        val all = everyone.getAndSet(false)
         val requested = HashSet(players)
         players.removeAll(requested)
         val changes = generateSequence { pending.poll() }.toList()
@@ -97,11 +97,11 @@ object TreeResend {
 
     internal fun pending(): List<PermissionsChanges> = pending.toList()
 
-    internal fun wantsEveryone(): Boolean = everyone
+    internal fun wantsEveryone(): Boolean = everyone.get()
 
     /** Oublie toute demande. Réservé aux tests. */
     internal fun clear() {
-        everyone = false
+        everyone.set(false)
         players.clear()
         pending.clear()
     }

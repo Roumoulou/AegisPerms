@@ -33,20 +33,25 @@ object FabricPermissionProvider {
      * La réponse à une demande (6.3) : la clé est celle du nœud, écrite en entier, et entre au catalogue par la voie `fabric` ; seul le codec booléen est
      * servi, les valeurs typées étant à la deuxième version ; le sujet vient du contexte.
      */
-    internal fun <T : Any> answer(context: PermissionContext, permission: PermissionNode<T>): T? {
-        val key = ApiKeyRequests.keyOf(permission.key()) ?: return null
-        return try {
-            ApiKeyRequests.request(key, ApiRoute.FABRIC)
-            if (permission.codec() !== Codec.BOOL) return null
-            when (subjectOf(context).decision(key)) {
-                Decision.ALLOW -> permission.cast(true)
-                Decision.DENY_VISIBLE, Decision.DENY_HIDDEN -> permission.cast(false)
-                Decision.UNSET, null -> null
-            }
-        } catch (error: Throwable) {
-            ModLog.once(HOOK, key.text, error)
+    internal fun <T : Any> answer(context: PermissionContext, permission: PermissionNode<T>): T? = try {
+        val key = ApiKeyRequests.keyOf(permission.key(), ApiRoute.FABRIC)
+        if (key == null) {
             null
+        } else {
+            ApiKeyRequests.request(key, ApiRoute.FABRIC)
+            if (permission.codec() !== Codec.BOOL) {
+                null
+            } else {
+                when (subjectOf(context).decision(key)) {
+                    Decision.ALLOW -> permission.cast(true)
+                    Decision.DENY_VISIBLE, Decision.DENY_HIDDEN -> permission.cast(false)
+                    Decision.UNSET, null -> null
+                }
+            }
         }
+    } catch (error: Throwable) {
+        ModLog.once(HOOK, permission.key().toString(), error)
+        null
     }
 
     /**
