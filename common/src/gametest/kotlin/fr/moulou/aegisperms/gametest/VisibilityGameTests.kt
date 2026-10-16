@@ -15,7 +15,7 @@ import net.minecraft.commands.Commands
 import net.minecraft.gametest.framework.GameTestHelper
 import net.minecraft.server.MinecraftServer
 
-/** Voir et utiliser (cahier des charges, 2.7 et 8.5) : ce qu'une source jugée voit, analyse, complète et exécute. */
+/** Voir et utiliser (cahier des charges, 2.7, 3.8 et 8.5) : ce qu'une source jugée voit, analyse, complète et exécute, et ce qu'un nœud tardif reçoit. */
 class VisibilityGameTests : AegisGameTests() {
 
     /** Prouve qu'une commande ouverte à `default` se voit sans être op, sous sa forme préfixée seule, puis disparaît sans règle. */
@@ -73,6 +73,51 @@ class VisibilityGameTests : AegisGameTests() {
         TestStates.publish(permissionsWith(open))
         helper.assertFalse("mc:seed" in suggestions(server, "mc:se", source), "une commande masquée ne se suggère pas")
         helper.assertFalse("mc:seed" in suggestions(server, "mc:execute as @s run mc:se", source), "ni sous execute as ... run")
+        helper.succeed()
+    }
+
+    /** Prouve que la porte tient aussi `CommandDispatcher#execute(ParseResults)`, par où un mod exécuterait une analyse : sous refus visible, 0 et le message du refus. */
+    @GameTest
+    fun visibleRefusalStopsTheExecutionOfAParse(helper: GameTestHelper) {
+        val server = helper.server
+        val recorder = Recorder()
+        val source = helper.judgedPlayer().source.withSource(recorder)
+        TestStates.publish(permissionsWith(deliveredDefaultPlus("minecraft:command.seed" to Rule(RuleValue.DENY, visible = true))))
+        val dispatcher = server.commands.dispatcher
+        val parse = dispatcher.parse("mc:seed", source)
+        helper.assertTrue(parse.exceptions.isEmpty() && !parse.reader.canRead(), "la ligne s'analyse en entier")
+        helper.assertValueEqual(dispatcher.execute(parse), 0, "l'exécution de l'analyse rend 0")
+        helper.assertValueEqual(recorder.messages.size, 1, "la source reçoit un seul message")
+        val keys = recorder.messages.single().translationKeys
+        helper.assertTrue(Hooks.REFUSAL_KEY in keys, "celui du refus visible, pas $keys")
+        helper.succeed()
+    }
+
+    /** Prouve que la forme exigée vaut aussi après `run` : `mc:execute as @s run seed` ne passe pas, `... run mc:seed` passe. */
+    @GameTest
+    fun bareFormAfterRunIsRefused(helper: GameTestHelper) {
+        val server = helper.server
+        val source = helper.judgedPlayer().source
+        TestStates.publish(permissionsWith(deliveredDefaultPlus("minecraft:command.execute" to Rule.ALLOW, "minecraft:commands/entity_selectors" to Rule.ALLOW, "minecraft:command.seed" to Rule.ALLOW)))
+        helper.assertTrue(Trees.runs(server.commands.dispatcher, "mc:execute as @s run mc:seed", source), "la forme préfixée passe après run")
+        helper.assertFalse(Trees.runs(server.commands.dispatcher, "mc:execute as @s run seed", source), "la forme nue ne passe pas après run")
+        helper.succeed()
+    }
+
+    /** Prouve qu'une commande racine enregistrée après l'index reçoit sa fiche et sa forme préfixée, et que la forme exigée vaut pour elle (3.8). */
+    @GameTest
+    fun lateRootReceivesItsForm(helper: GameTestHelper) {
+        val server = helper.server
+        val dispatcher = server.commands.dispatcher
+        val late = dispatcher.root.getChild("aegistest_late") ?: dispatcher.register(Commands.literal("aegistest_late").executes { 1 })
+        val key = "$TEST_MOD_ID:command.aegistest_late"
+        helper.assertValueEqual((Trees.markOf(late) as? NodeEntry)?.key?.text ?: "aucune", key, "la racine tardive porte une fiche sur sa clé")
+        val form = dispatcher.root.getChild("$TEST_MOD_ID:aegistest_late") ?: throw helper.assertionException("la racine tardive n'a pas reçu sa forme préfixée")
+        helper.assertValueEqual((Trees.markOf(form) as? NodeEntry)?.key?.text ?: "aucune", key, "la forme porte la clé de sa cible")
+        val source = helper.judgedPlayer().source
+        TestStates.publish(permissionsWith(deliveredDefaultPlus(key to Rule.ALLOW)))
+        helper.assertTrue(form.canUse(source), "ouverte, la forme préfixée se voit")
+        helper.assertFalse(late.canUse(source), "sa forme nue reste cachée sous la forme exigée")
         helper.succeed()
     }
 
