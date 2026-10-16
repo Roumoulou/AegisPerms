@@ -168,6 +168,34 @@ class DecisionTraceTest {
     }
 
     @Test
+    fun `un nœud refusé visible par sa propre clé se ferme lui-même, et reste vu`() {
+        val membre = personas.groups.getValue("membre")
+        val permissions = permissions(
+            groups = personas.groups + ("membre" to membre.copy(rules = membre.rules + (coordinates.text to Rule(RuleValue.DENY, visible = true)))),
+            players = personas.players,
+        )
+        val trace = resolver(permissions).explainNode(subject("Jogger"), coordinates)
+
+        assertEquals(NodeJudgment.REFUSED, trace.judgment)
+        assertTrue(trace.judgment.hasVisibleRefusal)
+        assertSame(trace.own, trace.closing)
+        assertEquals(Decision.DENY_VISIBLE, trace.own.decision)
+    }
+
+    @Test
+    fun `un allow sur une clé d'API n'est jamais sans effet, une clé d'API n'ayant pas de chemin`() {
+        val permissions = permissions(
+            groups = personas.groups,
+            players = personas.players + (readableForm("Nina") to Player(rules = mapOf("homes:home" to Rule.DENY, "homes:home/limit" to Rule.ALLOW))),
+        )
+        val resolver = resolver(permissions)
+
+        assertTrue(resolver.ineffectiveRules(subject("Nina")).isEmpty())
+        assertEquals(Decision.ALLOW, resolver.explain(subject("Nina"), key("homes:home/limit")).decision)
+        assertEquals(Decision.DENY_HIDDEN, resolver.explain(subject("Nina"), key("homes:home")).decision)
+    }
+
+    @Test
     fun `un nœud sans refus sur son chemin n'a pas de clé qui le ferme`() {
         val trace = resolver(personas).explainNode(subject("Joe"), coordinates)
 

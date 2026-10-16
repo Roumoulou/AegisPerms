@@ -133,6 +133,22 @@ class KeysTest {
     }
 
     @Test
+    fun `une clé se relit telle quelle, un nom à deux-points ou à barre oblique et des échappements collés compris`() {
+        for (text in listOf("mod:command.minecraft:max_minecart_speed", "mod:command.a/b", "mod:command.%252E", "mod:command.%2E", "mod:command.50%25.%2E5")) {
+            assertEquals(text, Keys.parse(text).text, text)
+        }
+        assertEquals(listOf("minecraft:max_minecart_speed"), commandKey("mod:command.minecraft:max_minecart_speed").segments)
+        assertEquals(listOf("a/b"), commandKey("mod:command.a/b").segments)
+        // `%252E` est le nom `%2E`, écrit avec son pour cent échappé ; `%2E` est le nom `.` : deux clés distinctes, chacune d'une seule écriture.
+        assertEquals(listOf("%2E"), commandKey("mod:command.%252E").segments)
+        assertEquals(listOf("."), commandKey("mod:command.%2E").segments)
+        assertEquals("mod:command.%252E", Keys.command("mod", listOf("%2E")).text)
+        assertEquals("mod:command.%2E", Keys.command("mod", listOf(".")).text)
+        assertNotEquals(commandKey("mod:command.%252E"), commandKey("mod:command.%2E"))
+        assertEquals(listOf("50%", ".5"), commandKey("mod:command.50%25.%2E5").segments)
+    }
+
+    @Test
     fun `une clé couvre ses descendantes, jamais ses ancêtres`() {
         val teleport = commandKey("minecraft:command.teleport")
         val location = commandKey("minecraft:command.teleport.targets.location")

@@ -248,6 +248,18 @@ class StoredFileTest {
     }
 
     @Test
+    fun `un store qui n'a pas pu se construire ne recrée pas un fichier supprimé à la relecture`() {
+        put(permissionsPath, "{ \"schema-version\": 1, \"groups\": { \"default\": {} }, }")
+        Stores.permissions(config).use { permissions ->
+            assertEquals(IssueKind.MALFORMED_FILE, permissions.read().issues().single().kind)
+            Files.delete(permissionsPath)
+            assertEquals(IssueKind.UNREADABLE_FILE, permissions.read().issues().single().kind)
+            assertFalse(Files.exists(permissionsPath))
+            assertFalse(permissions.isOpen)
+        }
+    }
+
+    @Test
     fun `un store qui n'a pas pu se construire se construit à la relecture suivante`() {
         put(permissionsPath, "{ \"schema-version\": 1, \"groups\": { \"default\": {} }, }")
         Stores.permissions(config).use { permissions ->

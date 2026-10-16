@@ -7,6 +7,7 @@ import fr.moulou.aegisperms.validate.ConfigurationFile
 import fr.moulou.storify.core.Store
 import fr.moulou.storify.encodeToPathAtomically
 import kotlinx.serialization.KSerializer
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.exists
 
@@ -48,10 +49,21 @@ internal class StoredFile<DATA : Any>(
 
     private var fingerprint: Fingerprint? = null
 
+    /** Vrai dès la première lecture : un fichier absent ne se crée qu'à l'ouverture, pas à une relecture, le store eût-il manqué son ouverture (4.8). */
+    private var everRead = false
+
     /** Lit le fichier par son store : l'ouvre s'il ne l'est pas, ce qui crée un fichier absent, et le relit sinon. En échec, le store garde ce qu'il tenait. */
     fun read(): FileRead<DATA> {
         val opened = store
-        if (opened == null && !path.exists()) return create().also { fingerprint = Fingerprint.of(path) }
+        val first = !everRead
+        everRead = true
+        if (opened == null && !path.exists()) {
+            if (!first) {
+                fingerprint = Fingerprint.of(path)
+                return FileRead.Refused(listOf(reader.issueOf(path, NoSuchFileException(path.toString()))))
+            }
+            return create().also { fingerprint = Fingerprint.of(path) }
+        }
 
         // L'empreinte se prend avant la lecture : un fichier qui change pendant qu'on le lit sera vu comme changé.
         fingerprint = Fingerprint.of(path)
