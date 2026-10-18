@@ -7,15 +7,15 @@ La référence de `/aegis`, pour l'administrateur. Les clés et les groupes sont
 
 ## 1. Qui lance `/aegis`
 
-La console, le RCON, et les ops dont le niveau atteint `admin-level`, `owners` par défaut dans `settings.json` : eux gardent `/aegis` quoi que disent les
-règles. Un joueur qui n'est pas op l'obtient par une règle `allow` sur `aegisperms:command.aegis` ; `command` à `allow` ne l'ouvre pas. Un bloc de commande,
+La console, le RCON, et les ops dont le niveau d'op atteint `admin-level` (`owners`, sa valeur livrée, dans `settings.json`) gardent `/aegis`, quoi que disent
+les règles. Un joueur qui n'est pas op l'obtient par une règle `allow` sur `aegisperms:command.aegis` ; `command` à `allow` ne l'ouvre pas. Un bloc de commande,
 une fonction et un `execute as <joueur> run aegis ...` lancé par la console sont refusés.
 
 ## 2. Les conventions
 
-- `<joueur>` est un UUID, avec ou sans tirets, ou un pseudo : celui d'un joueur en ligne, du cache de profils du serveur, ou d'une forme lisible du fichier
-  des droits, comparé sans la casse. Quand ces sources donnent deux UUID différents, la commande refuse et les nomme : écrivez l'UUID. Un UUID écrit tel quel
-  désigne aussi un joueur jamais venu.
+- `<joueur>` est un UUID, avec ou sans tirets, ou un pseudo : celui d'un joueur en ligne, du cache de profils du serveur, ou d'une forme lisible du fichier des
+  droits, sans tenir compte de la casse. Quand ces sources donnent deux UUID différents, la commande refuse et les nomme : écrivez l'UUID. Un UUID écrit tel
+  quel désigne aussi un joueur jamais venu.
 - `<groupe>`, `<parent>` et `<nom>` sont des noms de groupe : minuscules, chiffres, `_` et `-`.
 - `<clé>` est une clé de commande ou d'API, lue jusqu'au bout de la ligne.
 - `<commande>` est une ligne telle que le joueur la taperait, sans le `/`, sous sa forme nue, préfixée ou par un alias, lue jusqu'au bout.
@@ -23,7 +23,7 @@ une fonction et un `execute as <joueur> run aegis ...` lancé par la console son
 - Un texte libre se met entre guillemets.
 
 Le mod complète les arguments : les joueurs en ligne et ceux du fichier, les groupes, les clés du catalogue, les racines de commande, les dossiers de
-`backups\`.
+`backups/`.
 
 ## 3. Consulter
 
@@ -34,8 +34,8 @@ Le mod complète les arguments : les joueurs en ligne et ceux du fichier, les gr
 | `/aegis why <joueur> <commande>` | la ligne analysée sans être exécutée, et la décision expliquée nœud par nœud (chapitre 5) |
 | `/aegis check <joueur> <clé>` | la décision d'une clé pour ce joueur : la valeur, la règle qui répond et d'où elle vient, les ensembles écartés, l'étape 0 quand elle joue ; pour une clé de commande, si le nœud est permis compte tenu de son chemin ; pour la clé d'un alias de vanilla, la clé de la cible |
 | `/aegis search <clé>` | les groupes et les joueurs qui portent une règle sur cette clé ou sur une clé qui la couvre, avec la valeur de chaque règle |
-| `/aegis catalog [début de clé]` | les clés du catalogue qui commencent ainsi, trente au plus : l'exigence vanilla, la forme préfixée et les alias, les marques sensible, partagée et plus exigeante ; puis le nombre de clés restantes |
-| `/aegis manual [fr\|en]` | écrit le manuel des commandes du serveur dans `config\aegisperms\manuals\` : mod par mod, chaque commande avec sa forme préfixée, ses alias, sa clé, son exigence vanilla et sa description, puis son arbre entier, un nœud par ligne avec sa clé ; dans votre langue sans argument ; la réponse donne le fichier et les comptes (`les-fichiers.md`, chapitre 9) |
+| `/aegis catalog [<début de clé>]` | les clés du catalogue qui commencent ainsi, trente au plus : l'exigence vanilla, la forme préfixée et les alias, les marques `sensitive`, `shared` et `more-demanding` ; puis le nombre de clés restantes |
+| `/aegis manual [fr\|en]` | écrit le manuel des commandes du serveur dans `config/aegisperms/manuals/`, dans votre langue sans argument ; la réponse donne le fichier et les comptes ; ce que le manuel contient est au chapitre 9 de `les-fichiers.md` |
 | `/aegis group list` | les groupes par poids décroissant puis nom, avec le poids, le nombre de règles, les parents et les membres d'office |
 | `/aegis group <groupe> info` | le poids, les parents, les groupes qui en héritent, `include-ops`, la note, les règles triées, les joueurs du fichier qui l'ont pour groupe direct |
 | `/aegis player <joueur> info` | l'UUID et le pseudo ; en ligne ou hors ligne, avec le niveau d'op ; les groupes directs et d'office ; l'ordre d'examen ; les règles propres, et celles que la validation dit sans effet |
@@ -47,7 +47,7 @@ Une consultation répond à qui l'a lancée, ligne par ligne, et ne touche à ri
 
 | Commande | Ce qu'elle fait |
 |---|---|
-| `/aegis group <groupe> create [poids]` | crée un groupe vide, de poids 0 sans argument |
+| `/aegis group <groupe> create [<poids>]` | crée un groupe vide, de poids 0 sans argument |
 | `/aegis group <groupe> delete` | supprime un groupe que rien ne référence ; refuse `default`, un groupe parent d'un autre ou groupe direct d'un joueur, et nomme ce qui le retient |
 | `/aegis group <groupe> rename <nom>` | renomme le groupe et chaque référence, dans les parents et chez les joueurs ; refuse `default` et un nom déjà pris |
 | `/aegis group <groupe> clone <nom>` | crée `<nom>` avec le poids, les parents, les règles et la note du groupe ; ni `include-ops` ni les membres ne se copient |
@@ -64,14 +64,14 @@ Une consultation répond à qui l'a lancée, ligne par ligne, et ne touche à ri
 | `/aegis player <joueur> allow <clé>`, `deny`, `deny-visible`, `deny-hidden`, `unset` | ses règles propres, comme pour un groupe |
 | `/aegis player <joueur> note "<texte>" [<clé>]` | sa note, ou celle de l'une de ses règles |
 | `/aegis reload` | relit les deux fichiers, les valide et publie ; la réponse dit la génération, les règles qui changent et les avertissements |
-| `/aegis backup [nom]` | copie les deux fichiers dans `backups\<date>_<heure>[-nom]\` ; le nom : minuscules, chiffres, `_` et `-`, trente-deux caractères au plus |
-| `/aegis restore <dossier>` | remplace les deux fichiers par ceux d'une sauvegarde de `backups\`, met de côté ceux d'avant dans une sauvegarde `-before-restore`, et publie |
+| `/aegis backup [<nom>]` | copie les deux fichiers dans `backups/<AAAA-MM-JJ>_<HH-mm-ss>[-<nom>]/` ; le nom : minuscules, chiffres, `_` et `-`, trente-deux caractères au plus |
+| `/aegis restore <dossier>` | remplace les deux fichiers par ceux d'une sauvegarde de `backups/`, et publie (`les-fichiers.md`, chapitre 8) |
 | `/aegis mode observe`, `enforce` | change le mode en mémoire, tout de suite, et renvoie les arbres aux joueurs ; le fichier des réglages ne change pas, et le prochain rechargement reprend son mode |
 
 Un joueur entre dans le fichier des droits à sa première règle, à son premier groupe ou à sa première note, et en sort quand il n'a plus rien. Un groupe
 vide y reste.
 
-**Ce que fait une modification.** Elle se calcule sur l'état en vigueur, se valide entière, s'écrit d'un bloc dans `permissions.json`, puis se publie. La
+Une modification se calcule sur l'état en vigueur, se valide entière, s'écrit d'un bloc dans `permissions.json`, puis se publie. La
 réponse se diffuse aux ops en ligne et s'inscrit au journal du serveur, comme `/op` ; elle dit la génération publiée et répète les avertissements nouveaux :
 une clé absente du catalogue avec la plus proche, un `allow` sur une clé sensible, un `allow` sous un refus. Une modification refusée dit pourquoi et ne touche
 à rien :
@@ -96,8 +96,8 @@ mc:teleport est une forme ou un alias de teleport (mod minecraft)
 Verdict : refusée, masquée ; Jogger ne voit pas la commande
 ```
 
-Pour chaque nœud de la ligne, dans l'ordre : son nom, son statut, sa décision, et la règle qui l'emporte avec son ensemble, le groupe et par quel héritage, la
-règle propre, ou l'étape 0 pour `/aegis` ; « clé ancêtre » quand une clé plus courte couvre le nœud. Les statuts :
+Pour chaque nœud de la ligne, dans l'ordre : son nom, son statut, sa décision, et la règle qui l'emporte avec son ensemble, qui est un groupe (et par quel
+héritage), la règle propre du joueur, ou l'étape 0 pour `/aegis` ; « clé ancêtre » quand une clé plus courte couvre le nœud. Les statuts :
 
 | Statut | Sens |
 |---|---|
@@ -112,7 +112,15 @@ règle propre, ou l'étape 0 pour `/aegis` ; « clé ancêtre » quand une clé 
 | sans effet | un `allow` sous un refus du chemin |
 | forme nue | la forme nue d'une commande qui a une forme préfixée, masquée au joueur |
 
-Puis les ensembles écartés après celui qui a répondu, les égalités de poids qui ont joué, et le verdict : permise ; refusée, masquée ; refusée, visible ;
-refusée par vanilla, quand l'exigence d'un nœud sans règle ne passe pas ; incomplète, quand la ligne s'arrête avant un nœud qui s'exécute. Pour un joueur hors
-ligne, la sonde porte son niveau d'`ops.json`, et la dernière ligne le dit. En mode observation, une ligne rappelle que la décision est calculée, pas
-appliquée.
+Puis les ensembles écartés après celui qui a répondu, les égalités de poids qui ont joué, et le verdict :
+
+| Verdict | Quand |
+|---|---|
+| permise | aucun refus sur le chemin, et la ligne atteint un nœud qui s'exécute |
+| refusée, masquée | le premier refus du chemin est masqué : un `deny` masqué, ou une forme nue sous la forme exigée |
+| refusée, visible | le premier refus du chemin est visible |
+| refusée par vanilla | l'exigence vanilla d'un nœud sans règle ne passe pas |
+| incomplète | la ligne s'arrête avant un nœud qui s'exécute |
+
+Pour un joueur hors ligne, la sonde porte son niveau d'op d'`ops.json`, et la dernière ligne le dit. En mode observation, une ligne rappelle que la décision est
+calculée, pas appliquée.

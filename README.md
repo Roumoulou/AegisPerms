@@ -12,7 +12,7 @@ installer côté client.
 - Les **formes préfixées** et les **alias** que le client vanilla comprend, complétion et couleurs comprises : `/mc:teleport`, `/gm` pour `/gamemode`.
 - `/aegis why`, qui **explique une décision** nœud par nœud, et `/aegis check`, qui donne la décision d'une clé avec la règle qui l'emporte.
 - Deux **fichiers JSON** édités à la main ou par `/aegis`, validés avec la ligne de l'erreur, rechargés sans commande, sauvegardés et restaurés.
-- Un **mode observation**, qui calcule et journalise les décisions sans les appliquer, le temps d'ajuster les règles sur un serveur vivant.
+- Un **mode observation**, qui calcule et journalise les décisions sans les appliquer, le temps d'ajuster les règles sur un serveur en service.
 - Un **fournisseur des deux API de permissions**, celle de la Fabric API et celle de lucko, pour que les autres mods suivent les mêmes groupes.
 
 Pour l'administrateur d'un serveur Fabric dédié, petit ou moyen, qui veut ouvrir une commande d'op à un joueur sans le rendre op, retirer une seule
@@ -36,15 +36,15 @@ figées. Les versions sont sur [Modrinth](https://modrinth.com/mod/KNCR3gkY), su
 | Fabric Language Kotlin | 1.14.1 ou plus récent |
 | Java | 25 |
 
-Posez le jar de votre version dans `mods\` du serveur, avec la Fabric API et Fabric Language Kotlin. Le mod embarque le reste : son cœur, Storify, l'API de
-permissions de lucko. Il est `environment: server` : un client qui le trouve dans ses mods ne le charge pas, et un joueur n'a rien à installer.
+Posez le jar de votre version dans le dossier `mods/` du serveur, avec la Fabric API et Fabric Language Kotlin. Le mod embarque le reste : son cœur, Storify,
+l'API de permissions de lucko. Il est `environment: server` : un client qui le trouve dans ses mods ne le charge pas, et un joueur n'a rien à installer.
 
 AegisPerms est seul maître des droits sur son serveur : il refuse de démarrer avec LuckPerms, Vanilla Permissions, Universal Perms ou Player Roles, et le
-chargeur nomme les deux mods avant que le jeu ne charge.
+chargeur nomme les deux mods avant le chargement du jeu.
 
 ## Premier démarrage
 
-Au premier démarrage, le mod crée `config\aegisperms\settings.json` et `permissions.json` avec deux groupes : `default`, qui refuse toute commande sauf
+Au premier démarrage, le mod crée `config/aegisperms/settings.json` et `permissions.json` avec deux groupes : `default`, qui refuse toute commande sauf
 `/help` et `/msg`, et `admin`, qui ouvre tout aux ops de niveau 4. Un joueur ne voit alors que `/mc:help` et `/mc:msg` ; un op de niveau 4 voit tout, et
 `/aegis`. La console et le RCON ne sont jamais jugés.
 
@@ -56,7 +56,7 @@ Au premier démarrage, le mod crée `config\aegisperms\settings.json` et `permis
 ```
 
 Joe se téléporte, et `why` raconte pourquoi, nœud par nœud. `/aegis manual` écrit toutes les commandes du serveur, avec leurs clés et leur description,
-dans `config\aegisperms\manuals\`. La suite est dans la doc.
+dans `config/aegisperms/manuals/`. La suite est dans la doc.
 
 ## Documentation
 
@@ -98,4 +98,6 @@ jar.
 
 Ce dépôt est la racine Gradle du mod, et rien d'autre : le code, ses tests, sa doc dans `docs/`, ses tags et ses releases. Le classeur de l'auteur reste
 hors du dépôt : ses notes de travail, ses relevés et le cahier des charges, privé, qui fait foi sur ce que le mod doit faire ; les mentions
-`(cahier des charges, <section>)` du code et de la doc renvoient à ses sections. Un clone se construit sans lui.
+`(cahier des charges, <section>)` du code et de la doc renvoient à ses sections. Un clone se construit et passe ses tests sans lui ; seuls les
+environnements de développement (`runServer`, `runClient`, `serverModded`) lisent l'entrepôt de l'auteur, `C:\MC-Kit`, ou les chemins qu'un
+`machine.properties` donne.
