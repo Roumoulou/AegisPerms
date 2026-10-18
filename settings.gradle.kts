@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 roumoulou
+// SPDX-License-Identifier: LGPL-3.0-only
+
 /*
 ════════════════════════════════════════════════════════════════════════════════
  LE MOD EN MODULES : UN CŒUR, UN CODE COMMUN, UN MODULE PAR VERSION DU JEU

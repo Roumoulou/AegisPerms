@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 roumoulou
+// SPDX-License-Identifier: LGPL-3.0-only
+
 /**
  * ════════════════════════════════════════════════════════════════════════════════
  *  MODULE core — le cœur du mod, sans Minecraft

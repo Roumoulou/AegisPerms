@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 roumoulou
+// SPDX-License-Identifier: LGPL-3.0-only
+
 /**
  * ════════════════════════════════════════════════════════════════════════════════
  *  PLUGIN DE CONVENTION — aegisperms.loom-module

@@ -20,7 +20,7 @@ import java.util.zip.ZipFile
  * Ouvre le jar livrable et vérifie ce qu'il porte, à chaque build : exactement les jars embarqués attendus, et les entrées attendues à la
  * racine, les licences.
  *
- * Elle lit le fichier lui-même, pas la déclaration du build : c'est ce qui est publié qui compte.
+ * La tâche lit le fichier lui-même, pas la déclaration du build : c'est ce qui est publié qui compte.
  */
 @CacheableTask
 abstract class ReleaseJarCheck : DefaultTask() {

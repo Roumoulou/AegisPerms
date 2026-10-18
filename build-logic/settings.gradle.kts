@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 roumoulou
+// SPDX-License-Identifier: LGPL-3.0-only
+
 /*
 Le build des plugins de convention du mod, inclus par le settings.gradle.kts de la
 racine (pluginManagement) : ses plugins s'appliquent par leur id, sans version.

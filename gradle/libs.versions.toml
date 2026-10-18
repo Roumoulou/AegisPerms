@@ -8,9 +8,9 @@ java = "25" # Version Java cible (utilisée pour la compilation ET dans fabric.m
 # Le plugin des environnements de développement, pris sur Repsy à cette version
 # (settings.gradle.kts) : un -SNAPSHOT n'est rafraîchi qu'une fois par vingt-quatre
 # heures, --refresh-dependencies force la reprise. Les modules de version lui déclarent
-# leur serveur de test (`gameTests { }`) : une version antérieure à la 0.3 ne compilerait
-# pas leur build. Depuis la 0.4.0, l'entrepôt du kit se déclare dans gradle.properties, le
-# kit valant sur chaque poste, et machine.properties ne garde que le joueur.
+# leur serveur de test (`gameTests { }`), qu'Outfitter porte à partir de la 0.3. L'entrepôt du
+# kit se déclare dans gradle.properties, le kit valant sur chaque poste, et machine.properties
+# ne garde que le joueur.
 outfitter = "0.4.0-SNAPSHOT"
 
 # ── Publication ───────────────────────────────────────────────────────────────
@@ -25,9 +25,9 @@ mod-publish = "2.2.1"
 # Repsy à sa version publiée : un -SNAPSHOT n'est rafraîchi qu'une fois par vingt-quatre
 # heures, --refresh-dependencies force la reprise. tomlkt et json5 sont ses deux
 # dépendances que fabric-language-kotlin ne fournit pas : le jar du mod les embarque avec
-# elle (jar-in-jar, section 2 du plugin de version), aux versions de son catalogue. La 0.6.0
-# porte les trois chantiers que `files` attendait : le localisateur borné (C-53), le chemin
-# d'une clé en double (C-55) et la ligne d'une faute sans offset (C-56).
+# elle (jar-in-jar, section 2 du plugin de version), aux versions de son catalogue. `files`
+# compte sur trois chantiers de la 0.6.0 : le localisateur borné (C-53), le chemin d'une clé en
+# double (C-55) et la ligne d'une faute sans offset (C-56).
 storify = "0.6.0-SNAPSHOT"
 tomlkt = "0.6.1"
 json5 = "0.8.0"

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 roumoulou
+// SPDX-License-Identifier: LGPL-3.0-only
+
 /**
  * ════════════════════════════════════════════════════════════════════════════════
  *  MODULE mc-26.3 — le mod pour Minecraft 26.3

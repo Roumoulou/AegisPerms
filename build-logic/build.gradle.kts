@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 roumoulou
+// SPDX-License-Identifier: LGPL-3.0-only
+
 /**
  * ════════════════════════════════════════════════════════════════════════════════
  *  BUILD-LOGIC — les plugins de convention du mod

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 roumoulou
+// SPDX-License-Identifier: LGPL-3.0-only
+
 @file:Suppress("AvoidDuplicateDependencies") // IntelliJ souligne junit-jupiter, déclaré pour l'étage 0 et pour l'étage 1 : deux source sets, deux déclarations voulues.
 
 /**
