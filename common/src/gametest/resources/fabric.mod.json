@@ -21,7 +21,8 @@
       "fr.moulou.aegisperms.gametest.ModelGameTests",
       "fr.moulou.aegisperms.gametest.ApiGameTests",
       "fr.moulou.aegisperms.gametest.FilesAndCycleGameTests",
-      "fr.moulou.aegisperms.gametest.AdministrationGameTests"
+      "fr.moulou.aegisperms.gametest.AdministrationGameTests",
+      "fr.moulou.aegisperms.gametest.AdvancementGameTests"
     ]
   },
   "mixins": [
