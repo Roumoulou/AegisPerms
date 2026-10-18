@@ -37,6 +37,8 @@ class ConfigurationFiles internal constructor(val directory: Path, private val c
 
     private val backupFiles = Backups(directory, reader)
 
+    private val manuals = Manuals(directory)
+
     /**
      * Les réglages sur lesquels une écriture des droits s'appuie : ceux de la dernière lecture valide par les stores, ou ceux que le démarrage applique
      * quand les droits, eux, viennent de leur fichier. `null` met les droits en lecture seule.
@@ -210,6 +212,13 @@ class ConfigurationFiles internal constructor(val directory: Path, private val c
         } catch (failure: Exception) {
             BackupResult.Failed(failure)
         }
+    }
+
+    /** Écrit un manuel des commandes dans `manuals\` (5.10), pour la langue de code [language] : le nom du fichier écrit, ou la panne. */
+    fun writeManual(language: String, text: String): ManualWrite = try {
+        ManualWrite.Done(manuals.write(language, text, clock))
+    } catch (failure: Exception) {
+        ManualWrite.Failed(failure)
     }
 
     /** Les sauvegardes que [restore] peut reprendre, par le nom de leur dossier, triées. */
