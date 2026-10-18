@@ -77,9 +77,6 @@ Pour qui reprend le code, dans `docs/technical-docs/` :
 - [La mesure de performance](docs/technical-docs/mesure-de-performance.md) : le protocole et les chiffres.
 - [Le plan de tests en jeu](docs/technical-docs/plan-de-tests-en-jeu.md) : ce qu'un client vanilla montre et que le serveur de test ne montre pas.
 
-Le cahier des charges, [`docs/specs/cahier-des-charges.md`](docs/specs/cahier-des-charges.md), fait foi sur ce que le mod doit faire ; il s'adresse à qui
-le construit, et cite des preuves qui vivent hors du dépôt, sur le poste de l'auteur.
-
 ## Construire
 
 ```bash
@@ -99,5 +96,6 @@ jar.
 
 ## Le dépôt
 
-Ce dépôt est la racine Gradle du mod, et rien d'autre : le code, ses tests, sa doc dans `docs/`, ses tags et ses releases. Le classeur de l'auteur, avec
-ses notes de travail, ses relevés et les preuves que le cahier des charges cite, reste hors du dépôt. Un clone se construit sans lui.
+Ce dépôt est la racine Gradle du mod, et rien d'autre : le code, ses tests, sa doc dans `docs/`, ses tags et ses releases. Le classeur de l'auteur reste
+hors du dépôt : ses notes de travail, ses relevés et le cahier des charges, privé, qui fait foi sur ce que le mod doit faire ; les mentions
+`(cahier des charges, <section>)` du code et de la doc renvoient à ses sections. Un clone se construit sans lui.

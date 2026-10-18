@@ -32,7 +32,7 @@ tire sa version, `<mod_version>+<version servie>`, et `fabric.mod.json` sa contr
 embarquée dans le jar ; le mod en développement, `common` et le module réunis sous un même identifiant ; les ressources de `common`, `fabric.mod.json` rempli
 pour la version ; le jar livrable, vérifié par `checkReleaseJar` ; les étages 1 et 2 des tests ; la vérification de compatibilité ; la publication.
 
-Les versions des bibliothèques, et la source de chacune, sont dans le cahier des charges (7.2).
+Les versions des bibliothèques sont dans les catalogues de `gradle\`.
 
 ## 2. Construire
 

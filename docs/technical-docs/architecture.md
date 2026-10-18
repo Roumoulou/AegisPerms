@@ -3,9 +3,8 @@
 > *Type : doc technique.*
 > *Modèle : les règles générales de documents-markdown.md (The Human Readme).*
 
-Pour qui reprend le code : les modules, les packages, ce qui vit en mémoire et sur quel fil, et les endroits du jeu où le mod s'accroche. Le cahier des
-charges, `..\specs\cahier-des-charges.md`, dit ce que le mod doit faire et pourquoi ; cette doc dit comment le code le fait. Le build est dans
-`build-et-publication.md`.
+Pour qui reprend le code : les modules, les packages, ce qui vit en mémoire et sur quel fil, et les endroits du jeu où le mod s'accroche. Ce que le mod doit
+faire, et pourquoi, est au cahier des charges, privé, hors du dépôt (`README.md`, « Le dépôt »). Le build est dans `build-et-publication.md`.
 
 ## 1. Les modules
 

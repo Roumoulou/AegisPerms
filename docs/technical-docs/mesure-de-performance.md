@@ -23,8 +23,8 @@ Ce que le mod coûte au serveur, comment on le mesure, et les chiffres relevés.
 
 ## 2. Le protocole
 
-À jouer sur l'environnement `server` d'un module de version, profil `dev`, avec le `runClient` vanilla du même module, sur les personnages de l'exemple du
-cahier (2.11) : cinq groupes, quatre joueurs.
+À jouer sur l'environnement `server` d'un module de version, profil `dev`, avec le `runClient` vanilla du même module, sur l'exemple complet de
+`docs\user-docs\les-fichiers.md` (chapitre 3) : cinq groupes, quatre joueurs.
 
 | Mesure | Comment | Seuil |
 |---|---|---|
