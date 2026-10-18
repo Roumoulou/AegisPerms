@@ -53,7 +53,7 @@ class AdministrationGameTests : FileGameTests() {
             Console.text(Command.GROUP_LIST_ENTRY, "admin", 100, 1) + Console.text(Command.GROUP_INCLUDE_OPS, "owners"),
             Console.text(Command.GROUP_LIST_ENTRY, "vip", 80, 0),
             Console.text(Command.GROUP_LIST_ENTRY, "aaa", 0, 0),
-            Console.text(Command.GROUP_LIST_ENTRY, "default", 0, 4),
+            Console.text(Command.GROUP_LIST_ENTRY, "default", 0, 3),
         )
         helper.assertValueEqual(texts.drop(1), expected, "admin, vip, aaa, puis default, qui passe après aaa à poids égal")
         helper.succeed()
@@ -173,11 +173,11 @@ class AdministrationGameTests : FileGameTests() {
         val server = helper.server
         val player = helper.judgedPlayer()
         val why = Recorder()
-        Console.perform(server, Console.source(server, why), "aegis why ${player.uuid} mc:me coucou")
+        Console.perform(server, Console.source(server, why), "aegis why ${player.uuid} mc:help")
         val whyTexts = Console.texts(why)
         helper.assertTrue(whyTexts.size >= 3, "why répond ligne par ligne, pas $whyTexts")
-        helper.assertValueEqual(whyTexts.first(), Console.text(Why.TITLE, player.readableForm(), "mc:me coucou"), "la première ligne dit le joueur et la ligne")
-        helper.assertValueEqual(whyTexts.last(), Console.text(Why.VERDICT_PERMITTED), "la dernière le verdict : permise, default ouvre me")
+        helper.assertValueEqual(whyTexts.first(), Console.text(Why.TITLE, player.readableForm(), "mc:help"), "la première ligne dit le joueur et la ligne")
+        helper.assertValueEqual(whyTexts.last(), Console.text(Why.VERDICT_PERMITTED), "la dernière le verdict : permise, default ouvre help")
         val check = Recorder()
         Console.perform(server, Console.source(server, check), "aegis check ${player.uuid} minecraft:command.kick")
         val checkTexts = Console.texts(check)

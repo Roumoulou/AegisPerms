@@ -107,7 +107,7 @@ object TestStates {
 fun permissionsWith(defaultRules: Map<String, Rule>, groups: Map<String, Group> = emptyMap(), players: Map<String, Player> = emptyMap()): Permissions =
     Permissions(Permissions.SCHEMA_VERSION, Permissions.DELIVERED.groups + (Group.DEFAULT to Group(rules = defaultRules)) + groups, players)
 
-/** Les règles du `default` livré, `command` refusé et `help`, `me`, `msg` ouverts, complétées de [rules]. */
+/** Les règles du `default` livré, `command` refusé et `help` et `msg` ouverts, complétées de [rules]. */
 fun deliveredDefaultPlus(vararg rules: Pair<String, Rule>): Map<String, Rule> = Permissions.DELIVERED.groups.getValue(Group.DEFAULT).rules + rules
 
 /** Les ops du serveur de test, par sa liste des ops, comme `/op` et `/deop` le font. */
@@ -192,7 +192,6 @@ object ConfigurationOnDisk {
               "rules": {
                 "command": "deny",
                 "minecraft:command.help": "allow",
-                "minecraft:command.me": "allow",
                 "minecraft:command.msg": "allow"
               }
             },

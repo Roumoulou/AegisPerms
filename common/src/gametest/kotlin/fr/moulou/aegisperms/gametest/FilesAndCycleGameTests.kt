@@ -194,14 +194,14 @@ class FilesAndCycleGameTests : FileGameTests() {
     fun observationComputesWithoutApplying(helper: GameTestHelper) {
         val server = helper.server
         val source = helper.judgedPlayer().source
-        val me = Trees.node(server, "mc:me")
-        TestStates.publish(permissionsWith(deliveredDefaultPlus("minecraft:command.me" to Rule.DENY)))
-        helper.assertFalse(me.canUse(source), "sous enforce, le deny masque /mc:me")
+        val help = Trees.node(server, "mc:help")
+        TestStates.publish(permissionsWith(deliveredDefaultPlus("minecraft:command.help" to Rule.DENY)))
+        helper.assertFalse(help.canUse(source), "sous enforce, le deny masque /mc:help")
         val recorder = Recorder()
         Console.perform(server, Console.source(server, recorder), "aegis mode observe")
         helper.assertValueEqual(Publisher.mode(), Mode.OBSERVE, "le mode est posé en mémoire")
-        helper.assertTrue(me.canUse(source), "sous observe, le nœud suit vanilla et se voit")
-        helper.assertTrue(Trees.runs(server.commands.dispatcher, "mc:me coucou", source), "et la porte laisse passer la ligne que la règle refuse")
+        helper.assertTrue(help.canUse(source), "sous observe, le nœud suit vanilla et se voit")
+        helper.assertTrue(Trees.runs(server.commands.dispatcher, "mc:help", source), "et la porte laisse passer la ligne que la règle refuse")
         Console.perform(server, Console.source(server, recorder), "aegis status")
         helper.assertTrue(Console.text(Command.STATUS_MODE, Console.text(Command.MODE_OBSERVE)) in Console.texts(recorder), "status dit le mode observation, pas ${Console.texts(recorder)}")
         helper.succeed()

@@ -18,19 +18,29 @@ import net.minecraft.gametest.framework.GameTestHelper
 /** Les clés et le mod propriétaire (cahier des charges, 2.4, 3.2 et 8.5) : les alias de vanilla, les commandes des mods, le catalogue. */
 class KeysAndOwnersGameTests : AegisGameTests() {
 
-    /** Prouve que `/tp`, alias de vanilla, suit la clé de `/teleport`. */
+    /** Prouve que `/tp`, alias de vanilla, n'a pas de forme préfixée, se masque avec `/teleport` sous la forme exigée, et suit sa clé quand la table des alias le rend. */
     @GameTest
     fun tpFollowsTeleport(helper: GameTestHelper) {
         val server = helper.server
-        val source = helper.judgedPlayer().source
+        val player = helper.judgedPlayer()
+        val source = player.source
+        helper.assertTrue(server.commands.dispatcher.root.getChild("mc:tp") == null, "un alias de vanilla n'a pas de forme préfixée")
         TestStates.publish(permissionsWith(deliveredDefaultPlus("minecraft:command.teleport" to Rule.ALLOW)))
-        helper.assertTrue(Trees.node(server, "mc:tp").canUse(source), "/mc:tp prend la clé de /teleport, ouverte")
-        TestStates.publish(permissionsWith(deliveredDefaultPlus("minecraft:command.teleport" to Rule.DENY)))
-        helper.assertFalse(Trees.node(server, "mc:tp").canUse(source), "un refus sur /teleport ferme /tp")
+        helper.assertTrue(Trees.node(server, "mc:teleport").canUse(source), "/mc:teleport, ouverte, se voit")
+        helper.assertFalse(Trees.node(server, "tp").canUse(source), "/tp reste masqué sous la forme exigée, avec la forme nue de sa cible")
+        val settings = Settings.DELIVERED.copy(aliases = mapOf("tp" to "minecraft:teleport"))
+        TestStates.publish(permissionsWith(deliveredDefaultPlus("minecraft:command.teleport" to Rule.ALLOW)), settings)
+        val dispatcher = Trees.buildCommands(server).dispatcher
+        helper.assertTrue(Trees.runs(dispatcher, "tp ${player.nameAndId().name()}", source), "la table des alias rend /tp, qui suit la clé de /teleport, ouverte")
+        TestStates.publish(permissionsWith(deliveredDefaultPlus("minecraft:command.teleport" to Rule.DENY)), settings)
+        helper.assertFalse(dispatcher.root.getChild("tp").canUse(source), "un refus sur /teleport ferme /tp")
         helper.succeed()
     }
 
-    /** Prouve que la commande d'une lambda a le mod de test pour mod propriétaire, et que sa redirection se juge sur la clé de sa cible. */
+    /**
+     * Prouve que la commande d'une lambda a le mod de test pour mod propriétaire, que sa redirection, alias, se juge sur la clé de sa cible sans recevoir de
+     * forme, se masque avec elle sous la forme exigée, et la suit quand la table des alias la rend.
+     */
     @GameTest
     fun lambdaCommandBelongsToTheTestMod(helper: GameTestHelper) {
         val server = helper.server
@@ -40,13 +50,22 @@ class KeysAndOwnersGameTests : AegisGameTests() {
         helper.assertValueEqual<Any>(owner?.source ?: "aucune", OwnerSource.DETECTED, "trouvé par sa classe, sans rattachement")
         val source = helper.judgedPlayer().source
         val target = Trees.node(server, "$TEST_MOD_ID:aegistest_target")
-        val jump = Trees.node(server, "$TEST_MOD_ID:aegistest_jump")
-        TestStates.publish(permissionsWith(deliveredDefaultPlus("$TEST_MOD_ID:command.aegistest_target" to Rule.ALLOW)))
+        val jump = Trees.node(server, "aegistest_jump")
+        val mark = Trees.markOf(jump) as? NodeEntry ?: throw helper.assertionException("la redirection n'a pas de fiche")
+        helper.assertValueEqual(mark.key.text, "$TEST_MOD_ID:command.aegistest_target", "la redirection se juge sur la clé de sa cible")
+        helper.assertValueEqual(mark.ownKey?.text ?: "aucune", "$TEST_MOD_ID:command.aegistest_jump", "et garde la sienne pour le catalogue")
+        helper.assertTrue(server.commands.dispatcher.root.getChild("$TEST_MOD_ID:aegistest_jump") == null, "un alias n'a pas de forme préfixée")
+        val allowed = permissionsWith(deliveredDefaultPlus("$TEST_MOD_ID:command.aegistest_target" to Rule.ALLOW))
+        TestStates.publish(allowed)
         helper.assertTrue(target.canUse(source), "la commande du mod, ouverte, se voit")
-        helper.assertTrue(jump.canUse(source), "sa redirection, jugée sur la clé de sa cible, aussi")
-        TestStates.publish(permissionsWith(deliveredDefaultPlus("$TEST_MOD_ID:command.aegistest_target" to Rule.DENY)))
-        helper.assertFalse(target.canUse(source), "la commande du mod, refusée, disparaît")
-        helper.assertFalse(jump.canUse(source), "et sa redirection avec elle")
+        helper.assertFalse(jump.canUse(source), "sa redirection reste masquée sous la forme exigée, avec la forme nue de sa cible")
+        val settings = Settings.DELIVERED.copy(aliases = mapOf("aegistest_jump" to "$TEST_MOD_ID:aegistest_target"))
+        TestStates.publish(allowed, settings)
+        val dispatcher = Trees.buildCommands(server).dispatcher
+        helper.assertTrue(dispatcher.root.getChild("aegistest_jump").canUse(source), "rendue par la table des alias, la redirection suit la clé de sa cible, ouverte")
+        TestStates.publish(permissionsWith(deliveredDefaultPlus("$TEST_MOD_ID:command.aegistest_target" to Rule.DENY)), settings)
+        helper.assertFalse(dispatcher.root.getChild("$TEST_MOD_ID:aegistest_target").canUse(source), "la commande du mod, refusée, disparaît")
+        helper.assertFalse(dispatcher.root.getChild("aegistest_jump").canUse(source), "et sa redirection avec elle")
         helper.succeed()
     }
 

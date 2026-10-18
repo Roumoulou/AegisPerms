@@ -53,12 +53,12 @@ class SubjectGameTests : AegisGameTests() {
         val server = helper.server
         val judged = helper.judgedPlayer()
         val other = helper.judgedPlayer()
-        TestStates.publish(permissionsWith(deliveredDefaultPlus(), players = mapOf(judged.readableForm() to Player(rules = mapOf("minecraft:command.me" to Rule.DENY)))))
-        val me = Trees.node(server, "mc:me")
-        helper.assertTrue(me.canUse(other.source), "l'autre joueur garde /mc:me, que default ouvre")
-        helper.assertFalse(me.canUse(judged.source), "le joueur à la règle propre perd /mc:me")
-        helper.assertFalse(me.canUse(judged.source.withEntity(other)), "execute as ne prête pas les droits de la cible : le juge reste l'émetteur")
-        helper.assertTrue(me.canUse(other.source.withEntity(judged)), "et ne lui retire rien non plus")
+        TestStates.publish(permissionsWith(deliveredDefaultPlus(), players = mapOf(judged.readableForm() to Player(rules = mapOf("minecraft:command.help" to Rule.DENY)))))
+        val help = Trees.node(server, "mc:help")
+        helper.assertTrue(help.canUse(other.source), "l'autre joueur garde /mc:help, que default ouvre")
+        helper.assertFalse(help.canUse(judged.source), "le joueur à la règle propre perd /mc:help")
+        helper.assertFalse(help.canUse(judged.source.withEntity(other)), "execute as ne prête pas les droits de la cible : le juge reste l'émetteur")
+        helper.assertTrue(help.canUse(other.source.withEntity(judged)), "et ne lui retire rien non plus")
         helper.succeed()
     }
 
