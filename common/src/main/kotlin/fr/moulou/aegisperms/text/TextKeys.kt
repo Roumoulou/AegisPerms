@@ -78,6 +78,10 @@ object TextKeys {
         const val CATALOG_PREFIXED_FORM = COMMAND_PREFIX + "catalog.prefixed_form"
         const val CATALOG_ALIASES = COMMAND_PREFIX + "catalog.aliases"
 
+        const val MANUAL_DONE = COMMAND_PREFIX + "manual.done"
+        const val MANUAL_FAILED = COMMAND_PREFIX + "manual.failed"
+        const val MANUAL_UNKNOWN_LANGUAGE = COMMAND_PREFIX + "manual.unknown_language"
+
         const val SEARCH_TITLE = COMMAND_PREFIX + "search.title"
         const val SEARCH_ENTRY = COMMAND_PREFIX + "search.entry"
         const val SEARCH_NONE = COMMAND_PREFIX + "search.none"
@@ -234,6 +238,32 @@ object TextKeys {
         const val CHECK_ABSENT = WHY_PREFIX + "check.absent"
         const val CHECK_API_ABSENT = WHY_PREFIX + "check.api_absent"
         const val MORE_DEMANDING = WHY_PREFIX + "more_demanding"
+    }
+
+    /** Les mots du manuel des commandes (5.10), `aegisperms.manual.*` : la tête, le sommaire, la légende, les colonnes et les marques d'un nœud. */
+    object Manual {
+
+        const val MANUAL_PREFIX = PREFIX + "manual."
+
+        const val TITLE = MANUAL_PREFIX + "title"
+        const val GENERATED = MANUAL_PREFIX + "generated"
+        const val STATE = MANUAL_PREFIX + "state"
+        const val DESCRIPTIONS_UNREADABLE = MANUAL_PREFIX + "descriptions_unreadable"
+        const val SUMMARY = MANUAL_PREFIX + "summary"
+        const val SUMMARY_HEADER = MANUAL_PREFIX + "summary.header"
+        const val LEGEND = MANUAL_PREFIX + "legend"
+        const val COMMANDS_HEADER = MANUAL_PREFIX + "commands.header"
+        const val REQUIREMENT_NONE = MANUAL_PREFIX + "requirement.none"
+        const val REQUIREMENT_LEVEL = MANUAL_PREFIX + "requirement.level"
+        const val REQUIREMENT_MOD = MANUAL_PREFIX + "requirement.mod"
+        const val EXECUTABLE = MANUAL_PREFIX + "executable"
+        const val INHERITED_KEY = MANUAL_PREFIX + "inherited_key"
+        const val SHARED = MANUAL_PREFIX + "shared"
+        const val MORE_DEMANDING = MANUAL_PREFIX + "more_demanding"
+        const val SENSITIVE = MANUAL_PREFIX + "sensitive"
+        const val REDIRECT = MANUAL_PREFIX + "redirect"
+        const val REDIRECT_ANY = MANUAL_PREFIX + "redirect_any"
+        const val ALIASES = MANUAL_PREFIX + "aliases"
     }
 
     /** Ce que le mod dit aux ops d'au moins `admin-level` (4.8, 4.9), `aegisperms.notice.*`. */

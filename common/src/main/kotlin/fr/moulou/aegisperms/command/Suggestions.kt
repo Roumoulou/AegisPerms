@@ -11,6 +11,7 @@ import fr.moulou.aegisperms.hook.Publisher
 import fr.moulou.aegisperms.model.CodePointOrder
 import fr.moulou.aegisperms.model.Keys
 import fr.moulou.aegisperms.model.OpLevel
+import fr.moulou.aegisperms.text.Lang
 import fr.moulou.aegisperms.tree.CommandIndex
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.SharedSuggestionProvider
@@ -57,6 +58,9 @@ internal object Suggestions {
     val LEVELS = SuggestionProvider<CommandSourceStack> { _, builder ->
         SharedSuggestionProvider.suggest(OpLevel.entries.map { it.name.lowercase() } + "none", builder)
     }
+
+    /** Les deux langues du mod, pour `manual` (5.10). */
+    val LANGUAGES = SuggestionProvider<CommandSourceStack> { _, builder -> SharedSuggestionProvider.suggest(Lang.entries.map { it.code }, builder) }
 
     /** Les dossiers de `backups\`, pour `restore` (4.10). */
     val BACKUPS = SuggestionProvider<CommandSourceStack> { _, builder -> SharedSuggestionProvider.suggest(FileThread.backupNames(), builder) }

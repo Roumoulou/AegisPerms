@@ -37,6 +37,18 @@ internal class FakeMods(private val loaded: Set<String> = setOf("minecraft", "ho
     override fun modIdOf(className: String): String? = MOD_ID_BY_CLASS_NAME[className]
 
     override fun isLoaded(modId: String): Boolean = modId in loaded
+
+    override fun nameOf(modId: String): String? = when (modId) {
+        "minecraft" -> "Minecraft"
+        "homes" -> "Homes"
+        else -> null
+    }
+
+    override fun versionOf(modId: String): String? = when (modId) {
+        "minecraft" -> "26.3"
+        "homes" -> "1.2.0"
+        else -> null
+    }
 }
 
 /** Une lecture d'exigence simulée : les deux niveaux connus, le prédicat par défaut de Brigadier, et tout le reste en prédicat de mod. */

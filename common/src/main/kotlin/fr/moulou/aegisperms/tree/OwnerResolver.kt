@@ -37,6 +37,12 @@ interface ModLocator {
 
     /** Vrai pour le modid d'un mod chargé. */
     fun isLoaded(modId: String): Boolean
+
+    /** Le nom que le loader affiche pour le mod [modId], ou `null` quand il ne le connaît pas. */
+    fun nameOf(modId: String): String? = null
+
+    /** La version du mod [modId], telle que le loader la lit, ou `null` quand il ne le connaît pas. */
+    fun versionOf(modId: String): String? = null
 }
 
 /**

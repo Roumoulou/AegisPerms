@@ -1,0 +1,23 @@
+{
+  "aegisperms:command.aegis": "Administers AegisPerms: the state, the explanations, the groups, the players, the files.",
+  "aegisperms:command.aegis.status": "The state in force: the version, the generation, the mode, read-only, the file watch, the counts.",
+  "aegisperms:command.aegis.why": "Explains, node by node, what the server would do if the player typed the line.",
+  "aegisperms:command.aegis.check": "The decision of one key for a player, with the rule that answers.",
+  "aegisperms:command.aegis.search": "The groups and players that hold a rule on a key or on a key that covers it.",
+  "aegisperms:command.aegis.catalog": "The catalog keys that start with a given prefix.",
+  "aegisperms:command.aegis.manual": "Writes this manual of the commands, in French or in English.",
+  "aegisperms:command.aegis.group": "The groups: the list, the sheet, the creation, the rules, the inheritance.",
+  "aegisperms:command.aegis.player": "The players: the sheet, the direct groups, the own rules, the note.",
+  "aegisperms:command.aegis.reload": "Reloads both configuration files, validates them and applies them.",
+  "aegisperms:command.aegis.validate": "Reloads and validates both files without applying anything.",
+  "aegisperms:command.aegis.backup": "Copies both configuration files into a timestamped backup.",
+  "aegisperms:command.aegis.restore": "Replaces both files with those of a backup, and applies them.",
+  "aegisperms:command.aegis.mode": "Changes the mode in memory: enforce applies the decisions, observe computes them without applying.",
+  "minecraft:command.help": "The command help: the list of the commands one can use, or the syntax of one of them.",
+  "minecraft:command.msg": "Sends a private message to one or more players.",
+  "minecraft:command.teleport": "Teleports entities to a position or to another entity.",
+  "minecraft:command.kick": "Kicks players off the server, with a reason.",
+  "minecraft:command.seed": "Shows the world seed.",
+  "minecraft:command.whitelist": "Manages the whitelist of the allowed players.",
+  "minecraft:command.whitelist.add": "Adds players to the whitelist."
+}

@@ -1,0 +1,23 @@
+{
+  "aegisperms:command.aegis": "Administre AegisPerms : l'état, les explications, les groupes, les joueurs, les fichiers.",
+  "aegisperms:command.aegis.status": "L'état en vigueur : la version, la génération, le mode, la lecture seule, la surveillance, les comptes.",
+  "aegisperms:command.aegis.why": "Explique, nœud par nœud, ce que ferait le serveur si le joueur tapait la ligne.",
+  "aegisperms:command.aegis.check": "La décision d'une clé pour un joueur, avec la règle qui répond.",
+  "aegisperms:command.aegis.search": "Les groupes et les joueurs qui portent une règle sur une clé ou sur une clé qui la couvre.",
+  "aegisperms:command.aegis.catalog": "Les clés du catalogue qui commencent par un début donné.",
+  "aegisperms:command.aegis.manual": "Écrit ce manuel des commandes, en français ou en anglais.",
+  "aegisperms:command.aegis.group": "Les groupes : la liste, la fiche, la création, les règles, l'héritage.",
+  "aegisperms:command.aegis.player": "Les joueurs : la fiche, les groupes directs, les règles propres, la note.",
+  "aegisperms:command.aegis.reload": "Relit les deux fichiers de configuration, les valide et les applique.",
+  "aegisperms:command.aegis.validate": "Relit et valide les deux fichiers sans rien appliquer.",
+  "aegisperms:command.aegis.backup": "Copie les deux fichiers de configuration dans une sauvegarde horodatée.",
+  "aegisperms:command.aegis.restore": "Remplace les deux fichiers par ceux d'une sauvegarde, et les applique.",
+  "aegisperms:command.aegis.mode": "Change le mode en mémoire : enforce applique les décisions, observe les calcule sans les appliquer.",
+  "minecraft:command.help": "L'aide des commandes : la liste de celles qu'on peut utiliser, ou la syntaxe de l'une d'elles.",
+  "minecraft:command.msg": "Envoie un message privé à un ou plusieurs joueurs.",
+  "minecraft:command.teleport": "Téléporte des entités vers une position ou vers une autre entité.",
+  "minecraft:command.kick": "Expulse des joueurs du serveur, avec un motif.",
+  "minecraft:command.seed": "Affiche la graine du monde.",
+  "minecraft:command.whitelist": "Gère la liste blanche des joueurs admis.",
+  "minecraft:command.whitelist.add": "Ajoute des joueurs à la liste blanche."
+}

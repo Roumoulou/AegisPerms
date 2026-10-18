@@ -37,6 +37,7 @@ object AegisCommand {
     private const val LINE = "command"
     private const val TEXT = "text"
     private const val FOLDER = "folder"
+    private const val LANGUAGE = "language"
 
     /** L'arbre de `/aegis`, bâti sur l'`admin-level` des réglages publiés à cet instant : un `admin-level` changé prend effet à la construction suivante. */
     fun tree(): LiteralArgumentBuilder<CommandSourceStack> {
@@ -66,6 +67,11 @@ object AegisCommand {
                 Commands.literal("catalog")
                     .executes { context -> run(context) { Queries.catalog(it, context.source.server, "") } }
                     .then(Commands.argument("prefix", StringArgumentType.greedyString()).suggests(Suggestions.KEYS).executes { context -> run(context) { Queries.catalog(it, context.source.server, string(context, "prefix")) } }),
+            )
+            .then(
+                Commands.literal("manual")
+                    .executes { context -> run(context) { Manuals.write(it, context.source.server, null) } }
+                    .then(Commands.argument(LANGUAGE, StringArgumentType.word()).suggests(Suggestions.LANGUAGES).executes { context -> run(context) { Manuals.write(it, context.source.server, string(context, LANGUAGE)) } }),
             )
             .then(groupBranch())
             .then(playerBranch())

@@ -25,6 +25,10 @@ object LoaderMods : ModLocator {
 
     override fun isLoaded(modId: String): Boolean = FabricLoader.getInstance().isModLoaded(modId)
 
+    override fun nameOf(modId: String): String? = FabricLoader.getInstance().getModContainer(modId).map { it.metadata.name }.orElse(null)
+
+    override fun versionOf(modId: String): String? = FabricLoader.getInstance().getModContainer(modId).map { it.metadata.version.friendlyString }.orElse(null)
+
     private fun locate(className: String): String {
         val resource = className.replace('.', '/') + ".class"
         val container = FabricLoader.getInstance().allMods.firstOrNull { it.metadata.id != JAVA && it.findPath(resource).isPresent } ?: return NONE

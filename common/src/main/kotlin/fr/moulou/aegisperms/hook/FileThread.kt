@@ -10,6 +10,7 @@ import fr.moulou.aegisperms.files.ConfigurationRead
 import fr.moulou.aegisperms.files.ConfigurationSource
 import fr.moulou.aegisperms.files.ConfigurationWrite
 import fr.moulou.aegisperms.files.GeneratedWrite
+import fr.moulou.aegisperms.files.ManualWrite
 import fr.moulou.aegisperms.files.PublicationResult
 import fr.moulou.aegisperms.files.PublicationSource
 import fr.moulou.aegisperms.files.RestoreResult
@@ -218,6 +219,12 @@ object FileThread {
         }
         Outcome(result, published, before)
     }, executor)
+
+    /** L'écriture d'un manuel des commandes (5.10) dans `manuals\`, pour la langue de code [language] : le nom du fichier écrit, ou la panne. */
+    fun writeManual(language: String, text: String): CompletableFuture<ManualWrite> = CompletableFuture.supplyAsync({ files.writeManual(language, text) }, executor)
+
+    /** Le dossier de configuration que le fil sert, ou `null` avant le démarrage. */
+    fun directory(): Path? = if (::files.isInitialized) files.directory else null
 
     /** Les sauvegardes présentes, par le nom de leur dossier, triées : ce que `restore` complète. Lu sans passer par les stores, depuis n'importe quel fil. */
     fun backupNames(): List<String> {
