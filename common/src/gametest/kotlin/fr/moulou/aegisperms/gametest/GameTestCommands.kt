@@ -22,11 +22,11 @@ import net.minecraft.server.permissions.PermissionLevel
 class GameTestCommands : ModInitializer {
 
     companion object {
-        /** La clé d'API que la commande sous l'API de Fabric demande. */
-        val FABRIC_API_KEY: Identifier = Identifier.fromNamespaceAndPath(TEST_MOD_ID, "api/fabric")
-
         /** La chaîne à points que la commande sous l'API de lucko demande : la clé d'API `aegisperms-gametest:lucko`. */
         const val LUCKO_DOTTED_STRING = "$TEST_MOD_ID.lucko"
+
+        /** La clé d'API que la commande sous l'API de Fabric demande. */
+        val FABRIC_API_KEY: Identifier = Identifier.fromNamespaceAndPath(TEST_MOD_ID, "api/fabric")
 
         /** Le niveau d'op du repli des deux consommateurs quand le fournisseur ne répond pas. */
         val FALLBACK: PermissionLevel = PermissionLevel.ADMINS

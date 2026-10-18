@@ -57,22 +57,6 @@ class ConfigurationFilesTest {
         override fun hasApiKey(key: ApiKey): Boolean = true
     }
 
-    private fun put(path: Path, vararg lines: String) {
-        Files.createDirectories(path.parent)
-        Files.writeString(path, lines.joinToString("\n", postfix = "\n"))
-        Files.setLastModifiedTime(path, stamp)
-    }
-
-    private fun ConfigurationRead.valid(): ConfigurationRead.Valid = when (this) {
-        is ConfigurationRead.Valid -> this
-        is ConfigurationRead.Refused -> fail("La configuration est refusée : ${report.issues}")
-    }
-
-    private fun ConfigurationRead.refused(): List<Issue> = when (this) {
-        is ConfigurationRead.Valid -> fail("La configuration est valide : $configuration")
-        is ConfigurationRead.Refused -> report.issues
-    }
-
     @Test
     fun `le premier rechargement d'un dossier vide crée les deux fichiers et rend la configuration livrée, sans constat`() {
         ConfigurationFiles(config).use { files ->
@@ -287,5 +271,21 @@ class ConfigurationFilesTest {
             assertArrayEquals(text.toByteArray(Charsets.UTF_8), Files.readAllBytes(path))
             assertEquals(stamp, Files.getLastModifiedTime(path))
         }
+    }
+
+    private fun put(path: Path, vararg lines: String) {
+        Files.createDirectories(path.parent)
+        Files.writeString(path, lines.joinToString("\n", postfix = "\n"))
+        Files.setLastModifiedTime(path, stamp)
+    }
+
+    private fun ConfigurationRead.valid(): ConfigurationRead.Valid = when (this) {
+        is ConfigurationRead.Valid -> this
+        is ConfigurationRead.Refused -> fail("La configuration est refusée : ${report.issues}")
+    }
+
+    private fun ConfigurationRead.refused(): List<Issue> = when (this) {
+        is ConfigurationRead.Valid -> fail("La configuration est valide : $configuration")
+        is ConfigurationRead.Refused -> report.issues
     }
 }

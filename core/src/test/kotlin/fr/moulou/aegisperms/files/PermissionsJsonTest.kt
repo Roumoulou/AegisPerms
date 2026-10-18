@@ -39,19 +39,6 @@ class PermissionsJsonTest {
         ),
     )
 
-    private fun text(permissions: Permissions): String = JsonFileFormat.PERMISSIONS.encodeToText(Permissions.serializer(), permissions)
-
-    private fun write(permissions: Permissions): String {
-        JsonFileFormat.PERMISSIONS.encodeToPath(Permissions.serializer(), permissions, file)
-        return Files.readString(file)
-    }
-
-    private fun read(text: String): Permissions {
-        Files.createDirectories(file.parent)
-        Files.writeString(file, text)
-        return JsonFileFormat.PERMISSIONS.decodeFromPath(Permissions.serializer(), file)
-    }
-
     @Test
     fun `le fichier des droits du premier démarrage s'écrit à l'octet près`() {
         assertEquals(DeliveredTexts.PERMISSIONS, write(Permissions.DELIVERED))
@@ -257,6 +244,19 @@ class PermissionsJsonTest {
             }
         """.trimIndent() + "\n"
         assertEquals(expected, write(read(byHand)))
+    }
+
+    private fun text(permissions: Permissions): String = JsonFileFormat.PERMISSIONS.encodeToText(Permissions.serializer(), permissions)
+
+    private fun write(permissions: Permissions): String {
+        JsonFileFormat.PERMISSIONS.encodeToPath(Permissions.serializer(), permissions, file)
+        return Files.readString(file)
+    }
+
+    private fun read(text: String): Permissions {
+        Files.createDirectories(file.parent)
+        Files.writeString(file, text)
+        return JsonFileFormat.PERMISSIONS.decodeFromPath(Permissions.serializer(), file)
     }
 
     private fun <V> Map<String, V>.reversedEntries(): Map<String, V> = entries.reversed().associate { it.key to it.value }

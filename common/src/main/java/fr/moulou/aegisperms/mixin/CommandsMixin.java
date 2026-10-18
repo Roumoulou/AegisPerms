@@ -38,6 +38,16 @@ public abstract class CommandsMixin implements CommandsIndexHolder {
     @Unique
     private volatile CommandIndex<CommandSourceStack> aegisperms$index;
 
+    /**
+     * Vanilla recopie une redirection par la table des nœuds déjà recopiés, et la perd quand sa cible manque : sous la forme exigée, {@code execute as}
+     * redirige vers la forme nue d'{@code execute}, que le joueur ne reçoit pas.
+     */
+    @WrapOperation(method = "fillUsableCommands", at = @At(value = "INVOKE", target = "Ljava/util/Map;get(Ljava/lang/Object;)Ljava/lang/Object;"))
+    private static Object aegisperms$redirectTarget(Map<Object, Object> copies, Object target, Operation<Object> original) {
+        Object copy = original.call(copies, target);
+        return copy != null ? copy : Hooks.clientRedirect(copies, target);
+    }
+
     @Override
     public CommandIndex<CommandSourceStack> aegisperms$getIndex() {
         return this.aegisperms$index;
@@ -56,15 +66,5 @@ public abstract class CommandsMixin implements CommandsIndexHolder {
     @Inject(method = "performCommand", at = @At("HEAD"), cancellable = true)
     private void aegisperms$gate(ParseResults<CommandSourceStack> parse, String command, CallbackInfo ci) {
         if (!Hooks.allowsExecution(parse)) ci.cancel();
-    }
-
-    /**
-     * Vanilla recopie une redirection par la table des nœuds déjà recopiés, et la perd quand sa cible manque : sous la forme exigée, {@code execute as}
-     * redirige vers la forme nue d'{@code execute}, que le joueur ne reçoit pas.
-     */
-    @WrapOperation(method = "fillUsableCommands", at = @At(value = "INVOKE", target = "Ljava/util/Map;get(Ljava/lang/Object;)Ljava/lang/Object;"))
-    private static Object aegisperms$redirectTarget(Map<Object, Object> copies, Object target, Operation<Object> original) {
-        Object copy = original.call(copies, target);
-        return copy != null ? copy : Hooks.clientRedirect(copies, target);
     }
 }

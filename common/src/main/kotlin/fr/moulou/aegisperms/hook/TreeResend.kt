@@ -56,23 +56,6 @@ object TreeResend {
         }
     }
 
-    /** Vrai si [subject] est touché par [changes] : son entrée de joueur, ses règles propres, ou les règles d'un groupe de son ordre d'examen sous [resolver]. */
-    internal fun concerns(subject: Subject, resolver: Resolver, changes: Collection<PermissionsChanges>): Boolean {
-        val suffix = "#${subject.uuid}"
-        val groups: Set<String> by lazy { resolver.order(subject).groups.mapTo(HashSet()) { it.name } }
-        for (change in changes) {
-            if ((change.playersAdded + change.playersRemoved + change.playersChanged).any { it.endsWith(suffix) }) return true
-            for (rule in change.rules) {
-                val touched = when (val owner = rule.owner) {
-                    is RuleSetOwner.OfPlayer -> owner.readableForm.endsWith(suffix)
-                    is RuleSetOwner.OfGroup -> owner.name in groups
-                }
-                if (touched) return true
-            }
-        }
-        return false
-    }
-
     /** À la fin du tick, sur le fil serveur : l'arbre des joueurs demandés et des joueurs concernés, une fois chacun. */
     fun flush(server: MinecraftServer) {
         if (!everyone.get() && players.isEmpty() && pending.isEmpty()) return
@@ -91,6 +74,23 @@ object TreeResend {
                 ModLog.once(HOOK, uuid.toString(), error)
             }
         }
+    }
+
+    /** Vrai si [subject] est touché par [changes] : son entrée de joueur, ses règles propres, ou les règles d'un groupe de son ordre d'examen sous [resolver]. */
+    internal fun concerns(subject: Subject, resolver: Resolver, changes: Collection<PermissionsChanges>): Boolean {
+        val suffix = "#${subject.uuid}"
+        val groups: Set<String> by lazy { resolver.order(subject).groups.mapTo(HashSet()) { it.name } }
+        for (change in changes) {
+            if ((change.playersAdded + change.playersRemoved + change.playersChanged).any { it.endsWith(suffix) }) return true
+            for (rule in change.rules) {
+                val touched = when (val owner = rule.owner) {
+                    is RuleSetOwner.OfPlayer -> owner.readableForm.endsWith(suffix)
+                    is RuleSetOwner.OfGroup -> owner.name in groups
+                }
+                if (touched) return true
+            }
+        }
+        return false
     }
 
     private fun levelOf(player: ServerPlayer): Int = (player.permissions() as? LevelBasedPermissionSet)?.level()?.id() ?: 0

@@ -37,12 +37,12 @@ import java.util.Optional
 class LuckoPermissionProviderTest {
 
     companion object {
+        /** L'atome des sélecteurs, tel qu'un consommateur de l'API de lucko l'écrit. */
+        private const val SELECTORS = "minecraft.commands.entity_selectors"
+
         private val NON_OP: LevelBasedPermissionSet = LevelBasedPermissionSet.forLevel(PermissionLevel.ALL)
 
         private val DEFAULT_WRITER: LogWriter = ModLog.writer
-
-        /** L'atome des sélecteurs, tel qu'un consommateur de l'API de lucko l'écrit. */
-        private const val SELECTORS = "minecraft.commands.entity_selectors"
 
         @JvmStatic
         @BeforeAll

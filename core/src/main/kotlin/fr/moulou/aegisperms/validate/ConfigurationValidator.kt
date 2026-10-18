@@ -67,27 +67,6 @@ object ConfigurationValidator {
         return ValidationReport(issues)
     }
 
-    /** Les cycles d'héritage, chacun écrit comme la suite des groupes qui revient à son premier. */
-    internal fun inheritanceCycles(groups: Map<String, Group>): List<List<String>> {
-        val cycles = mutableListOf<List<String>>()
-        val done = HashSet<String>()
-        val reported = HashSet<Set<String>>()
-        fun visit(name: String, path: List<String>) {
-            val index = path.indexOf(name)
-            if (index >= 0) {
-                val cycle = path.subList(index, path.size) + name
-                if (reported.add(cycle.toSet())) cycles += cycle
-                return
-            }
-            if (name in done) return
-            val group = groups[name] ?: return
-            for (parent in group.parents) visit(parent, path + name)
-            done += name
-        }
-        for (name in groups.keys.sortedWith(CodePointOrder)) visit(name, emptyList())
-        return cycles
-    }
-
     private fun checkGroups(permissions: Permissions, issues: MutableList<Issue>) {
         val groups = permissions.groups
         if (Group.DEFAULT !in groups) issues += Issue(IssueKind.MISSING_DEFAULT, ConfigurationFile.PERMISSIONS, listOf(GROUPS))
@@ -107,6 +86,27 @@ object ConfigurationValidator {
         for (cycle in inheritanceCycles(groups)) {
             issues += Issue(IssueKind.INHERITANCE_CYCLE, ConfigurationFile.PERMISSIONS, listOf(GROUPS, cycle.first(), PARENTS), literals(cycle.joinToString(" > ")))
         }
+    }
+
+    /** Les cycles d'héritage, chacun écrit comme la suite des groupes qui revient à son premier. */
+    internal fun inheritanceCycles(groups: Map<String, Group>): List<List<String>> {
+        val cycles = mutableListOf<List<String>>()
+        val done = HashSet<String>()
+        val reported = HashSet<Set<String>>()
+        fun visit(name: String, path: List<String>) {
+            val index = path.indexOf(name)
+            if (index >= 0) {
+                val cycle = path.subList(index, path.size) + name
+                if (reported.add(cycle.toSet())) cycles += cycle
+                return
+            }
+            if (name in done) return
+            val group = groups[name] ?: return
+            for (parent in group.parents) visit(parent, path + name)
+            done += name
+        }
+        for (name in groups.keys.sortedWith(CodePointOrder)) visit(name, emptyList())
+        return cycles
     }
 
     private fun checkPlayers(permissions: Permissions, issues: MutableList<Issue>) {

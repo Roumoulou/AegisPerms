@@ -22,12 +22,12 @@ import net.minecraft.server.level.ServerPlayer
  */
 object Lifecycle {
 
+    private const val HOOK = "lifecycle"
+
     /** Vrai dès qu'un joueur s'est connecté avec une autorité qui n'est pas l'enveloppe (6.6) : un pare-feu qui ne juge plus doit le dire, et `/aegis status` le lira. */
     @Volatile
     var foreignAuthoritySeen: Boolean = false
         private set
-
-    private const val HOOK = "lifecycle"
 
     /** Le serveur en service, de `SERVER_STARTING` à `SERVER_STOPPING` : ce que les messages aux ops ont à connaître. */
     @Volatile
@@ -42,6 +42,15 @@ object Lifecycle {
         ServerPlayConnectionEvents.JOIN.register { handler, _, _ -> guarded("join") { onJoin(handler.player) } }
         ServerPlayConnectionEvents.DISCONNECT.register { handler, _ -> guarded("disconnect") { onDisconnect(handler.player) } }
         FileThread.watchListener = { outcome -> server?.let { current -> current.execute { guarded("watch") { Notices.watch(current, outcome) } } } }
+    }
+
+    /** Une erreur interne dans un événement du cycle de vie se journalise une fois et ne fait pas tomber le serveur : ce qui n'a pas été fait laisse l'arbre fermé ou le sujet non-op. */
+    private inline fun guarded(event: String, block: () -> Unit) {
+        try {
+            block()
+        } catch (error: Throwable) {
+            ModLog.once(HOOK, event, error)
+        }
     }
 
     /**
@@ -62,11 +71,6 @@ object Lifecycle {
         if (!server.usesAuthentication()) ModLog.warn(ModLog.OFFLINE_MODE)
     }
 
-    private fun onServerStopping() {
-        server = null
-        FileThread.stop()
-    }
-
     /** À la fin d'un `/reload` : l'index du nouveau `Commands` devient courant, et tous les arbres repartent. Un `/reload` raté garde l'ancien dispatcher et son index. */
     private fun onDataPackReloaded(server: MinecraftServer, success: Boolean) {
         if (!success) return
@@ -74,13 +78,9 @@ object Lifecycle {
         TreeResend.requestAll()
     }
 
-    /** Une erreur interne dans un événement du cycle de vie se journalise une fois et ne fait pas tomber le serveur : ce qui n'a pas été fait laisse l'arbre fermé ou le sujet non-op. */
-    private inline fun guarded(event: String, block: () -> Unit) {
-        try {
-            block()
-        } catch (error: Throwable) {
-            ModLog.once(HOOK, event, error)
-        }
+    private fun onServerStopping() {
+        server = null
+        FileThread.stop()
     }
 
     /**

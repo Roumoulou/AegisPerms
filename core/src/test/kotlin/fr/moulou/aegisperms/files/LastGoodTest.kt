@@ -49,12 +49,6 @@ class LastGoodTest {
             return LastGood(config, reader, JsonFileFormat.SETTINGS, JsonFileFormat.PERMISSIONS)
         }
 
-    private fun write(configuration: Configuration = published, generation: Long = 7) {
-        ConfigurationFiles(config, clock).use { files -> assertEquals(GeneratedWrite.Done, files.writeLastGood(configuration, generation)) }
-    }
-
-    private fun names(directory: Path): Set<String> = Files.list(directory).use { found -> found.map { it.name }.toList().toSet() }
-
     @Test
     fun `la copie porte les deux fichiers tels que le mod les écrit, et son manifeste à l'octet près`() {
         write()
@@ -151,4 +145,10 @@ class LastGoodTest {
         Files.move(config.resolve("abîmée"), current)
         assertEquals(6, lastGood.read(catalog = null)?.generation)
     }
+
+    private fun write(configuration: Configuration = published, generation: Long = 7) {
+        ConfigurationFiles(config, clock).use { files -> assertEquals(GeneratedWrite.Done, files.writeLastGood(configuration, generation)) }
+    }
+
+    private fun names(directory: Path): Set<String> = Files.list(directory).use { found -> found.map { it.name }.toList().toSet() }
 }

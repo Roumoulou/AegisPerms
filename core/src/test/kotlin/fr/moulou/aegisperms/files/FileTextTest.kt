@@ -38,8 +38,6 @@ class FileTextTest {
         """}""",
     ).joinToString("\n")
 
-    private fun textOf(content: String): FileText = FileText.of(content, JsonFileFormat.PERMISSIONS.lineLocator())
-
     private val text = textOf(written)
 
     @Test
@@ -103,4 +101,6 @@ class FileTextTest {
         assertEquals(issue.copy(line = 2), text.withLine(issue.copy(line = 2)))
         assertNull(text.withLine(issue.copy(path = emptyList())).line)
     }
+
+    private fun textOf(content: String): FileText = FileText.of(content, JsonFileFormat.PERMISSIONS.lineLocator())
 }

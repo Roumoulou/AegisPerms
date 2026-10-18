@@ -33,14 +33,14 @@ import kotlinx.serialization.json.JsonPrimitive
 internal class FileInspection(private val file: ConfigurationFile, private val migrations: SchemaMigrations) {
 
     companion object {
-        private val VERSION_PATH = listOf(SchemaVersion.KEY)
-
-        private val RULE: String = Rule.serializer().descriptor.serialName
-
         private const val RULE_VALUE = "value"
 
         /** Au-delà, une valeur citée dans un constat est coupée : un objet entier n'a rien à faire dans un message. */
         private const val WRITTEN_LIMIT = 60
+
+        private val VERSION_PATH = listOf(SchemaVersion.KEY)
+
+        private val RULE: String = Rule.serializer().descriptor.serialName
     }
 
     /**

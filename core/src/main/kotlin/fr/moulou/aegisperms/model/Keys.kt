@@ -28,6 +28,7 @@ object Keys {
     /** Un espace de noms et un segment de clé d'API suivent la même règle, celle des identifiants du jeu : minuscules, chiffres, `_`, `-` et `.`. */
     private val IDENTIFIER_PART = Regex("[a-z0-9_.-]+")
 
+    // Cette table et IDENTIFIER_PART précèdent les clés publiques, qui s'en servent en s'initialisant : Kotlin initialise un objet de haut en bas.
     private val interned = ConcurrentHashMap<String, Key>()
 
     /** La clé `command`, qui couvre toutes les commandes, `/aegis` excepté (2.6). */

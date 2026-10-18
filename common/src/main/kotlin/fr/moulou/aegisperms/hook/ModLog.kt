@@ -81,8 +81,6 @@ object ModLog {
     /** La décision de la porte d'exécution pour une ligne lancée par une source jugée, au niveau `DEBUG` seulement (5.9). Arguments : le sujet, la commande racine, l'issue. */
     const val DECISION = "decision"
 
-    private val logger: Logger = LoggerFactory.getLogger(AegisPerms.MOD_ID)
-
     /** Ce qui écrit les lignes : le logger du mod, ou ce qu'un test de l'étage 1 pose à sa place pour les lire. */
     internal var writer: LogWriter = LogWriter { line ->
         when (line.level) {
@@ -95,6 +93,8 @@ object ModLog {
 
     /** Vrai quand les lignes `DEBUG` s'écrivent : la décision ne se résout pas en texte pour rien sur le chemin chaud. Un test de l'étage 1 le pose. */
     internal var debugEnabled: () -> Boolean = { logger.isDebugEnabled }
+
+    private val logger: Logger = LoggerFactory.getLogger(AegisPerms.MOD_ID)
 
     /** Les erreurs internes déjà dites pour la génération [reportedGeneration], par accroche et par clé. */
     private val reported = ConcurrentHashMap.newKeySet<String>()

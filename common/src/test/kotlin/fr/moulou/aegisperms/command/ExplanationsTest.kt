@@ -46,10 +46,6 @@ class ExplanationsTest {
     companion object {
         private const val CONSOLE_LEVEL = 4
 
-        private fun uuidOf(name: String): UUID = UUID.nameUUIDFromBytes("OfflinePlayer:$name".toByteArray(Charsets.UTF_8))
-
-        private fun readableForm(name: String): String = ReadableForm.of(name, uuidOf(name))
-
         private val PERSONAS = Permissions(
             Permissions.SCHEMA_VERSION,
             groups = mapOf(
@@ -66,6 +62,10 @@ class ExplanationsTest {
                 readableForm("Jogger") to Player(groups = listOf("membre"), rules = mapOf("minecraft:command.teleport.targets.location.rotation" to Rule.ALLOW)),
             ),
         )
+
+        private fun uuidOf(name: String): UUID = UUID.nameUUIDFromBytes("OfflinePlayer:$name".toByteArray(Charsets.UTF_8))
+
+        private fun readableForm(name: String): String = ReadableForm.of(name, uuidOf(name))
     }
 
     /** Les réglages livrés, plus un alias vers un littéral profond (3.6). */

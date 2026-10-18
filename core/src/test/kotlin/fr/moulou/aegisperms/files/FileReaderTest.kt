@@ -27,17 +27,6 @@ class FileReaderTest {
 
     private val reader = FileReader(ConfigurationFile.PERMISSIONS, JsonFileFormat.PERMISSIONS, Permissions.serializer())
 
-    private fun put(text: String) {
-        Files.createDirectories(config)
-        Files.writeString(permissionsPath, text)
-    }
-
-    /** Ce qu'une lecture rend, mis à plat pour se comparer : les données, ou les constats. */
-    private fun outcome(read: FileRead<Permissions>): Pair<Permissions?, List<Issue>> = when (read) {
-        is FileRead.Loaded -> read.data to emptyList()
-        is FileRead.Refused -> null to read.issues
-    }
-
     @Test
     fun `un fichier lu sans store rend les mêmes données et les mêmes constats que par son store, lignes comprises`() {
         val cases = mapOf(
@@ -87,5 +76,16 @@ class FileReaderTest {
         Files.writeString(backup, DeliveredTexts.PERMISSIONS)
         val read = reader.read(backup)
         assertTrue(read is FileRead.Loaded && read.data == Permissions.DELIVERED && !read.created)
+    }
+
+    private fun put(text: String) {
+        Files.createDirectories(config)
+        Files.writeString(permissionsPath, text)
+    }
+
+    /** Ce qu'une lecture rend, mis à plat pour se comparer : les données, ou les constats. */
+    private fun outcome(read: FileRead<Permissions>): Pair<Permissions?, List<Issue>> = when (read) {
+        is FileRead.Loaded -> read.data to emptyList()
+        is FileRead.Refused -> null to read.issues
     }
 }

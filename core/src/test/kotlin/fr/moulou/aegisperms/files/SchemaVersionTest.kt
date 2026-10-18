@@ -23,8 +23,6 @@ class SchemaVersionTest {
         ),
     )
 
-    private fun root(text: String): JsonObject = Json.parseToJsonElement(text).jsonObject
-
     @Test
     fun `le numéro se lit sur l'arbre, où qu'il soit écrit`() {
         assertEquals(SchemaVersion.Known(1), SchemaVersion.of(root("""{ "schema-version": 1 }""")))
@@ -67,4 +65,6 @@ class SchemaVersionTest {
         assertThrows(IllegalArgumentException::class.java) { migrations.migrate(tree, from = 4) }
         assertThrows(IllegalArgumentException::class.java) { migrations.migrate(tree, from = 0) }
     }
+
+    private fun root(text: String): JsonObject = Json.parseToJsonElement(text).jsonObject
 }

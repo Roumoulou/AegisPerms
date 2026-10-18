@@ -34,6 +34,10 @@ object ApiKeyRequests {
 
     private const val SEPARATOR = "+"
 
+    /** Ce que le fil des fichiers pose pour apprendre qu'une clé, une voie pour elle ou une chaîne refusée est nouvelle : il écrit alors le catalogue (D12). */
+    @Volatile
+    internal var onNewKey: (() -> Unit)? = null
+
     /** Ce que les tables retiennent d'un identifiant qui ne fait pas une clé d'API : elles ne gardent pas de `null`. */
     private val NOT_A_KEY = Any()
 
@@ -43,10 +47,6 @@ object ApiKeyRequests {
 
     /** Les textes qui ne font pas une clé d'API, chacun avec les voies qui l'ont demandé : le catalogue les dit refusés (4.6, 6.4). */
     private val refused = ConcurrentHashMap<String, Set<ApiRoute>>()
-
-    /** Ce que le fil des fichiers pose pour apprendre qu'une clé, une voie pour elle ou une chaîne refusée est nouvelle : il écrit alors le catalogue (D12). */
-    @Volatile
-    internal var onNewKey: (() -> Unit)? = null
 
     /**
      * La clé d'API de l'identifiant [id] d'un atome ou d'un nœud de l'API de Fabric (6.2, 6.3), demandé par [route], ou `null` quand il n'en fait pas une :
@@ -133,6 +133,8 @@ object ApiKeyRequests {
     /** Le type de [key] au catalogue, ou `null` quand elle n'a jamais été demandée. */
     fun typeOf(key: ApiKey): String? = routesByKey[key]?.let(::typeOf)
 
+    private fun typeOf(routes: Set<ApiRoute>): String = routes.sortedBy { it.ordinal }.joinToString(SEPARATOR) { it.catalogName }
+
     fun keys(): Set<ApiKey> = routesByKey.keys.toSet()
 
     /** Oublie toute demande et toute chaîne refusée. Réservé aux tests. */
@@ -142,6 +144,4 @@ object ApiKeyRequests {
         keysByDottedString.clear()
         refused.clear()
     }
-
-    private fun typeOf(routes: Set<ApiRoute>): String = routes.sortedBy { it.ordinal }.joinToString(SEPARATOR) { it.catalogName }
 }

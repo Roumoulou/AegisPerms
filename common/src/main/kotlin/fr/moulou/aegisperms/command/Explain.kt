@@ -40,9 +40,6 @@ import java.util.function.Predicate
  */
 internal object Explain {
 
-    /** La sonde (5.1) : le sujet, la source avec laquelle on juge, et si le joueur est en ligne. */
-    class Probe(val subject: Subject, val source: CommandSourceStack, val online: Boolean)
-
     /**
      * La sonde d'un joueur (E6) : sa propre source quand il est en ligne, qui porte l'enveloppe ; sinon la source de la console, sans entité, à qui l'on
      * donne une enveloppe bâtie sur son niveau d'op d'`ops.json`.
@@ -215,4 +212,9 @@ internal object Explain {
         is RuleSetOwner.OfPlayer -> owner.readableForm
         is RuleSetOwner.OfGroup -> owner.name
     }
+
+    // ── Les types ────────────────────────────────────────────────────────────────
+
+    /** La sonde (5.1) : le sujet, la source avec laquelle on juge, et si le joueur est en ligne. */
+    class Probe(val subject: Subject, val source: CommandSourceStack, val online: Boolean)
 }

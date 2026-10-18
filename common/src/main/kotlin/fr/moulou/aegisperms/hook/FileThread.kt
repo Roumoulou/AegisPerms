@@ -56,9 +56,6 @@ object FileThread {
     /** Le dossier des sauvegardes sous celui de la configuration (4.10), le même nom que `files` lui donne. */
     private const val BACKUPS = "backups"
 
-    private lateinit var files: ConfigurationFiles
-    private lateinit var executor: ScheduledExecutorService
-
     /** La période de la surveillance (4.8), en millisecondes ; un test la raccourcit. */
     internal var watchPeriodMillis = 2_000L
 
@@ -67,6 +64,9 @@ object FileThread {
 
     /** Ce qui reçoit le résultat d'un rechargement par la surveillance, sur le fil des fichiers : le cycle de vie le porte aux ops (E12). */
     internal var watchListener: (Outcome<ConfigurationRead>) -> Unit = {}
+
+    private lateinit var files: ConfigurationFiles
+    private lateinit var executor: ScheduledExecutorService
 
     private var watching: ScheduledFuture<*>? = null
 

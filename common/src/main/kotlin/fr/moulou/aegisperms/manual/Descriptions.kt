@@ -19,22 +19,16 @@ import java.nio.file.Path
  */
 class Descriptions(private val jar: Map<Lang, Map<String, String>>, private val custom: Map<String, Map<String, String>> = emptyMap()) {
 
-    /** La description de [key] en [lang] : celle de l'administrateur d'abord, puis celle du jar ; `null` quand ni l'un ni l'autre n'en a. */
-    fun of(key: CommandKey, lang: Lang): String? = custom[key.text]?.get(lang.code)?.takeIf { it.isNotBlank() } ?: jar[lang]?.get(key.text)
-
-    /** Les descriptions lues, et ce qui a empêché de lire le fichier de l'administrateur, ou `null`. */
-    class Loaded(val descriptions: Descriptions, val issue: String?)
-
     companion object {
         /** Le fichier de l'administrateur, dans le dossier de configuration. */
         const val FILE_NAME = "descriptions.json"
 
         private const val RESOURCE_DIRECTORY = "/assets/aegisperms/descriptions/"
 
-        private val CUSTOM = MapSerializer(String.serializer(), MapSerializer(String.serializer(), String.serializer()))
-
         /** Les descriptions du jar, lues une fois. */
         val jar: Map<Lang, Map<String, String>> by lazy { Lang.entries.associateWith(::loadJar) }
+
+        private val CUSTOM = MapSerializer(String.serializer(), MapSerializer(String.serializer(), String.serializer()))
 
         /** Le fichier de l'administrateur : un objet JSON strict, une clé vers un objet qui va d'un code de langue à une phrase. */
         fun parseCustom(content: String): Map<String, Map<String, String>> = Json.decodeFromString(CUSTOM, content.removePrefix("﻿"))
@@ -58,4 +52,10 @@ class Descriptions(private val jar: Map<Lang, Map<String, String>>, private val 
             return stream.use { Texts.parse(it.readBytes().toString(Charsets.UTF_8)) }
         }
     }
+
+    /** La description de [key] en [lang] : celle de l'administrateur d'abord, puis celle du jar ; `null` quand ni l'un ni l'autre n'en a. */
+    fun of(key: CommandKey, lang: Lang): String? = custom[key.text]?.get(lang.code)?.takeIf { it.isNotBlank() } ?: jar[lang]?.get(key.text)
+
+    /** Les descriptions lues, et ce qui a empêché de lire le fichier de l'administrateur, ou `null`. */
+    class Loaded(val descriptions: Descriptions, val issue: String?)
 }

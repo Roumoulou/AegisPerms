@@ -37,17 +37,6 @@ class SettingsJsonTest {
         watchFiles = false,
     )
 
-    private fun write(settings: Settings): String {
-        JsonFileFormat.SETTINGS.encodeToPath(Settings.serializer(), settings, file)
-        return Files.readString(file)
-    }
-
-    private fun read(text: String): Settings {
-        Files.createDirectories(file.parent)
-        Files.writeString(file, text)
-        return JsonFileFormat.SETTINGS.decodeFromPath(Settings.serializer(), file)
-    }
-
     @Test
     fun `le fichier des réglages du premier démarrage s'écrit à l'octet près`() {
         assertEquals(DeliveredTexts.SETTINGS, write(Settings.DELIVERED))
@@ -113,5 +102,16 @@ class SettingsJsonTest {
         val modes = mapOf("enforce" to Mode.ENFORCE, "observe" to Mode.OBSERVE)
         for ((name, value) in modes) assertEquals(value, read("""{ "schema-version": 1, "mode": "$name" }""").mode)
         assertEquals(Mode.entries.toSet(), modes.values.toSet())
+    }
+
+    private fun write(settings: Settings): String {
+        JsonFileFormat.SETTINGS.encodeToPath(Settings.serializer(), settings, file)
+        return Files.readString(file)
+    }
+
+    private fun read(text: String): Settings {
+        Files.createDirectories(file.parent)
+        Files.writeString(file, text)
+        return JsonFileFormat.SETTINGS.decodeFromPath(Settings.serializer(), file)
     }
 }

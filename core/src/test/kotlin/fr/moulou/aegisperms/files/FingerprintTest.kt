@@ -22,13 +22,6 @@ class FingerprintTest {
 
     private val stamp = FileTime.fromMillis(1_700_000_000_000)
 
-    private fun put(text: String, modified: FileTime = stamp): Fingerprint? {
-        Files.createDirectories(file.parent)
-        Files.writeString(file, text)
-        Files.setLastModifiedTime(file, modified)
-        return Fingerprint.of(file)
-    }
-
     @Test
     fun `un fichier absent n'a pas d'empreinte`() {
         assertNull(Fingerprint.of(file))
@@ -53,5 +46,12 @@ class FingerprintTest {
 
         assertNotEquals(first, put("{ \"a\": 10 }"))
         assertNotEquals(first, put("{ \"a\": 1 }", modified = FileTime.fromMillis(stamp.toMillis() + 2_000)))
+    }
+
+    private fun put(text: String, modified: FileTime = stamp): Fingerprint? {
+        Files.createDirectories(file.parent)
+        Files.writeString(file, text)
+        Files.setLastModifiedTime(file, modified)
+        return Fingerprint.of(file)
     }
 }

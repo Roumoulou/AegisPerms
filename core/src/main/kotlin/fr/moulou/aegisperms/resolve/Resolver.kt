@@ -58,6 +58,28 @@ class Resolver(val state: EffectiveState) {
         return cache.judgments.putIfAbsent(key, computed) ?: computed
     }
 
+    private fun computeJudgment(cache: SubjectCache, key: CommandKey): NodeJudgment {
+        var underVisibleRefusal = false
+        for (pathKey in key.pathKeys) {
+            val decision = ruleDecision(cache, pathKey)
+            if (pathKey === key) {
+                return when (decision) {
+                    Decision.DENY_HIDDEN -> NodeJudgment.HIDDEN
+                    Decision.DENY_VISIBLE -> NodeJudgment.REFUSED
+                    Decision.ALLOW -> if (underVisibleRefusal) NodeJudgment.ALLOWED_UNDER_REFUSAL else NodeJudgment.ALLOWED
+                    // Jamais sous un refus : la règle qui refuse une clé ancêtre couvre aussi celle-ci.
+                    Decision.UNSET -> NodeJudgment.UNSET
+                }
+            }
+            when (decision) {
+                Decision.DENY_HIDDEN -> return NodeJudgment.HIDDEN
+                Decision.DENY_VISIBLE -> underVisibleRefusal = true
+                Decision.ALLOW, Decision.UNSET -> {}
+            }
+        }
+        error("A node key is the last of its own path keys: $key")
+    }
+
     /** L'ordre d'examen de [subject] (2.6), calculé une fois par UUID et par niveau d'op. */
     fun order(subject: Subject): ExaminationOrder = cacheFor(subject.uuid, subject.opLevel).order
 
@@ -69,6 +91,28 @@ class Resolver(val state: EffectiveState) {
         val winner = hits.firstOrNull()
         val decision = decisionOf(winner)
         return DecisionTrace(key, decision, step0 = false, winner = winner, setAside = hits.drop(1), order = cache.order, weightTies = weightTies(cache, key, winner, decision))
+    }
+
+    /**
+     * Les groupes de départ de même poids que celui de la règle qui l'emporte, rangés après lui par leur nom, qui auraient changé la décision en passant
+     * devant lui. L'ordre se recalcule pour chacun : c'est ce qui écarte le groupe que l'héritage, et non le nom, a fait passer après. `default` n'en est
+     * jamais : à poids égal, c'est une règle qui le range après les autres, pas son nom.
+     */
+    private fun weightTies(cache: SubjectCache, key: Key, winner: RuleHit?, decision: Decision): List<WeightTie> {
+        val winnerGroup = (winner?.owner as? RuleSetOwner.OfGroup)?.name ?: return emptyList()
+        val startingGroups = cache.order.startingGroups
+        val winnerStart = cache.order.groups.first { it.name == winnerGroup }.chain.first()
+        val winnerIndex = startingGroups.indexOfFirst { it.name == winnerStart }
+        val weight = startingGroups[winnerIndex].weight
+        val ties = mutableListOf<WeightTie>()
+        for (otherIndex in winnerIndex + 1 until startingGroups.size) {
+            val other = startingGroups[otherIndex]
+            if (other.weight != weight || other.name == Group.DEFAULT) break
+            val otherFirst = startingGroups.toMutableList().apply { add(winnerIndex, removeAt(otherIndex)) }
+            val otherwise = decisionOf(hits(cache.player, ExaminationOrder.from(state.permissions.groups, otherFirst), key).firstOrNull())
+            if (otherwise != decision) ties += WeightTie(winnerStart, other.name, weight)
+        }
+        return ties
     }
 
     /** La trace d'un nœud : son jugement, et la clé de son chemin qui le ferme. */
@@ -130,28 +174,6 @@ class Resolver(val state: EffectiveState) {
         return cache.decisions.putIfAbsent(key, computed) ?: computed
     }
 
-    private fun computeJudgment(cache: SubjectCache, key: CommandKey): NodeJudgment {
-        var underVisibleRefusal = false
-        for (pathKey in key.pathKeys) {
-            val decision = ruleDecision(cache, pathKey)
-            if (pathKey === key) {
-                return when (decision) {
-                    Decision.DENY_HIDDEN -> NodeJudgment.HIDDEN
-                    Decision.DENY_VISIBLE -> NodeJudgment.REFUSED
-                    Decision.ALLOW -> if (underVisibleRefusal) NodeJudgment.ALLOWED_UNDER_REFUSAL else NodeJudgment.ALLOWED
-                    // Jamais sous un refus : la règle qui refuse une clé ancêtre couvre aussi celle-ci.
-                    Decision.UNSET -> NodeJudgment.UNSET
-                }
-            }
-            when (decision) {
-                Decision.DENY_HIDDEN -> return NodeJudgment.HIDDEN
-                Decision.DENY_VISIBLE -> underVisibleRefusal = true
-                Decision.ALLOW, Decision.UNSET -> {}
-            }
-        }
-        error("A node key is the last of its own path keys: $key")
-    }
-
     /** Les règles qui répondent de [key], dans l'ordre : celle des règles propres du joueur, puis celle de chaque groupe de [order]. */
     private fun hits(player: KnownPlayer?, order: ExaminationOrder, key: Key): Sequence<RuleHit> = sequence {
         if (player != null) hit(RuleSetOwner.OfPlayer(player.readableForm), player.rules, key)?.let { yield(it) }
@@ -164,28 +186,6 @@ class Resolver(val state: EffectiveState) {
     }
 
     private fun decisionOf(winner: RuleHit?): Decision = if (winner == null) Decision.UNSET else state.decisionOf(winner.rule)
-
-    /**
-     * Les groupes de départ de même poids que celui de la règle qui l'emporte, rangés après lui par leur nom, qui auraient changé la décision en passant
-     * devant lui. L'ordre se recalcule pour chacun : c'est ce qui écarte le groupe que l'héritage, et non le nom, a fait passer après. `default` n'en est
-     * jamais : à poids égal, c'est une règle qui le range après les autres, pas son nom.
-     */
-    private fun weightTies(cache: SubjectCache, key: Key, winner: RuleHit?, decision: Decision): List<WeightTie> {
-        val winnerGroup = (winner?.owner as? RuleSetOwner.OfGroup)?.name ?: return emptyList()
-        val startingGroups = cache.order.startingGroups
-        val winnerStart = cache.order.groups.first { it.name == winnerGroup }.chain.first()
-        val winnerIndex = startingGroups.indexOfFirst { it.name == winnerStart }
-        val weight = startingGroups[winnerIndex].weight
-        val ties = mutableListOf<WeightTie>()
-        for (otherIndex in winnerIndex + 1 until startingGroups.size) {
-            val other = startingGroups[otherIndex]
-            if (other.weight != weight || other.name == Group.DEFAULT) break
-            val otherFirst = startingGroups.toMutableList().apply { add(winnerIndex, removeAt(otherIndex)) }
-            val otherwise = decisionOf(hits(cache.player, ExaminationOrder.from(state.permissions.groups, otherFirst), key).firstOrNull())
-            if (otherwise != decision) ties += WeightTie(winnerStart, other.name, weight)
-        }
-        return ties
-    }
 
     /** La case d'un sujet : son ordre d'examen, calculé une fois, et ses décisions. */
     private class SubjectCache(val player: KnownPlayer?, val order: ExaminationOrder) {

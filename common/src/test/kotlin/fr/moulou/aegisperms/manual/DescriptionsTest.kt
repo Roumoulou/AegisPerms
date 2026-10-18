@@ -24,6 +24,7 @@ import java.nio.file.Paths
 class DescriptionsTest {
 
     companion object {
+        // Ce dossier précède jar, qui s'en sert en s'initialisant : Kotlin initialise un objet de haut en bas.
         private val DIRECTORY = Paths.get("src", "main", "resources", "assets", "aegisperms", "descriptions")
 
         /** Les deux fichiers du jar, lus à la source. */

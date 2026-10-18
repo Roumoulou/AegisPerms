@@ -25,8 +25,6 @@ class StagedDirectoryTest {
 
     private val target: Path get() = parent.resolve("last-good")
 
-    private fun names(): Set<String> = Files.list(parent).use { found -> found.map { it.name }.toList().toSet() }
-
     @Test
     fun `un dossier s'écrit à côté, sous un nom temporaire, et n'apparaît qu'une fois mis en place`() {
         val staged = StagedDirectory.stage(target) { copy ->
@@ -84,4 +82,6 @@ class StagedDirectoryTest {
         StagedDirectory.delete(dir.resolve("absent"))
         assertFalse(Files.exists(dir.resolve("absent")))
     }
+
+    private fun names(): Set<String> = Files.list(parent).use { found -> found.map { it.name }.toList().toSet() }
 }

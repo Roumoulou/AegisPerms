@@ -53,13 +53,6 @@ class StateFileTest {
         ),
     )
 
-    private fun write(generation: Long, source: PublicationSource, result: PublicationResult, report: ValidationReport): String {
-        ConfigurationFiles(config, clock).use { files -> assertEquals(GeneratedWrite.Done, files.writeState(generation, source, result, report)) }
-        return Files.readString(statePath)
-    }
-
-    private fun readState(): StateFile? = ConfigurationFiles(config, clock).use { it.readState() }
-
     @Test
     fun `une publication appliquée sans constat s'écrit à l'octet près, à l'heure UTC`() {
         val expected = """
@@ -183,4 +176,11 @@ class StateFileTest {
         write(2, PublicationSource.RELOAD, PublicationResult.APPLIED, none)
         assertEquals(2L, readState()?.generation)
     }
+
+    private fun write(generation: Long, source: PublicationSource, result: PublicationResult, report: ValidationReport): String {
+        ConfigurationFiles(config, clock).use { files -> assertEquals(GeneratedWrite.Done, files.writeState(generation, source, result, report)) }
+        return Files.readString(statePath)
+    }
+
+    private fun readState(): StateFile? = ConfigurationFiles(config, clock).use { it.readState() }
 }

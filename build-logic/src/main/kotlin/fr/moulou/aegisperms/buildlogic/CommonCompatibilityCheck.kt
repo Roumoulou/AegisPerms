@@ -38,10 +38,10 @@ import java.util.zip.ZipFile
 abstract class CommonCompatibilityCheck : DefaultTask() {
 
     private companion object {
+        const val MAX_LINES_IN_MESSAGE = 60
+
         /* Leurs méthodes invoke et compagnie acceptent toute signature : la JVM ne les résout pas par leur descripteur. */
         val SIGNATURE_POLYMORPHIC_OWNERS = setOf("java/lang/invoke/MethodHandle", "java/lang/invoke/VarHandle")
-
-        const val MAX_LINES_IN_MESSAGE = 60
     }
 
     /** Le code compilé de common à vérifier : dossiers de classes et jars. */

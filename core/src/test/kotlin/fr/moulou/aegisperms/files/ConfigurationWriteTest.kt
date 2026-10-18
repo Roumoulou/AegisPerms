@@ -44,17 +44,6 @@ class ConfigurationWriteTest {
     /** Des droits valides, écrits à la main par un autre que le mod. */
     private val byHand = "{ \"schema-version\": 1, \"groups\": { \"default\": {}, \"vip\": { \"weight\": 80 } } }"
 
-    /** Une édition faite par un autre : le texte, et une date qui n'est pas celle d'une écriture du mod. */
-    private fun edit(path: Path, text: String, modified: FileTime = stamp) {
-        Files.createDirectories(path.parent)
-        Files.writeString(path, text)
-        Files.setLastModifiedTime(path, modified)
-    }
-
-    private fun ConfigurationRead.valid(): ConfigurationRead.Valid = this as? ConfigurationRead.Valid ?: fail("La configuration est refusée : ${report.issues}")
-
-    private fun ConfigurationWrite.written(): ConfigurationWrite.Written = this as? ConfigurationWrite.Written ?: fail("L'écriture n'a pas eu lieu : $this")
-
     @Test
     fun `une écriture écrit le fichier des droits entier, à l'octet près, sans rien laisser à côté`() {
         ConfigurationFiles(config).use { files ->
@@ -200,4 +189,15 @@ class ConfigurationWriteTest {
             assertEquals(emptySet<ConfigurationFile>(), files.changedOutside())
         }
     }
+
+    /** Une édition faite par un autre : le texte, et une date qui n'est pas celle d'une écriture du mod. */
+    private fun edit(path: Path, text: String, modified: FileTime = stamp) {
+        Files.createDirectories(path.parent)
+        Files.writeString(path, text)
+        Files.setLastModifiedTime(path, modified)
+    }
+
+    private fun ConfigurationRead.valid(): ConfigurationRead.Valid = this as? ConfigurationRead.Valid ?: fail("La configuration est refusée : ${report.issues}")
+
+    private fun ConfigurationWrite.written(): ConfigurationWrite.Written = this as? ConfigurationWrite.Written ?: fail("L'écriture n'a pas eu lieu : $this")
 }

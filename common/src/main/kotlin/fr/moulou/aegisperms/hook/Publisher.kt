@@ -20,13 +20,17 @@ import java.time.Instant
  */
 object Publisher {
 
-    @Volatile
-    private var resolver: Resolver? = null
-
     /** La dernière publication appliquée par le fil des fichiers, ou `null` tant qu'il n'a rien publié. */
     @Volatile
     var lastPublication: LastPublication? = null
         internal set
+
+    @Volatile
+    private var resolver: Resolver? = null
+
+    /** Le mode posé en mémoire par `/aegis mode`, jusqu'à la publication suivante qui relit les réglages (5.8) ; `null` quand c'est celui des réglages qui vaut. */
+    @Volatile
+    private var modeOverride: Mode? = null
 
     /** Le résolveur de l'état en vigueur. Lève tant que rien n'est publié : pour une accroche, c'est une erreur interne, donc un refus (7.5). */
     fun current(): Resolver = resolver ?: throw IllegalStateException("No state has been published yet")
@@ -36,10 +40,6 @@ object Publisher {
 
     /** La génération de l'état en vigueur : 0 avant la première publication, et 0 aussi pour l'état provisoire du premier temps du démarrage (D9). */
     fun generation(): Long = resolver?.state?.generation ?: 0
-
-    /** Le mode posé en mémoire par `/aegis mode`, jusqu'à la publication suivante qui relit les réglages (5.8) ; `null` quand c'est celui des réglages qui vaut. */
-    @Volatile
-    private var modeOverride: Mode? = null
 
     /** Les réglages de l'état en vigueur, ou les réglages livrés tant que rien n'est publié : ceux sur lesquels un `Commands` bâtit ses formes et son index. */
     fun settings(): Settings = resolver?.state?.settings ?: Settings.DELIVERED

@@ -58,27 +58,6 @@ class BackupsTest {
         Fixtures.permissions(groups = mapOf("vip" to Group(weight = 80, note = "À la main."), "default" to Group())),
     )
 
-    private fun put(path: Path, text: String) {
-        Files.createDirectories(path.parent)
-        Files.writeString(path, text)
-        Files.setLastModifiedTime(path, stamp)
-    }
-
-    private fun putByHand() {
-        put(settingsPath, settingsByHand)
-        put(permissionsPath, permissionsByHand)
-    }
-
-    private fun files(): ConfigurationFiles = ConfigurationFiles(config, clock)
-
-    private fun BackupResult.folder(): String = (this as? BackupResult.Done)?.folder ?: fail("La sauvegarde n'a pas eu lieu : $this")
-
-    private fun RestoreResult.restored(): RestoreResult.Restored = this as? RestoreResult.Restored ?: fail("La restauration n'a pas eu lieu : $this")
-
-    private fun names(directory: Path): Set<String> = Files.list(directory).use { found -> found.map { it.name }.toList().toSet() }
-
-    private fun assertBytes(text: String, path: Path) = assertArrayEquals(text.toByteArray(Charsets.UTF_8), Files.readAllBytes(path), path.toString())
-
     @Test
     fun `le dossier d'une sauvegarde porte l'heure locale, sans deux-points, et le nom demandé`() {
         putByHand()
@@ -272,4 +251,25 @@ class BackupsTest {
         }
         assertBytes(settingsByHand, settingsPath)
     }
+
+    private fun put(path: Path, text: String) {
+        Files.createDirectories(path.parent)
+        Files.writeString(path, text)
+        Files.setLastModifiedTime(path, stamp)
+    }
+
+    private fun putByHand() {
+        put(settingsPath, settingsByHand)
+        put(permissionsPath, permissionsByHand)
+    }
+
+    private fun files(): ConfigurationFiles = ConfigurationFiles(config, clock)
+
+    private fun BackupResult.folder(): String = (this as? BackupResult.Done)?.folder ?: fail("La sauvegarde n'a pas eu lieu : $this")
+
+    private fun RestoreResult.restored(): RestoreResult.Restored = this as? RestoreResult.Restored ?: fail("La restauration n'a pas eu lieu : $this")
+
+    private fun names(directory: Path): Set<String> = Files.list(directory).use { found -> found.map { it.name }.toList().toSet() }
+
+    private fun assertBytes(text: String, path: Path) = assertArrayEquals(text.toByteArray(Charsets.UTF_8), Files.readAllBytes(path), path.toString())
 }

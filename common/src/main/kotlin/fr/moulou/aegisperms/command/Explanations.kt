@@ -24,51 +24,6 @@ import fr.moulou.aegisperms.tree.Unindexed
  */
 internal object Explanations {
 
-    /** Un nœud du chemin analysé : tapé, ou cible d'une redirection, que la forme exigée ne vise pas (3.5). */
-    class Step(val node: CommandNode<*>, val typed: Boolean)
-
-    /** Ce que donne l'exigence vanilla d'un nœud sur la sonde : elle passe, elle refuse, ou elle ne s'évalue pas, la sonde étant hors ligne (E6). */
-    enum class Evaluation {
-        PASSES,
-        FAILS,
-        NOT_EVALUATED,
-    }
-
-    /** Le statut d'un nœud dans `why` (5.5) : son jugement, complété par vanilla et par le catalogue. */
-    enum class NodeStatus {
-        SEEN,
-        HIDDEN,
-        VISIBLE_REFUSAL,
-        SEEN_UNDER_VISIBLE_REFUSAL,
-        UNSEEN_MOD,
-        UNSEEN_VANILLA,
-        OUT_OF_CATALOG,
-        NOT_EVALUATED,
-        INEFFECTIVE,
-        BARE_FORM,
-    }
-
-    /** Le verdict d'une ligne (5.5). */
-    enum class Verdict {
-        PERMITTED,
-        REFUSED_HIDDEN,
-        REFUSED_VISIBLE,
-        REFUSED_BY_VANILLA,
-        INCOMPLETE,
-    }
-
-    /** Une ligne du récit : le nœud, son statut, sa décision, et sa trace quand il a une fiche. */
-    class Row(val name: String, val status: NodeStatus, val decision: Decision?, val trace: NodeTrace?, val entry: NodeEntry?, val moreDemanding: Boolean = false) {
-
-        /** Vrai quand la règle qui l'emporte porte une clé ancêtre, et non la clé du nœud. */
-        val byAncestorKey: Boolean get() = trace != null && entry != null && trace.own.winner?.key?.let { it != entry.key } == true
-    }
-
-    /** La première ligne, quand la ligne commence par une forme ou un alias : ce qu'il tape, la commande que cela désigne, et son mod. */
-    class Headline(val typed: String, val target: String, val owner: String)
-
-    class Report(val headline: Headline?, val rows: List<Row>, val deciding: Row?, val verdict: Verdict)
-
     /** Le chemin d'une analyse, comme la porte le parcourt : chaque contexte, sa racine quand elle n'est pas tapée, puis ses nœuds. */
     fun steps(parse: ParseResults<*>): List<Step> {
         val steps = ArrayList<Step>()
@@ -203,4 +158,49 @@ internal object Explanations {
         val base = ancestor?.opLevel ?: return true
         return own.level > base.level
     }
+
+    /** Un nœud du chemin analysé : tapé, ou cible d'une redirection, que la forme exigée ne vise pas (3.5). */
+    class Step(val node: CommandNode<*>, val typed: Boolean)
+
+    /** Ce que donne l'exigence vanilla d'un nœud sur la sonde : elle passe, elle refuse, ou elle ne s'évalue pas, la sonde étant hors ligne (E6). */
+    enum class Evaluation {
+        PASSES,
+        FAILS,
+        NOT_EVALUATED,
+    }
+
+    /** Le statut d'un nœud dans `why` (5.5) : son jugement, complété par vanilla et par le catalogue. */
+    enum class NodeStatus {
+        SEEN,
+        HIDDEN,
+        VISIBLE_REFUSAL,
+        SEEN_UNDER_VISIBLE_REFUSAL,
+        UNSEEN_MOD,
+        UNSEEN_VANILLA,
+        OUT_OF_CATALOG,
+        NOT_EVALUATED,
+        INEFFECTIVE,
+        BARE_FORM,
+    }
+
+    /** Le verdict d'une ligne (5.5). */
+    enum class Verdict {
+        PERMITTED,
+        REFUSED_HIDDEN,
+        REFUSED_VISIBLE,
+        REFUSED_BY_VANILLA,
+        INCOMPLETE,
+    }
+
+    /** Une ligne du récit : le nœud, son statut, sa décision, et sa trace quand il a une fiche. */
+    class Row(val name: String, val status: NodeStatus, val decision: Decision?, val trace: NodeTrace?, val entry: NodeEntry?, val moreDemanding: Boolean = false) {
+
+        /** Vrai quand la règle qui l'emporte porte une clé ancêtre, et non la clé du nœud. */
+        val byAncestorKey: Boolean get() = trace != null && entry != null && trace.own.winner?.key?.let { it != entry.key } == true
+    }
+
+    /** La première ligne, quand la ligne commence par une forme ou un alias : ce qu'il tape, la commande que cela désigne, et son mod. */
+    class Headline(val typed: String, val target: String, val owner: String)
+
+    class Report(val headline: Headline?, val rows: List<Row>, val deciding: Row?, val verdict: Verdict)
 }

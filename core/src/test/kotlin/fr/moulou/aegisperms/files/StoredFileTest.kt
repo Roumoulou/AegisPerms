@@ -44,27 +44,6 @@ class StoredFileTest {
     /** Une date ancienne, qu'une réécriture ferait sauter. */
     private val stamp = FileTime.fromMillis(1_700_000_000_000)
 
-    private fun put(path: Path, text: String) {
-        Files.createDirectories(path.parent)
-        Files.writeString(path, text)
-        Files.setLastModifiedTime(path, stamp)
-    }
-
-    private fun <DATA> FileRead<DATA>.loaded(): FileRead.Loaded<DATA> = when (this) {
-        is FileRead.Loaded -> this
-        is FileRead.Refused -> fail("Le fichier est refusé : $issues")
-    }
-
-    private fun FileRead<*>.issues(): List<Issue> = when (this) {
-        is FileRead.Loaded -> fail("Le fichier est lu : $data")
-        is FileRead.Refused -> issues
-    }
-
-    private fun assertUntouched(path: Path, text: String) {
-        assertArrayEquals(text.toByteArray(Charsets.UTF_8), Files.readAllBytes(path))
-        assertEquals(stamp, Files.getLastModifiedTime(path))
-    }
-
     @Test
     fun `le premier démarrage crée les deux fichiers à l'octet près`() {
         Stores.settings(config).use { settings ->
@@ -287,5 +266,26 @@ class StoredFileTest {
             assertEquals(expected, permissions.read().loaded().data)
         }
         assertUntouched(permissionsPath, text)
+    }
+
+    private fun put(path: Path, text: String) {
+        Files.createDirectories(path.parent)
+        Files.writeString(path, text)
+        Files.setLastModifiedTime(path, stamp)
+    }
+
+    private fun <DATA> FileRead<DATA>.loaded(): FileRead.Loaded<DATA> = when (this) {
+        is FileRead.Loaded -> this
+        is FileRead.Refused -> fail("Le fichier est refusé : $issues")
+    }
+
+    private fun FileRead<*>.issues(): List<Issue> = when (this) {
+        is FileRead.Loaded -> fail("Le fichier est lu : $data")
+        is FileRead.Refused -> issues
+    }
+
+    private fun assertUntouched(path: Path, text: String) {
+        assertArrayEquals(text.toByteArray(Charsets.UTF_8), Files.readAllBytes(path))
+        assertEquals(stamp, Files.getLastModifiedTime(path))
     }
 }

@@ -21,6 +21,19 @@ import fr.moulou.aegisperms.hook.AllRights as AllRightsSet
  */
 sealed interface RequestSubject {
 
+    companion object {
+
+        /** Le sujet que donne l'autorité [authority] d'une source. */
+        fun of(authority: PermissionSet): RequestSubject = when (authority) {
+            is Envelope -> Judged(Subject(authority.subject, authority.level().id()))
+            AllRightsSet -> AllRights
+            else -> None
+        }
+
+        /** Le sujet d'un joueur désigné par [uuid], en ligne ou hors ligne. */
+        fun of(uuid: UUID): RequestSubject = Judged(Subject(uuid, OpLevels.levelOf(uuid)))
+    }
+
     /** La décision du sujet pour [key] (2.6), ou `null` quand le fournisseur ne répond pas et laisse le consommateur à son repli. */
     fun decision(key: ApiKey): Decision?
 
@@ -48,18 +61,5 @@ sealed interface RequestSubject {
     data object None : RequestSubject {
 
         override fun decision(key: ApiKey): Decision? = null
-    }
-
-    companion object {
-
-        /** Le sujet que donne l'autorité [authority] d'une source. */
-        fun of(authority: PermissionSet): RequestSubject = when (authority) {
-            is Envelope -> Judged(Subject(authority.subject, authority.level().id()))
-            AllRightsSet -> AllRights
-            else -> None
-        }
-
-        /** Le sujet d'un joueur désigné par [uuid], en ligne ou hors ligne. */
-        fun of(uuid: UUID): RequestSubject = Judged(Subject(uuid, OpLevels.levelOf(uuid)))
     }
 }

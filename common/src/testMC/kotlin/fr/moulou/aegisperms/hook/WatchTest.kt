@@ -22,8 +22,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 class WatchTest {
 
     companion object {
-        private val DEFAULT_WRITER: LogWriter = ModLog.writer
         private const val VIP_PERMISSIONS = "{\n  \"schema-version\": 1,\n  \"groups\": {\n    \"default\": {},\n    \"vip\": {\n      \"weight\": 80\n    }\n  },\n  \"players\": {}\n}\n"
+        private val DEFAULT_WRITER: LogWriter = ModLog.writer
 
         @JvmStatic
         @BeforeAll

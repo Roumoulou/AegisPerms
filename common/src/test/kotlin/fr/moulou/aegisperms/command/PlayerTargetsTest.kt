@@ -17,19 +17,6 @@ class PlayerTargetsTest {
         private val JOE: UUID = UUID.fromString("0e000000-0000-4000-8000-000000000001")
     }
 
-    /** Des sources qui ne connaissent que ce qu'on leur donne. */
-    private class FakeLookup(
-        private val online: Map<String, PlayerTarget> = emptyMap(),
-        private val cached: Map<String, PlayerTarget> = emptyMap(),
-        private val names: Map<UUID, String> = emptyMap(),
-        private val known: List<PlayerTarget> = emptyList(),
-    ) : PlayerLookup {
-        override fun online(name: String): PlayerTarget? = online[name]
-        override fun cached(name: String): PlayerTarget? = cached[name]
-        override fun nameOf(uuid: UUID): String? = names[uuid]
-        override fun knownPlayers(): Collection<PlayerTarget> = known
-    }
-
     @Test
     fun `un UUID écrit tel quel désigne ce joueur, venu ou jamais venu, avec le pseudo connu`() {
         val lookup = FakeLookup(names = mapOf(JOE to "Joe"))
@@ -63,5 +50,18 @@ class PlayerTargetsTest {
     @Test
     fun `un pseudo que rien ne connaît est inconnu`() {
         assertEquals(TargetResolution.Unknown("Nina"), PlayerTargets.resolve("Nina", FakeLookup()))
+    }
+
+    /** Des sources qui ne connaissent que ce qu'on leur donne. */
+    private class FakeLookup(
+        private val online: Map<String, PlayerTarget> = emptyMap(),
+        private val cached: Map<String, PlayerTarget> = emptyMap(),
+        private val names: Map<UUID, String> = emptyMap(),
+        private val known: List<PlayerTarget> = emptyList(),
+    ) : PlayerLookup {
+        override fun online(name: String): PlayerTarget? = online[name]
+        override fun cached(name: String): PlayerTarget? = cached[name]
+        override fun nameOf(uuid: UUID): String? = names[uuid]
+        override fun knownPlayers(): Collection<PlayerTarget> = known
     }
 }

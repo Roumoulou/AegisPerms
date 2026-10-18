@@ -31,12 +31,6 @@ class JsonFileFormatTest {
         SchemaMigrations(current = 2, steps = mapOf(1 to { root -> JsonObject(root.entries.associate { (key, value) -> (if (key == "ranks") "groups" else key) to value }) })),
     )
 
-    private fun read(text: String, format: JsonFileFormat = JsonFileFormat.PERMISSIONS): Permissions {
-        Files.createDirectories(file.parent)
-        Files.writeString(file, text)
-        return format.decodeFromPath(Permissions.serializer(), file)
-    }
-
     @Test
     fun `le format refuse lui-même un fichier sans numéro de structure, au numéro mal écrit ou plus récent que le mod`() {
         assertEquals(SchemaVersion.Missing, assertThrows(SchemaVersionException::class.java) { read("""{ "groups": {} }""") }.version)
@@ -75,5 +69,11 @@ class JsonFileFormatTest {
         val bom = "﻿"
         assertEquals(Permissions(schemaVersion = 1), read("""$bom{ "schema-version": 1 }"""))
         assertEquals(Permissions(schemaVersion = 2, groups = mapOf("default" to Group())), read("""$bom{ "schema-version": 1, "ranks": { "default": {} } }""", migrating))
+    }
+
+    private fun read(text: String, format: JsonFileFormat = JsonFileFormat.PERMISSIONS): Permissions {
+        Files.createDirectories(file.parent)
+        Files.writeString(file, text)
+        return format.decodeFromPath(Permissions.serializer(), file)
     }
 }

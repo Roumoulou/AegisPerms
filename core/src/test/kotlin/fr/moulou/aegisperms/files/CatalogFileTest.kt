@@ -50,11 +50,6 @@ class CatalogFileTest {
         "homes:command.home" to CommandEntry(NodeKind.LITERAL, executable = true, requirement = CommandRequirement.MOD_PREDICATE, owner = "homes", prefixedForm = "homes:home"),
     )
 
-    private fun update(clock: Clock, commands: Map<String, CommandEntry> = this.commands, apiKeys: Map<String, String> = emptyMap(), refused: Map<String, String> = emptyMap()): CatalogUpdate =
-        ConfigurationFiles(config, clock).use { files -> files.updateCatalog(commands, apiKeys, refused) }
-
-    private fun readCatalog(): CatalogFile? = ConfigurationFiles(config, nextStart).use { it.readCatalog() }
-
     @Test
     fun `le catalogue s'écrit à l'octet près, trié, sans ce qui vaut son défaut, et se relit`() {
         val update = update(firstStart, apiKeys = mapOf("minecraft:commands/entity_selectors" to "boolean", "homes:home/limit" to "integer"))
@@ -254,4 +249,9 @@ class CatalogFileTest {
         assertEquals(listOf(null, null), listOf(CommandRequirement.NONE.opLevel, CommandRequirement.MOD_PREDICATE.opLevel))
         assertEquals("command_blocks", CommandEntry.sensitiveName(SensitiveReason.COMMAND_BLOCKS))
     }
+
+    private fun update(clock: Clock, commands: Map<String, CommandEntry> = this.commands, apiKeys: Map<String, String> = emptyMap(), refused: Map<String, String> = emptyMap()): CatalogUpdate =
+        ConfigurationFiles(config, clock).use { files -> files.updateCatalog(commands, apiKeys, refused) }
+
+    private fun readCatalog(): CatalogFile? = ConfigurationFiles(config, nextStart).use { it.readCatalog() }
 }

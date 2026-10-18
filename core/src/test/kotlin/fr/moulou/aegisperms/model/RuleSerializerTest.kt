@@ -14,10 +14,6 @@ class RuleSerializerTest {
 
     private val json = Json
 
-    private fun write(rule: Rule, json: Json = this.json): String = json.encodeToString(Rule.serializer(), rule)
-
-    private fun read(text: String): Rule = json.decodeFromString(Rule.serializer(), text)
-
     @Test
     fun `une règle sans visible ni note s'écrit en forme courte`() {
         assertEquals("\"allow\"", write(Rule.ALLOW))
@@ -53,4 +49,8 @@ class RuleSerializerTest {
             assertThrows(SerializationException::class.java, { read(text) }, text)
         }
     }
+
+    private fun write(rule: Rule, json: Json = this.json): String = json.encodeToString(Rule.serializer(), rule)
+
+    private fun read(text: String): Rule = json.decodeFromString(Rule.serializer(), text)
 }

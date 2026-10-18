@@ -15,14 +15,14 @@ import fr.moulou.aegisperms.text.Texts
  */
 object ManualRenderer {
 
+    private val JAR: TextSource = TextSource { key, lang, arguments -> Texts.text(key, lang, *arguments.toTypedArray()) }
+
+    fun render(manual: Manual, source: TextSource = JAR): String = Rendering(source).render(manual)
+
     /** Le texte d'une clé en une langue, ses arguments remplis : [Texts.text] par défaut ; un test de l'étage 0, sans les ressources du jar, donne le sien. */
     fun interface TextSource {
         fun text(key: String, lang: Lang, arguments: List<Any?>): String
     }
-
-    private val JAR: TextSource = TextSource { key, lang, arguments -> Texts.text(key, lang, *arguments.toTypedArray()) }
-
-    fun render(manual: Manual, source: TextSource = JAR): String = Rendering(source).render(manual)
 
     private class Rendering(private val source: TextSource) {
 

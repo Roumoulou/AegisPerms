@@ -49,30 +49,6 @@ class ConfigurationStartTest {
 
     private val personasText = JsonFileFormat.PERMISSIONS.encodeToText(Permissions.serializer(), Fixtures.personas)
 
-    private fun put(path: Path, text: String) {
-        Files.createDirectories(path.parent)
-        Files.writeString(path, text)
-        Files.setLastModifiedTime(path, stamp)
-    }
-
-    /** Un serveur qui a tourné : ses deux fichiers valides, et la copie de sa dernière publication. */
-    private fun publishOnce() {
-        put(settingsPath, observing)
-        put(permissionsPath, personasText)
-        ConfigurationFiles(config).use { files ->
-            val start = files.start()
-            assertEquals(published, start.configuration)
-            assertEquals(GeneratedWrite.Done, files.writeLastGood(start.configuration, generation = 1))
-        }
-    }
-
-    private fun assertUntouched(path: Path, text: String) {
-        assertArrayEquals(text.toByteArray(Charsets.UTF_8), Files.readAllBytes(path))
-        assertEquals(stamp, Files.getLastModifiedTime(path))
-    }
-
-    private fun kinds(start: ConfigurationStart): List<IssueKind> = start.report.issues.map { it.kind }
-
     @Test
     fun `le premier démarrage crée les deux fichiers et applique la configuration livrée`() {
         ConfigurationFiles(config).use { files ->
@@ -228,4 +204,28 @@ class ConfigurationStartTest {
             assertTrue(files.write(Fixtures.personas) is ConfigurationWrite.Written)
         }
     }
+
+    private fun put(path: Path, text: String) {
+        Files.createDirectories(path.parent)
+        Files.writeString(path, text)
+        Files.setLastModifiedTime(path, stamp)
+    }
+
+    /** Un serveur qui a tourné : ses deux fichiers valides, et la copie de sa dernière publication. */
+    private fun publishOnce() {
+        put(settingsPath, observing)
+        put(permissionsPath, personasText)
+        ConfigurationFiles(config).use { files ->
+            val start = files.start()
+            assertEquals(published, start.configuration)
+            assertEquals(GeneratedWrite.Done, files.writeLastGood(start.configuration, generation = 1))
+        }
+    }
+
+    private fun assertUntouched(path: Path, text: String) {
+        assertArrayEquals(text.toByteArray(Charsets.UTF_8), Files.readAllBytes(path))
+        assertEquals(stamp, Files.getLastModifiedTime(path))
+    }
+
+    private fun kinds(start: ConfigurationStart): List<IssueKind> = start.report.issues.map { it.kind }
 }

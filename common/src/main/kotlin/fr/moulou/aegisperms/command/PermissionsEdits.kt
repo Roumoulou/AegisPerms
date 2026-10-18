@@ -21,30 +21,6 @@ import java.util.UUID
  */
 internal object PermissionsEdits {
 
-    /** Un refus connu avant d'écrire : la clé du texte qui le dit, et ses arguments. */
-    class Refusal(val key: String, vararg val arguments: Any) : RuntimeException(key)
-
-    /** Les cinq verbes d'une règle (5.3) : `deny` laisse la visibilité au réglage `denied-commands`, `deny-visible` et `deny-hidden` l'écrivent dans la règle. */
-    enum class RuleVerb(val literal: String) {
-        ALLOW("allow"),
-        DENY("deny"),
-        DENY_VISIBLE("deny-visible"),
-        DENY_HIDDEN("deny-hidden"),
-        UNSET("unset");
-
-        /** [rules] après ce verbe sur [key] : la note d'une règle qui change reste. */
-        fun apply(rules: Map<String, Rule>, key: Key, owner: String): Map<String, Rule> {
-            val note = rules[key.text]?.note
-            return when (this) {
-                ALLOW -> rules + (key.text to Rule(RuleValue.ALLOW, note = note))
-                DENY -> rules + (key.text to Rule(RuleValue.DENY, note = note))
-                DENY_VISIBLE -> rules + (key.text to Rule(RuleValue.DENY, visible = true, note = note))
-                DENY_HIDDEN -> rules + (key.text to Rule(RuleValue.DENY, visible = false, note = note))
-                UNSET -> if (key.text in rules) rules - key.text else throw Refusal(Command.RULE_ABSENT, owner, key.text)
-            }
-        }
-    }
-
     // ── Les groupes ───────────────────────────────────────────────────────────────
 
     fun createGroup(permissions: Permissions, name: String, weight: Int): Permissions {
@@ -168,5 +144,31 @@ internal object PermissionsEdits {
             permissions.groups[current]?.parents?.let { pending += it }
         }
         return false
+    }
+
+    // ── Les types ─────────────────────────────────────────────────────────────────
+
+    /** Un refus connu avant d'écrire : la clé du texte qui le dit, et ses arguments. */
+    class Refusal(val key: String, vararg val arguments: Any) : RuntimeException(key)
+
+    /** Les cinq verbes d'une règle (5.3) : `deny` laisse la visibilité au réglage `denied-commands`, `deny-visible` et `deny-hidden` l'écrivent dans la règle. */
+    enum class RuleVerb(val literal: String) {
+        ALLOW("allow"),
+        DENY("deny"),
+        DENY_VISIBLE("deny-visible"),
+        DENY_HIDDEN("deny-hidden"),
+        UNSET("unset");
+
+        /** [rules] après ce verbe sur [key] : la note d'une règle qui change reste. */
+        fun apply(rules: Map<String, Rule>, key: Key, owner: String): Map<String, Rule> {
+            val note = rules[key.text]?.note
+            return when (this) {
+                ALLOW -> rules + (key.text to Rule(RuleValue.ALLOW, note = note))
+                DENY -> rules + (key.text to Rule(RuleValue.DENY, note = note))
+                DENY_VISIBLE -> rules + (key.text to Rule(RuleValue.DENY, visible = true, note = note))
+                DENY_HIDDEN -> rules + (key.text to Rule(RuleValue.DENY, visible = false, note = note))
+                UNSET -> if (key.text in rules) rules - key.text else throw Refusal(Command.RULE_ABSENT, owner, key.text)
+            }
+        }
     }
 }

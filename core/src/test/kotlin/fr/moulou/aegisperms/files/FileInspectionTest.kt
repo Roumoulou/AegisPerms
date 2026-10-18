@@ -23,21 +23,6 @@ class FileInspectionTest {
 
     private val bob = Fixtures.readableForm("Bob")
 
-    private fun settingsIssues(text: String): List<Issue> = FileInspection(ConfigurationFile.SETTINGS, SchemaMigrations(1)).inspect(Json.parseToJsonElement(text), Settings.serializer().descriptor)
-
-    private fun permissionsIssues(text: String, migrations: SchemaMigrations = SchemaMigrations(1)): List<Issue> =
-        FileInspection(ConfigurationFile.PERMISSIONS, migrations).inspect(Json.parseToJsonElement(text), Permissions.serializer().descriptor)
-
-    /** Les constats d'un fichier des droits réduit à un groupe `vip`, dont [group] est le contenu. */
-    private fun groupIssues(group: String): List<Issue> = permissionsIssues("""{ "schema-version": 1, "groups": { "vip": $group } }""")
-
-    private fun unknownKey(file: ConfigurationFile, vararg path: String): Issue = Issue(IssueKind.UNKNOWN_KEY, file, path.toList(), literals(path.last()))
-
-    private fun outOfDomain(file: ConfigurationFile, path: List<String>, written: String, domain: ValueDomain): Issue =
-        Issue(IssueKind.VALUE_OUT_OF_DOMAIN, file, path, listOf(IssueArgument.Literal(written), IssueArgument.Translatable(domain.translationKey)))
-
-    private fun outOfClosedDomain(file: ConfigurationFile, path: List<String>, written: String, names: String): Issue = Issue(IssueKind.VALUE_OUT_OF_DOMAIN, file, path, literals(written, names))
-
     @Test
     fun `un fichier bien écrit ne donne aucun constat`() {
         val custom = """{ "schema-version": 1, "admin-level": "admins", "refusal-message": null, "namespaces": { "prefixes": { "homes": "h" } }, "aliases": { "wla": "whitelist add" } }"""
@@ -173,4 +158,19 @@ class FileInspectionTest {
         assertEquals("aegisperms.issue.value_out_of_domain.schema_version", ValueDomain.SCHEMA_VERSION.translationKey)
         assertEquals(ValueDomain.entries.size, ValueDomain.entries.map { it.translationKey }.toSet().size)
     }
+
+    private fun settingsIssues(text: String): List<Issue> = FileInspection(ConfigurationFile.SETTINGS, SchemaMigrations(1)).inspect(Json.parseToJsonElement(text), Settings.serializer().descriptor)
+
+    private fun permissionsIssues(text: String, migrations: SchemaMigrations = SchemaMigrations(1)): List<Issue> =
+        FileInspection(ConfigurationFile.PERMISSIONS, migrations).inspect(Json.parseToJsonElement(text), Permissions.serializer().descriptor)
+
+    /** Les constats d'un fichier des droits réduit à un groupe `vip`, dont [group] est le contenu. */
+    private fun groupIssues(group: String): List<Issue> = permissionsIssues("""{ "schema-version": 1, "groups": { "vip": $group } }""")
+
+    private fun unknownKey(file: ConfigurationFile, vararg path: String): Issue = Issue(IssueKind.UNKNOWN_KEY, file, path.toList(), literals(path.last()))
+
+    private fun outOfDomain(file: ConfigurationFile, path: List<String>, written: String, domain: ValueDomain): Issue =
+        Issue(IssueKind.VALUE_OUT_OF_DOMAIN, file, path, listOf(IssueArgument.Literal(written), IssueArgument.Translatable(domain.translationKey)))
+
+    private fun outOfClosedDomain(file: ConfigurationFile, path: List<String>, written: String, names: String): Issue = Issue(IssueKind.VALUE_OUT_OF_DOMAIN, file, path, literals(written, names))
 }

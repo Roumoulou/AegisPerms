@@ -112,9 +112,6 @@ object Hooks {
 
     // ── La porte d'exécution ─────────────────────────────────────────────────────
 
-    /** Un refus à la porte : visible ou masqué, sur la commande racine ou sur un nœud plus profond, ce qui choisit le message de vanilla, et la clé qui refuse. */
-    internal class GateRefusal(val visible: Boolean, val deep: Boolean, val key: String)
-
     /** La porte d'exécution (7.5). Vrai si la commande analysée dans [parse] peut s'exécuter ; sinon la source reçoit le message du refus. */
     @JvmStatic
     fun allowsExecution(parse: ParseResults<*>): Boolean = allowsExecution(parse, ::markOf)
@@ -179,9 +176,6 @@ object Hooks {
         }
         return null
     }
-
-    /** Ce qu'un nœud oppose à l'exécution : un refus visible ou masqué, avec la clé qui le porte. */
-    private class Refusing(val visible: Boolean, val key: String)
 
     /** Le refus d'un nœud, ou `null` sans refus : une commande s'utilise sans aucun refus sur son chemin (2.7). */
     private fun refusalOf(node: CommandNode<*>, markOf: (CommandNode<*>) -> NodeMark?, typed: Boolean, requirePrefix: Boolean, resolver: Resolver, envelope: Envelope): Refusing? {
@@ -313,4 +307,12 @@ object Hooks {
     internal fun markOf(node: CommandNode<*>): NodeMark? = (node as NodeMarkHolder).`aegisperms$getMark`()
 
     private fun setMark(node: CommandNode<*>, mark: NodeMark) = (node as NodeMarkHolder).`aegisperms$setMark`(mark)
+
+    // ── Les types ────────────────────────────────────────────────────────────────
+
+    /** Un refus à la porte : visible ou masqué, sur la commande racine ou sur un nœud plus profond, ce qui choisit le message de vanilla, et la clé qui refuse. */
+    internal class GateRefusal(val visible: Boolean, val deep: Boolean, val key: String)
+
+    /** Ce qu'un nœud oppose à l'exécution : un refus visible ou masqué, avec la clé qui le porte. */
+    private class Refusing(val visible: Boolean, val key: String)
 }

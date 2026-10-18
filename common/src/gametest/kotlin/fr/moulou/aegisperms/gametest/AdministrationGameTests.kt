@@ -194,20 +194,6 @@ class AdministrationGameTests : FileGameTests() {
         helper.succeed()
     }
 
-    private fun manualNames(manuals: Path): Set<String> = if (Files.isDirectory(manuals)) Files.list(manuals).use { found -> found.map { it.fileName.toString() }.toList().toSet() } else emptySet()
-
-    /** Lance une modification depuis [console], qui doit l'accepter, et attend que le fil des fichiers l'ait écrite et publiée. */
-    private fun perform(helper: GameTestHelper, server: MinecraftServer, console: CommandSourceStack, line: String) {
-        helper.assertValueEqual(Console.perform(server, console, line), 1, "« $line » est acceptée")
-        Console.settle(server)
-    }
-
-    private fun publishedGroup(helper: GameTestHelper, name: String): Group =
-        Publisher.current().state.permissions.groups[name] ?: throw helper.assertionException("le groupe $name manque aux droits publiés")
-
-    private fun publishedPlayer(helper: GameTestHelper, readableForm: String): Player =
-        Publisher.current().state.permissions.players[readableForm] ?: throw helper.assertionException("le joueur $readableForm manque aux droits publiés")
-
     /** Prouve que `why` et `check` depuis la console se lisent dans l'enregistreur, résolus dans sa langue : le titre, le verdict, la décision d'une clé. */
     @GameTest
     fun whyAndCheckFromTheConsole(helper: GameTestHelper) {
@@ -303,4 +289,18 @@ class AdministrationGameTests : FileGameTests() {
         helper.assertTrue(Console.text(Command.PLAYER_INFO_GROUPS, "admin") in texts, "et la fiche dit ses groupes, pas $texts")
         helper.succeed()
     }
+
+    private fun manualNames(manuals: Path): Set<String> = if (Files.isDirectory(manuals)) Files.list(manuals).use { found -> found.map { it.fileName.toString() }.toList().toSet() } else emptySet()
+
+    /** Lance une modification depuis [console], qui doit l'accepter, et attend que le fil des fichiers l'ait écrite et publiée. */
+    private fun perform(helper: GameTestHelper, server: MinecraftServer, console: CommandSourceStack, line: String) {
+        helper.assertValueEqual(Console.perform(server, console, line), 1, "« $line » est acceptée")
+        Console.settle(server)
+    }
+
+    private fun publishedGroup(helper: GameTestHelper, name: String): Group =
+        Publisher.current().state.permissions.groups[name] ?: throw helper.assertionException("le groupe $name manque aux droits publiés")
+
+    private fun publishedPlayer(helper: GameTestHelper, readableForm: String): Player =
+        Publisher.current().state.permissions.players[readableForm] ?: throw helper.assertionException("le joueur $readableForm manque aux droits publiés")
 }
