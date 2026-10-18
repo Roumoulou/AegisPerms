@@ -24,9 +24,9 @@ Une erreur refuse la configuration entière : l'état en vigueur reste, et rien 
 |---|---|
 | « Fichier illisible » | le fichier manque pendant que le serveur tourne, est verrouillé, ou un dossier porte son nom ; rendez-le lisible, puis `/aegis reload` |
 | « Fichier mal formé » | ce n'est pas du JSON strict : une virgule finale, un commentaire, une clé sans guillemets, une accolade manquante ; la ligne est donnée |
-| « Clé écrite deux fois dans le même objet » | un groupe, un joueur ou une règle en double ; gardez-en un |
+| « Champ écrit deux fois dans le même objet » | un groupe, un joueur ou une règle en double ; gardez-en un |
 | « schema-version manque », « schema-version N est plus récent » | ajoutez `"schema-version": 1` en tête, ou prenez un mod plus récent |
-| « Clé inconnue » | un champ inconnu, une faute de frappe le plus souvent : `weigth`, `rule` ; les champs admis sont dans `les-fichiers.md` |
+| « Champ inconnu » | une faute de frappe le plus souvent : `weigth`, `rule` ; les champs admis sont dans `les-fichiers.md` |
 | « Valeur hors de son domaine » | une valeur qui n'est pas dans la liste admise, `"include-ops": "owner"`, ou d'un autre type, un nombre entre guillemets ; la valeur attendue est donnée |
 | « Le groupe default manque » | recréez-le : `"default": {}` suffit |
 | « Nom de groupe mal formé » | minuscules, chiffres, `_` et `-` seulement |

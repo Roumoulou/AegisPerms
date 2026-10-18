@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test
 class JsonLayoutTest {
 
     @Test
-    fun `un objet s'écrit une clé par ligne, à deux espaces, et le texte finit par une fin de ligne`() {
+    fun `un objet s'écrit un champ par ligne, à deux espaces, et le texte finit par une fin de ligne`() {
         val tree = buildJsonObject {
             put("schema-version", 1)
             putJsonObject("namespaces") {

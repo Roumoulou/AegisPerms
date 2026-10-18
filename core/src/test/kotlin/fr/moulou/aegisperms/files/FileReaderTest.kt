@@ -32,9 +32,9 @@ class FileReaderTest {
         val cases = mapOf(
             "un fichier valide" to DeliveredTexts.PERMISSIONS,
             "un fichier écrit à la main, sous un BOM" to FileText.BOM + "{ \"schema-version\": 1, \"groups\": { \"default\": { \"rules\": { \"command\": { \"value\": \"deny\" } } } } }",
-            "une clé inconnue et une valeur hors de son domaine" to "{\n  \"schema-version\": 1,\n  \"groups\": {\n    \"vip\": {\n      \"poids\": 3,\n      \"include-ops\": \"ops\"\n    }\n  }\n}\n",
+            "un champ inconnu et une valeur hors de son domaine" to "{\n  \"schema-version\": 1,\n  \"groups\": {\n    \"vip\": {\n      \"poids\": 3,\n      \"include-ops\": \"ops\"\n    }\n  }\n}\n",
             "un commentaire" to "{\n  \"schema-version\": 1,\n  \"groups\": {} // une note\n}\n",
-            "une clé écrite deux fois" to "{\n  \"schema-version\": 1,\n  \"groups\": {\n    \"vip\": {},\n    \"vip\": {}\n  }\n}\n",
+            "un champ écrit deux fois" to "{\n  \"schema-version\": 1,\n  \"groups\": {\n    \"vip\": {},\n    \"vip\": {}\n  }\n}\n",
             "un numéro de structure absent" to "{\n  \"groups\": {}\n}\n",
             "un numéro de structure plus récent" to "{\n  \"schema-version\": 2\n}\n",
         )

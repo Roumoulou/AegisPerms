@@ -205,7 +205,7 @@ class PermissionsJsonTest {
     }
 
     @Test
-    fun `les clés se trient par point de code, au-delà du plan de base`() {
+    fun `les champs se trient par point de code, au-delà du plan de base`() {
         val lastOfBasicPlane = "￿"
         val beyondBasicPlane = "😀"
         // L'ordre naturel de String, par unité UTF-16, rangerait la paire de substitution avant U+FFFF.

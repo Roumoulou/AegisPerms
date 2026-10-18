@@ -134,7 +134,7 @@ class StoredFileTest {
     }
 
     @Test
-    fun `une clé écrite deux fois est refusée, avec son chemin et la ligne de la seconde`() {
+    fun `un champ écrit deux fois est refusé, avec son chemin et la ligne du second`() {
         val text = "{\n  \"schema-version\": 1,\n  \"groups\": {\n    \"default\": {},\n    \"vip\": { \"weight\": 1 },\n    \"vip\": { \"weight\": 2 }\n  }\n}\n"
         put(permissionsPath, text)
         Stores.permissions(config).use { permissions ->
@@ -145,7 +145,7 @@ class StoredFileTest {
     }
 
     @Test
-    fun `une clé inconnue et une valeur hors de son domaine sortent ensemble, avec leur chemin et leur ligne`() {
+    fun `un champ inconnu et une valeur hors de son domaine sortent ensemble, avec leur chemin et leur ligne`() {
         put(settingsPath, "{\n  \"schema-version\": 1,\n  \"admin_level\": \"admins\",\n  \"mode\": \"regarde\"\n}\n")
         Stores.settings(config).use { settings ->
             val expected = listOf(

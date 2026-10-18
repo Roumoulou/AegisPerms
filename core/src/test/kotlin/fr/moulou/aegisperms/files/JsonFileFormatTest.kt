@@ -47,7 +47,7 @@ class JsonFileFormatTest {
     }
 
     @Test
-    fun `une clé écrite deux fois est refusée dans un fichier à migrer comme dans un autre, avec son chemin`() {
+    fun `un champ écrit deux fois est refusé dans un fichier à migrer comme dans un autre, avec son chemin`() {
         val twice = "{\n  \"schema-version\": 1,\n  \"ranks\": {\n    \"vip\": {},\n    \"vip\": {}\n  }\n}"
         val duplicate = assertThrows(DuplicateKeyException::class.java) { read(twice, migrating) }
         assertEquals("vip", duplicate.key)

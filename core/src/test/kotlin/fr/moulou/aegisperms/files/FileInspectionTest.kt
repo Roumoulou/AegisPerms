@@ -34,7 +34,7 @@ class FileInspectionTest {
     }
 
     @Test
-    fun `une clé inconnue est une erreur à chaque niveau, avec son chemin, et toutes sortent en une passe`() {
+    fun `un champ inconnu est une erreur à chaque niveau, avec son chemin, et tous sortent en une passe`() {
         assertEquals(
             listOf(unknownKey(ConfigurationFile.SETTINGS, "admin_level"), unknownKey(ConfigurationFile.SETTINGS, "namespaces", "prefix")),
             settingsIssues("""{ "schema-version": 1, "admin_level": "admins", "namespaces": { "prefix": {} } }"""),
