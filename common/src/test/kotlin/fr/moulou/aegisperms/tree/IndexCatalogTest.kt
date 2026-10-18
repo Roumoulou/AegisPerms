@@ -55,7 +55,7 @@ class IndexCatalogTest {
         val commands = catalog().commands()
 
         assertEquals(
-            CommandEntry(NodeKind.LITERAL, requirement = CommandRequirement.GAMEMASTERS, aliasOf = "minecraft:command.teleport", owner = "minecraft", prefixedForm = "mc:tp"),
+            CommandEntry(NodeKind.LITERAL, requirement = CommandRequirement.GAMEMASTERS, aliasOf = "minecraft:command.teleport", owner = "minecraft"),
             commands["minecraft:command.tp"],
         )
         assertNull(commands.getValue("minecraft:command.teleport").aliasOf)

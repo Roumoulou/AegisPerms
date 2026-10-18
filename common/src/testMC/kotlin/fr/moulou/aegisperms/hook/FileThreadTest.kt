@@ -75,8 +75,8 @@ class FileThreadTest {
         val catalog = checkNotNull(ConfigurationFiles(directory).readCatalog())
         assertTrue(catalog.commands.containsKey("unknown:command.teleport"), catalog.commands.keys.toString())
         assertTrue("aegisperms.log.files_created settings.json, permissions.json" in lines, lines.toString())
-        // Quatre constats : teleport sans mod propriétaire, et les trois clés que default ouvre, absentes de cet arbre réduit.
-        assertTrue("aegisperms.log.published 1 startup enforce false 2 0 5 4" in lines, lines.toString())
+        // Trois constats : teleport sans mod propriétaire, et les deux clés que default ouvre, absentes de cet arbre réduit.
+        assertTrue("aegisperms.log.published 1 startup enforce false 2 0 4 3" in lines, lines.toString())
         assertTrue(lines.any { it.startsWith("aegisperms.issue.command_without_owner settings.json:namespaces.owners:") && it.endsWith(" teleport") }, lines.toString())
         assertTrue(lines.any { it.startsWith("aegisperms.issue.unknown_command_key permissions.json:groups.default.rules.minecraft:command.help:") }, lines.toString())
     }

@@ -76,20 +76,32 @@ class CommandFormsTest {
     }
 
     @Test
-    fun `la forme d'un alias de vanilla se bâtit sur le nœud final, avec la conjonction des deux exigences`() {
+    fun `un alias de vanilla ne reçoit pas de forme, et se masque avec sa cible`() {
         val dispatcher = tree()
         val plan = apply(dispatcher)
-        val teleport = dispatcher.root.getChild("teleport")
-        val prefixed = dispatcher.root.getChild("mc:tp")
+        val tp = dispatcher.root.getChild("tp")
 
-        assertSame(teleport, plan.prefixedForms.getValue("tp").end)
-        assertEquals(listOf("tp", "teleport"), plan.prefixedForms.getValue("tp").path.map { it.name })
-        assertNull(prefixed.redirect)
+        assertNull(dispatcher.root.getChild("mc:tp"))
+        assertFalse("tp" in plan.prefixedForms)
+        assertFalse("tp" in plan.takenFormNames)
+        assertTrue(tp in plan.hiddenBareForms, "l'alias se masque avec /teleport, qui a sa forme")
+        assertTrue(dispatcher.root.getChild("teleport") in plan.hiddenBareForms)
+    }
+
+    @Test
+    fun `la table des alias rend un alias de vanilla, nu ou préfixé, sur l'exigence de sa cible seule`() {
+        val dispatcher = tree()
+        val plan = apply(dispatcher, aliases = mapOf("tp" to "minecraft:teleport", "mc:tp" to "minecraft:teleport"))
+        val teleport = dispatcher.root.getChild("teleport")
+
+        assertEquals(mapOf("mc:tp" to AliasOutcome.Added, "tp" to AliasOutcome.RestoresBareForm), plan.aliasOutcomes)
+        assertFalse(dispatcher.root.getChild("tp") in plan.hiddenBareForms, "/tp est rendu aux joueurs")
+        val prefixed = dispatcher.root.getChild("mc:tp")
+        assertSame(teleport, plan.aliases.getValue("mc:tp").end)
         assertSame(teleport.getChild("targets"), prefixed.getChild("targets"))
-        // `tp` exige le niveau 3 dans cet arbre, `teleport` le niveau 2 : la forme exige les deux.
-        assertFalse(prefixed.canUse(2))
-        assertTrue(prefixed.canUse(3))
-        assertEquals(7, dispatcher.execute("mc:tp Joe", 3))
+        // `tp` exige le niveau 3 dans cet arbre : l'alias de la table, lui, ne porte que l'exigence de /teleport, le niveau 2.
+        assertTrue(prefixed.canUse(2))
+        assertEquals(7, dispatcher.execute("mc:tp Joe", 2))
     }
 
     @Test
@@ -125,7 +137,7 @@ class CommandFormsTest {
         dispatcher.register(literal<Any>("homes:old").executes(HomeCommand()))
         val plan = apply(dispatcher)
 
-        assertEquals(setOf("teleport", "tp", "list", "gamemode", "whitelist", "execute", "home", "aegis"), plan.prefixedForms.keys)
+        assertEquals(setOf("teleport", "list", "gamemode", "whitelist", "execute", "home", "aegis"), plan.prefixedForms.keys, "tp, alias, n'en reçoit pas")
         assertNull(dispatcher.root.getChild("unknown:orphan"))
         assertNull(dispatcher.root.getChild("homes:homes:old"))
         assertFalse(dispatcher.root.getChild("orphan") in plan.hiddenBareForms)
@@ -246,9 +258,9 @@ class CommandFormsTest {
         val dispatcher = tree()
         val list = dispatcher.root.getChild("list")
         val command = list.command
-        val plan = apply(dispatcher, aliases = mapOf("list" to "minecraft:gamemode", "mc:tp" to "minecraft:gamemode"))
+        val plan = apply(dispatcher, aliases = mapOf("list" to "minecraft:gamemode", "mc:teleport" to "minecraft:gamemode"))
 
-        assertEquals(mapOf("list" to AliasOutcome.NameTaken, "mc:tp" to AliasOutcome.NameTaken), plan.aliasOutcomes)
+        assertEquals(mapOf("list" to AliasOutcome.NameTaken, "mc:teleport" to AliasOutcome.NameTaken), plan.aliasOutcomes)
         assertTrue(plan.aliases.isEmpty())
         // Rien n'a fusionné : `list` garde sa commande et n'a reçu aucun enfant.
         assertSame(command, list.command)

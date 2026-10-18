@@ -112,7 +112,7 @@ class CommandIndex<S> private constructor(
 
     /**
      * Ce que reçoit [node], commande racine enregistrée après l'index (3.8) : son mod propriétaire, sa fiche et celles de son sous-arbre, et sa forme
-     * préfixée. `null` pour une racine dont le nom ne fait pas une clé. [markOf] rend la marque qu'un nœud de l'arbre porte déjà.
+     * préfixée, sauf pour un alias (3.4). `null` pour une racine dont le nom ne fait pas une clé. [markOf] rend la marque qu'un nœud de l'arbre porte déjà.
      *
      * La racine tardive n'entre ni dans [owners] ni dans le catalogue : ils sont ceux de la construction de l'arbre, et la suivante la comptera.
      */
@@ -120,12 +120,16 @@ class CommandIndex<S> private constructor(
         if (!Keys.isNodeName(node.name)) return null
         val owner = OwnerResolver(mods, settings.namespaces.owners).ownerOf(node)
         val ownKey = Keys.command(owner.modId, listOf(node.name))
-        val aliasTarget = KeyIndexer.vanillaAliasTarget(root, node)?.let { markOf(it) as? NodeEntry }
+        val aliasTargetNode = KeyIndexer.vanillaAliasTarget(root, node)
+        val aliasTarget = aliasTargetNode?.let { markOf(it) as? NodeEntry }
         val key = aliasTarget?.key ?: ownKey
 
-        // Un nom déjà pris à la racine refuse la forme : l'ajouter fusionnerait les deux nœuds (3.8).
-        val wanted = CommandForms.prefixedFormOf(root, node, owner, settings, mods)
+        // Un alias simple ne reçoit pas de forme ; un nom déjà pris à la racine refuse la forme : l'ajouter fusionnerait les deux nœuds (3.8).
+        val plainAlias = CommandForms.isPlainAlias(root, node)
+        val wanted = if (plainAlias) null else CommandForms.prefixedFormOf(root, node, owner, settings, mods)
         val planned = wanted?.takeIf { root.getChild(it.name) == null }
+        // Un alias tardif se masque avec sa cible quand elle a une forme, comme à la construction (3.5).
+        val targetHasForm = plainAlias && aliasTargetNode != null && (plan.prefixedForms.containsKey(aliasTargetNode.name) || aliasTarget?.forms?.isNotEmpty() == true)
         val formKey = when {
             planned == null -> null
             planned.end === node -> key
@@ -142,7 +146,7 @@ class CommandIndex<S> private constructor(
             inheritsKey = false,
             shared = false,
             isForm = false,
-            hiddenUnderRequirePrefix = form != null && !CommandForms.isAdministration(node.name, owner),
+            hiddenUnderRequirePrefix = (form != null || targetHasForm) && !CommandForms.isAdministration(node.name, owner),
             forms = if (form != null && form.redirect == null && planned?.end === node) listOf(form) else emptyList(),
         )
         val seen = identitySetOf<CommandNode<S>>().apply { add(node) }

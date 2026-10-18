@@ -114,7 +114,13 @@ object CommandForms {
 
         val prefixedForms = LinkedHashMap<String, PlannedForm<S>>()
         val takenFormNames = LinkedHashMap<String, String>()
+        val aliasRoots = identitySetOf<CommandNode<S>>()
         for (node in originals) {
+            // Un alias, de vanilla ou d'un mod, ne reçoit pas de forme (3.4) : une forme par commande, et la table des alias rend les noms courts qu'on veut.
+            if (isPlainAlias(root, node)) {
+                aliasRoots += node
+                continue
+            }
             val form = prefixedFormOf(root, node, owners.getValue(node.name), settings, mods) ?: continue
             if (form.name in originalsByName || !plannedNames.add(form.name)) takenFormNames[node.name] = form.name else prefixedForms[node.name] = form
         }
@@ -149,12 +155,24 @@ object CommandForms {
             val node = originalsByName.getValue(name)
             if (node !in restored && !isAdministration(name, owners.getValue(name))) hidden += node
         }
+        // Un alias se masque avec sa cible (3.5) : sous la forme exigée, le joueur tape la forme de la cible, ou le nom que la table des alias lui rend (3.6).
+        for (alias in aliasRoots) {
+            val end = chainEnd(root, alias, ArrayList())
+            if (alias !in restored && end.name in prefixedForms && root.getChild(end.name) === end) hidden += alias
+        }
         return FormPlan(prefixedForms, aliases, aliasOutcomes, takenFormNames, hidden)
     }
 
     /**
+     * Vrai pour un alias (2.4) dont la redirection est simple, sans modificateur ni fourche : `tp` vers `teleport`. Il ne fait que nommer sa cible, et ne
+     * reçoit pas de forme (3.4). Une redirection à modificateur fait autre chose que nommer, et garde la sienne.
+     */
+    fun <S> isPlainAlias(root: RootCommandNode<S>, node: CommandNode<S>): Boolean = node.redirectModifier == null && !node.isFork && KeyIndexer.vanillaAliasTarget(root, node) != null
+
+    /**
      * La forme préfixée que reçoit [node], commande racine de mod propriétaire [owner] (3.4), ou `null` : les formes désactivées, une commande sans mod
-     * propriétaire connu, ou un nom qui porte déjà un deux-points, n'en donnent pas. Que son nom soit libre à la racine reste à voir par qui l'ajoute.
+     * propriétaire connu, ou un nom qui porte déjà un deux-points, n'en donnent pas. Qu'un alias n'en reçoive pas non plus, et que son nom soit libre à la
+     * racine, reste à voir par qui l'appelle.
      */
     fun <S> prefixedFormOf(root: RootCommandNode<S>, node: CommandNode<S>, owner: Owner, settings: Settings, mods: ModLocator): PlannedForm<S>? {
         if (!settings.namespaces.enabled || owner.source == OwnerSource.UNKNOWN || ':' in node.name || !Keys.isNodeName(node.name)) return null

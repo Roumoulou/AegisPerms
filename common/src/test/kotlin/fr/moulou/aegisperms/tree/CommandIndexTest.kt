@@ -80,12 +80,13 @@ class CommandIndexTest {
         val prefixed = dispatcher.root.getChild("mc:gamemode")
 
         assertEquals(listOf("gamemode", "gm", "home"), index.originals.map { it.name })
-        assertEquals(listOf("gamemode", "gm", "home", "mc:gamemode", "mc:gm", "homes:home", "gmc"), dispatcher.root.children.map { it.name })
+        assertEquals(listOf("gamemode", "gm", "home", "mc:gamemode", "homes:home", "gmc"), dispatcher.root.children.map { it.name }, "gm, alias, ne reçoit pas de forme")
         assertEquals(key("minecraft:command.gamemode"), index.entryOf(prefixed)?.key)
         assertTrue(index.entryOf(prefixed)!!.isForm)
         assertEquals(key("minecraft:command.gamemode.creative"), index.entryOf(dispatcher.root.getChild("gmc"))?.key)
         assertTrue(index.entryOf(gamemode)!!.hiddenUnderRequirePrefix)
-        assertEquals(listOf(prefixed, dispatcher.root.getChild("mc:gm")), index.entryOf(gamemode)!!.forms)
+        assertEquals(listOf(prefixed), index.entryOf(gamemode)!!.forms)
+        assertTrue(index.entryOf(dispatcher.root.getChild("gm"))!!.hiddenUnderRequirePrefix, "l'alias se masque avec sa cible")
         assertEquals(setOf("gamemode", "gm", "home"), index.owners.keys)
         assertEquals(AliasOutcome.Added, index.plan.aliasOutcomes["gmc"])
     }
