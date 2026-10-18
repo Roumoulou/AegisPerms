@@ -23,10 +23,10 @@ Au premier démarrage, le mod écrit `config\aegisperms\settings.json`, les rég
 
 | Groupe | Poids | Membres | Règles |
 |---|---|---|---|
-| `default` | 0 | tout joueur, sans inscription | `command` à `deny` ; `minecraft:command.help`, `minecraft:command.me` et `minecraft:command.msg` à `allow` |
+| `default` | 0 | tout joueur, sans inscription | `command` à `deny` ; `minecraft:command.help` et `minecraft:command.msg` à `allow` |
 | `admin` | 100 | les ops de niveau 4, d'office | `command` à `allow` |
 
-Ce que cela donne : un joueur qui n'est pas op ne voit que `/mc:help`, `/mc:me` et `/mc:msg` ; un op de niveau 4 voit toutes les commandes, et `/aegis` ; un
+Ce que cela donne : un joueur qui n'est pas op ne voit que `/mc:help` et `/mc:msg` ; un op de niveau 4 voit toutes les commandes, et `/aegis` ; un
 op de niveau 1 à 3 n'a que les commandes de `default`. La console et le RCON ne sont jamais jugés et gardent tout.
 
 Le serveur est donc fermé : rien ne s'ouvre à un joueur sans qu'une règle le dise. C'est voulu, et c'est ce qui suit qui ouvre.
@@ -43,6 +43,8 @@ Le serveur est donc fermé : rien ne s'ouvre à un joueur sans qu'une règle le 
   règle sur la clé l'emporte.
 - **La forme préfixée** d'une commande est son nom précédé du préfixe de son mod : `/mc:teleport` pour `/teleport`, `/homes:home` pour `/home`. Par défaut,
   un joueur ne voit et ne tape que les formes préfixées ; la console garde les deux. Les clés ne changent pas : `/mc:teleport` et `/teleport` ont la même.
+  Un autre nom d'une même commande, `/tp` pour `/teleport`, `/tell` et `/w` pour `/msg`, n'a pas de forme préfixée : une commande, une forme. Un alias de
+  `settings.json` le rend à qui le veut (`les-fichiers.md`, chapitre 2).
 
 ## 4. Ouvrir une première commande
 

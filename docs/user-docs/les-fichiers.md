@@ -16,9 +16,12 @@ Ce que le mod lit et écrit dans `config\aegisperms\`, pour l'administrateur qui
 | `state.json` | la dernière publication, appliquée ou refusée, et ses constats (chapitre 5) | le mod seul, à chaque tentative |
 | `last-good\` | la dernière configuration publiée, pour le démarrage suivant (chapitre 6) | le mod seul |
 | `backups\<date>_<heure>[-nom]\` | une sauvegarde des deux fichiers (chapitre 7) | le mod, sur `/aegis backup` et avant `/aegis restore` |
+| `manuals\commands-<date>-<langue>.md` | le manuel des commandes du serveur, mod par mod, chaque nœud avec sa clé (chapitre 9) | le mod, sur `/aegis manual` |
+| `descriptions.json` | vos descriptions des commandes que le manuel ne connaît pas (chapitre 9) | vous |
 
-Tous ces fichiers sont du JSON strict : ni commentaire, ni virgule finale, ni clé sans guillemets, et une clé inconnue est une erreur, ce qui attrape les fautes
-de frappe. Un commentaire a sa place dans un champ `note`. Ils s'écrivent en UTF-8 sans BOM et en LF ; un BOM posé par un éditeur est toléré à la lecture.
+Tous ces fichiers sont du JSON strict, le manuel excepté, qui est du Markdown : ni commentaire, ni virgule finale, ni clé sans guillemets, et une clé inconnue
+est une erreur, ce qui attrape les fautes de frappe. Un commentaire a sa place dans un champ `note`. Ils s'écrivent en UTF-8 sans BOM et en LF ; un BOM posé
+par un éditeur est toléré à la lecture.
 
 Chaque fichier que le mod lit porte en tête `schema-version`, le numéro de la structure du fichier, `1` pour cette version ; un fichier sans cette clé, ou d'un
 numéro plus récent, est refusé.
@@ -63,7 +66,7 @@ Tel que le mod le crée au premier démarrage :
 | `namespaces.require-prefix` | `true`, `false` | `true` | la forme exigée : un joueur ne voit et ne tape que les formes préfixées ; ignoré, avec un avertissement, sans les formes préfixées |
 | `namespaces.prefixes` | un objet modid vers préfixe | `{"minecraft": "mc"}` | le préfixe d'un mod ; par défaut, son modid ; un préfixe qui est le modid d'un autre mod chargé lui cède la place |
 | `namespaces.owners` | un objet commande racine vers modid | `{}` | donne à la main un mod propriétaire à une commande qui n'en a pas de connu, ou en a plusieurs |
-| `aliases` | un objet nom vers cible | `{}` | un alias : `"gm": "minecraft:gamemode"`, `"wla": "minecraft:whitelist add"` |
+| `aliases` | un objet nom vers cible | `{}` | un alias : `"gm": "minecraft:gamemode"`, `"wla": "minecraft:whitelist add"` ; les alias de vanilla (`tp`, `tell`, `w`, `xp`, `tm`) n'ont pas de forme préfixée et restent masqués sous la forme exigée : `"tell": "minecraft:msg"` rend `/tell` aux joueurs, `"mc:tell": "minecraft:msg"` crée `/mc:tell` |
 | `watch-files` | `true`, `false` | `true` | la surveillance : un fichier écrit hors du mod se recharge tout seul, deux à trois secondes après |
 
 Le mod ne réécrit jamais ce fichier quand il existe. Un changement se fait à la main et prend effet à `/aegis reload`, ou tout seul par la surveillance ; un
@@ -94,7 +97,6 @@ Tel que le mod le crée au premier démarrage :
       "rules": {
         "command": "deny",
         "minecraft:command.help": "allow",
-        "minecraft:command.me": "allow",
         "minecraft:command.msg": "allow"
       }
     }
@@ -150,7 +152,6 @@ Un exemple complet, cinq groupes et quatre joueurs :
       "rules": {
         "command": "deny",
         "minecraft:command.help": "allow",
-        "minecraft:command.me": "allow",
         "minecraft:command.msg": "allow"
       }
     },
@@ -223,8 +224,7 @@ Le mod l'écrit à chaque démarrage et à chaque `/reload` réussi ; il ne se l
       "kind": "literal",
       "requirement": "gamemasters",
       "alias-of": "minecraft:command.teleport",
-      "owner": "minecraft",
-      "prefixed-form": "mc:tp"
+      "owner": "minecraft"
     }
   },
   "api-keys": {
@@ -245,7 +245,7 @@ Le mod l'écrit à chaque démarrage et à chaque `/reload` réussi ; il ne se l
 | `shared`, `more-demanding` | `true` pour un nœud rattaché à plusieurs endroits de l'arbre, pour un nœud qui exige plus que son ancêtre |
 | `sensitive` | ce que la commande donne en plus de son nom : `functions`, `command_blocks`, `command_minecart`, `lectern_book`, `data_writing`, `impersonation` ou `op_change` |
 | `owner`, `co-owners` | le mod propriétaire, et les autres mods qui ont greffé une branche sur la même racine |
-| `prefixed-form`, `aliases` | la forme préfixée et les alias, tels qu'on les tape |
+| `prefixed-form`, `aliases` | la forme préfixée et les alias de la table, tels qu'on les tape ; l'entrée d'un alias de vanilla n'a pas de forme préfixée |
 
 Une clé d'API porte `type`, la voie par laquelle elle est venue, `atom`, `fabric` ou `lucko`, et `first-requested`, l'instant de sa première demande ; une
 chaîne de l'API de lucko qui ne fait pas une clé entre avec `refused`, et une clé dont un segment porte un point avec `dotted-path`. Les clés d'API se gardent
@@ -307,3 +307,44 @@ journal, à `state.json` et aux ops d'au moins `admin-level` en ligne.
 Une configuration invalide ne s'applique jamais : l'état en vigueur reste, chaque erreur se dit avec son fichier, son chemin et sa ligne, et les modifications
 par commande attendent une configuration valide. Le mod n'écrit pas non plus sur un fichier qui a bougé depuis sa dernière lecture : la commande refuse, et
 `/aegis reload` relit d'abord.
+
+## 9. Le manuel des commandes, `manuals\`, et vos descriptions, `descriptions.json`
+
+`/aegis manual [fr|en]` écrit toutes les commandes du serveur dans `manuals\commands-<date>-<langue>.md`, un fichier Markdown à ouvrir dans un éditeur ou sur
+GitHub ; sans argument, dans votre langue. Un manuel ne s'écrase jamais : le suivant du même jour prend le suffixe `-2`, puis `-3`. Le mod n'y supprime rien.
+
+Le manuel commence par les mods, avec leur nombre de commandes et de nœuds, puis donne une section par mod, `minecraft` d'abord : une table des commandes (la
+forme nue, la forme préfixée, les alias, la clé, l'exigence vanilla, la clé sensible, la description), puis, pour chaque commande, sa description et son arbre
+entier, un nœud par ligne, avec la clé sur laquelle il se juge et ce qui compte pour une règle : il s'exécute, le niveau d'op qu'il exige quand il change, un
+prédicat de mod, une clé sensible, un nœud plus exigeant que son ancêtre, une redirection, un nœud partagé décrit sous sa propre clé. C'est là que se lit la
+clé exacte d'une règle : `minecraft:command.advancement.revoke` pour fermer `/advancement revoke` sans toucher à `grant`.
+
+```markdown
+### /whitelist
+
+Gère la liste blanche des joueurs admis.
+
+- `whitelist` : `minecraft:command.whitelist`, niveau 3 (admins)
+  - `add` : `minecraft:command.whitelist.add`. Ajoute des joueurs à la liste blanche.
+    - `<targets>` : `minecraft:command.whitelist.add.targets`, s'exécute
+```
+
+Les descriptions des commandes de vanilla et de `/aegis` viennent du mod, en français et en anglais. Celles des autres mods viennent de vous : écrivez
+`descriptions.json` à côté de `settings.json`, une clé de commande vers une phrase par langue, en JSON strict ; il l'emporte sur le mod, et une clé sans
+description n'en montre pas.
+
+```json
+{
+  "homes:command.home": {
+    "fr": "Téléporte le joueur à l'un de ses foyers.",
+    "en": "Teleports the player to one of their homes."
+  },
+  "homes:command.home.set": {
+    "fr": "Pose un foyer à la position du joueur.",
+    "en": "Sets a home at the player's position."
+  }
+}
+```
+
+Un `descriptions.json` qui ne se lit pas ne fait pas échouer le manuel : sa tête le dit, et les descriptions du mod servent seules. Le manuel ne compte que les
+commandes du serveur : celles d'un mod client, que le serveur ne voit jamais, n'y sont pas.

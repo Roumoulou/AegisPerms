@@ -43,8 +43,8 @@ chargeur nomme les deux mods avant que le jeu ne charge.
 ## Premier démarrage
 
 Au premier démarrage, le mod crée `config\aegisperms\settings.json` et `permissions.json` avec deux groupes : `default`, qui refuse toute commande sauf
-`/help`, `/me` et `/msg`, et `admin`, qui ouvre tout aux ops de niveau 4. Un joueur ne voit alors que `/mc:help`, `/mc:me` et `/mc:msg` ; un op de niveau 4
-voit tout, et `/aegis`. La console et le RCON ne sont jamais jugés.
+`/help` et `/msg`, et `admin`, qui ouvre tout aux ops de niveau 4. Un joueur ne voit alors que `/mc:help` et `/mc:msg` ; un op de niveau 4 voit tout, et
+`/aegis`. La console et le RCON ne sont jamais jugés.
 
 ```text
 /aegis group vip create 80
@@ -53,7 +53,8 @@ voit tout, et `/aegis`. La console et le RCON ne sont jamais jugés.
 /aegis why Joe mc:teleport Joe 10 64 10
 ```
 
-Joe se téléporte, et `why` raconte pourquoi, nœud par nœud. La suite est dans la doc.
+Joe se téléporte, et `why` raconte pourquoi, nœud par nœud. `/aegis manual` écrit toutes les commandes du serveur, avec leurs clés et leur description,
+dans `config\aegisperms\manuals\`. La suite est dans la doc.
 
 ## Documentation
 

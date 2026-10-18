@@ -37,7 +37,8 @@ Une clé couvre ses descendantes, comme chez LuckPerms une permission couvre ses
 `<modid>:command` et `command`, toutes les commandes sauf `/aegis`.
 
 Les alias et les formes préfixées ne créent pas de clé : `/tp`, `/mc:teleport` et `/teleport` se jugent sur `minecraft:command.teleport`. Une règle écrite
-sur `minecraft:command.tp` ne couvre rien, et la validation le dit.
+sur `minecraft:command.tp` ne couvre rien, et la validation le dit. `/tp` n'a pas de forme préfixée : un joueur sous la forme exigée tape `/mc:teleport`, ou
+l'alias que vous lui rendez.
 
 **Les clés d'API** sont les identifiants que les mods demandent par les API de permissions : `homes:home/limit`. La chaîne à points de l'API de lucko,
 `essentialcommands.home.set`, se lit comme l'identifiant `essentialcommands:home/set`, le premier segment pour espace de noms : c'est la convention des mods

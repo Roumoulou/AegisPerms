@@ -115,3 +115,12 @@ Le mod écrit dans le journal du serveur, sous le nom `aegisperms`, dans la lang
 
 Le mod n'écrit ni les commandes que les joueurs exécutent, ni les refus qu'ils essuient. Les modifications par `/aegis` arrivent au journal par la diffusion
 de vanilla, sous le nom de qui les a faites.
+
+## 7. Le manuel des commandes
+
+| Ce que vous lisez | Ce que c'est, et ce qu'on fait |
+|---|---|
+| « Le manuel n'a pas pu s'écrire : ... » | le dossier `config\aegisperms\manuals\` ne se crée pas ou ne s'écrit pas : les droits du dossier, le disque plein, ou un fichier qui porte le nom `manuals` ; la cause est donnée |
+| « Langue inconnue : X. Les langues : fr, en. » | `/aegis manual` ne prend que `fr` ou `en` ; sans argument, votre langue |
+| « Le fichier descriptions.json ne se lit pas, et ses descriptions manquent : ... », en tête du manuel | `descriptions.json` n'est pas du JSON strict, ou n'a pas la forme attendue, une clé de commande vers un objet `{"fr": ..., "en": ...}` ; la cause dit la position ; le manuel est écrit quand même, avec les descriptions du mod |
+| une commande sans description dans le manuel | le mod ne la connaît pas : écrivez la vôtre dans `descriptions.json` (`les-fichiers.md`, chapitre 9) |
