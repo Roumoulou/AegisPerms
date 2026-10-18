@@ -36,7 +36,6 @@ data class Permissions(
                     rules = mapOf(
                         "command" to Rule.DENY,
                         "minecraft:command.help" to Rule.ALLOW,
-                        "minecraft:command.me" to Rule.ALLOW,
                         "minecraft:command.msg" to Rule.ALLOW,
                     ),
                 ),

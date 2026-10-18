@@ -21,11 +21,12 @@ class FirstStartTest {
     private val reload = commandKey("aegisperms:command.aegis.reload")
 
     @Test
-    fun `un joueur non-op n'a que les trois commandes de default`() {
+    fun `un joueur non-op n'a que les deux commandes de default`() {
         val player = subject("Nina")
 
         assertEquals(listOf("default"), resolver.order(player).groups.map { it.name })
-        for (opened in listOf("help", "me.action", "msg.targets.message")) assertEquals(NodeJudgment.ALLOWED, resolver.judgment(player, commandKey("minecraft:command.$opened")), opened)
+        for (opened in listOf("help", "msg.targets.message")) assertEquals(NodeJudgment.ALLOWED, resolver.judgment(player, commandKey("minecraft:command.$opened")), opened)
+        assertEquals(NodeJudgment.HIDDEN, resolver.judgment(player, commandKey("minecraft:command.me.action")), "me ne s'ouvre plus par défaut")
         // Ni ce que vanilla ouvrait à tous, ni aucune commande d'un mod.
         for (closed in listOf("list", "teammsg", "trigger", "random.value", "gamemode")) assertEquals(NodeJudgment.HIDDEN, resolver.judgment(player, commandKey("minecraft:command.$closed")), closed)
         assertEquals(NodeJudgment.HIDDEN, resolver.judgment(player, commandKey("homes:command.home")))

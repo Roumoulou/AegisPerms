@@ -76,7 +76,6 @@ class PermissionsJsonTest {
                   "rules": {
                     "command": "deny",
                     "minecraft:command.help": "allow",
-                    "minecraft:command.me": "allow",
                     "minecraft:command.msg": "allow"
                   }
                 },

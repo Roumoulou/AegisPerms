@@ -24,7 +24,7 @@ class PermissionsTest {
         assertTrue(defaultGroup.parents.isEmpty())
         assertNull(defaultGroup.includeOps)
         assertEquals(
-            mapOf("command" to Rule.DENY, "minecraft:command.help" to Rule.ALLOW, "minecraft:command.me" to Rule.ALLOW, "minecraft:command.msg" to Rule.ALLOW),
+            mapOf("command" to Rule.DENY, "minecraft:command.help" to Rule.ALLOW, "minecraft:command.msg" to Rule.ALLOW),
             defaultGroup.rules,
         )
 
