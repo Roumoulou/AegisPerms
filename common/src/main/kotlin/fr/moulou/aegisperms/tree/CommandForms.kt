@@ -31,21 +31,21 @@ sealed interface AliasOutcome {
     data object Added : AliasOutcome
 
     /**
-     * Son nom est celui d'une commande racine qui mène au même nœud que sa cible : il ne crée rien, et rend sa forme nue à cette commande sous la forme
-     * exigée.
+     * Le nom de l'alias est celui d'une commande racine qui mène au même nœud que sa cible : il ne crée rien, et rend sa forme nue à cette commande sous la
+     * forme exigée.
      */
     data object RestoresBareForm : AliasOutcome
 
-    /** Son nom est déjà pris à la racine par une autre commande ou par une forme préfixée : l'ajouter fusionnerait les deux nœuds (3.8). */
+    /** Le nom de l'alias est déjà pris à la racine par une autre commande ou par une forme préfixée : l'ajouter fusionnerait les deux nœuds (3.8). */
     data object NameTaken : AliasOutcome
 
-    /** La commande racine de sa cible n'est pas dans l'arbre : son mod n'est pas là. */
+    /** La commande racine de la cible de l'alias n'est pas dans l'arbre : son mod n'est pas là. */
     data object TargetMissing : AliasOutcome
 
-    /** Sa cible n'est pas une suite de littéraux : [word] n'est pas un littéral sous ce qui le précède, une valeur d'argument par exemple. */
+    /** La cible de l'alias n'est pas une suite de littéraux : [word] n'est pas un littéral sous ce qui le précède, une valeur d'argument par exemple. */
     data class TargetNotLiterals(val word: String) : AliasOutcome
 
-    /** Sa cible s'écrit avec le préfixe qu'on tape au lieu du modid : [expected] est l'écriture attendue. */
+    /** La cible de l'alias s'écrit avec le préfixe qu'on tape au lieu du modid : [expected] est l'écriture attendue. */
     data class TypedPrefix(val expected: String) : AliasOutcome
 }
 
@@ -181,7 +181,7 @@ object CommandForms {
         return PlannedForm(prefixOf(owner.modId, settings.namespaces.prefixes, mods) + ":" + node.name, end, path)
     }
 
-    /** Ajoute à l'arbre de [root] les formes et les alias de [plan]. */
+    /** Ajoute à l'arbre de [root] les formes et les alias de [plan] ; rend ce qui a été ajouté, que [Forms] décrit. */
     fun <S> apply(root: RootCommandNode<S>, plan: FormPlan<S>): Forms<S> {
         val targets = IdentityHashMap<CommandNode<S>, CommandNode<S>>()
         val sharing = IdentityHashMap<CommandNode<S>, MutableList<CommandNode<S>>>()

@@ -43,7 +43,7 @@ data class Settings(
 data class NamespaceSettings(
     /** L'activation des formes préfixées (3.4). */
     val enabled: Boolean = true,
-    /** La forme exigée (3.5). */
+    /** La forme exigée (3.5) : un joueur ne voit et ne tape que les formes préfixées ; sans effet quand les formes préfixées sont coupées. */
     @SerialName("require-prefix") val requirePrefix: Boolean = true,
     /** La table des préfixes : un modid vers le préfixe qui le remplace (3.3). */
     val prefixes: Map<String, String> = mapOf(Keys.MINECRAFT to "mc"),

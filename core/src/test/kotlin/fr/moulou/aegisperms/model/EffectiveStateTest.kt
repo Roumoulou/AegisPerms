@@ -66,7 +66,7 @@ class EffectiveStateTest {
     @Test
     fun `les membres d'office d'un groupe sont les ops d'au moins son niveau`() {
         val personasState = state(personas)
-        for (opLevel in 0..3) assertTrue(personasState.exOfficioGroups(opLevel).isEmpty(), "niveau $opLevel")
+        for (opLevel in 0..3) assertTrue(personasState.exOfficioGroups(opLevel).isEmpty(), "niveau d'op $opLevel")
         assertEquals(listOf("admin"), personasState.exOfficioGroups(4))
 
         val twoLevels = state(permissions(Permissions.DELIVERED.groups + ("staff" to Group(includeOps = OpLevel.MODERATORS))))
@@ -84,11 +84,9 @@ class EffectiveStateTest {
         assertEquals(Decision.DENY_HIDDEN, hiddenByDefault.decisionOf(Rule.DENY))
         assertEquals(Decision.DENY_VISIBLE, visibleByDefault.decisionOf(Rule.DENY))
 
-        // Ce que la règle dit l'emporte sur le réglage.
         assertEquals(Decision.DENY_VISIBLE, hiddenByDefault.decisionOf(Rule(RuleValue.DENY, visible = true)))
         assertEquals(Decision.DENY_HIDDEN, visibleByDefault.decisionOf(Rule(RuleValue.DENY, visible = false)))
 
-        // Sur un allow, la visibilité est ignorée.
         assertEquals(Decision.ALLOW, visibleByDefault.decisionOf(Rule(RuleValue.ALLOW, visible = true)))
     }
 

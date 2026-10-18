@@ -128,8 +128,12 @@ object AegisCommand {
             .then(Commands.literal("info").executes { context -> run(context) { reply -> withTarget(context, reply) { Queries.playerInfo(reply, context.source.server, it) } } })
             .then(
                 Commands.literal("group")
-                    .then(Commands.literal("add").then(Commands.argument(GROUP, StringArgumentType.word()).suggests(Suggestions.GROUPS).executes { context -> run(context) { reply -> withTarget(context, reply) { Modifications.playerGroup(reply, it, string(context, GROUP), add = true) } } }))
-                    .then(Commands.literal("remove").then(Commands.argument(GROUP, StringArgumentType.word()).suggests(Suggestions.GROUPS).executes { context -> run(context) { reply -> withTarget(context, reply) { Modifications.playerGroup(reply, it, string(context, GROUP), add = false) } } })),
+                    .then(Commands.literal("add").then(Commands.argument(GROUP, StringArgumentType.word()).suggests(Suggestions.GROUPS).executes { context ->
+                        run(context) { reply -> withTarget(context, reply) { Modifications.playerGroup(reply, it, string(context, GROUP), add = true) } }
+                    }))
+                    .then(Commands.literal("remove").then(Commands.argument(GROUP, StringArgumentType.word()).suggests(Suggestions.GROUPS).executes { context ->
+                        run(context) { reply -> withTarget(context, reply) { Modifications.playerGroup(reply, it, string(context, GROUP), add = false) } }
+                    })),
             )
             .then(
                 Commands.literal("note").then(
@@ -139,7 +143,9 @@ object AegisCommand {
                 ),
             )
         for (verb in RuleVerb.entries) {
-            target.then(Commands.literal(verb.literal).then(Commands.argument(KEY, StringArgumentType.greedyString()).suggests(Suggestions.KEYS).executes { context -> run(context) { reply -> withTarget(context, reply) { Modifications.playerRule(reply, it, verb, string(context, KEY)) } } }))
+            target.then(Commands.literal(verb.literal).then(Commands.argument(KEY, StringArgumentType.greedyString()).suggests(Suggestions.KEYS).executes { context ->
+                run(context) { reply -> withTarget(context, reply) { Modifications.playerRule(reply, it, verb, string(context, KEY)) } }
+            }))
         }
         return Commands.literal("player").then(target)
     }

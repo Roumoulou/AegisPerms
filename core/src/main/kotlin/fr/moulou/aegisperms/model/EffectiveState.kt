@@ -48,7 +48,7 @@ class KnownPlayer private constructor(
     val readableForm: String,
     /** Le joueur, tel que le fichier des droits l'écrit. */
     val player: Player,
-    /** Ses règles propres, compilées. */
+    /** Les règles propres du joueur, compilées. */
     val rules: RuleSet,
 ) {
 

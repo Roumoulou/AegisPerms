@@ -166,8 +166,8 @@ class TreeValidatorTest {
 
         assertEquals(
             listOf(
-                Issue(IssueKind.REASSIGNED_COMMAND_KEY, ConfigurationFile.PERMISSIONS, listOf("groups", "vip", "rules", "unknown:command.orphan"), literals("unknown:command.orphan", "homes:command.orphan")),
-                Issue(IssueKind.REASSIGNED_COMMAND_KEY, ConfigurationFile.PERMISSIONS, listOf("players", BOB, "rules", "unknown:command.orphan.sub"), literals("unknown:command.orphan.sub", "homes:command.orphan.sub")),
+                Issue(IssueKind.OWNER_ASSIGNMENT_OLD_KEY, ConfigurationFile.PERMISSIONS, listOf("groups", "vip", "rules", "unknown:command.orphan"), literals("unknown:command.orphan", "homes:command.orphan")),
+                Issue(IssueKind.OWNER_ASSIGNMENT_OLD_KEY, ConfigurationFile.PERMISSIONS, listOf("players", BOB, "rules", "unknown:command.orphan.sub"), literals("unknown:command.orphan.sub", "homes:command.orphan.sub")),
             ),
             issues,
         )

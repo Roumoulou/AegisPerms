@@ -20,13 +20,13 @@ import me.lucko.fabric.api.permissions.v0.Permissions as LuckoPermissions
 /** Les API (cahier des charges, chapitre 6 et 8.5) : les deux fournisseurs face à de vrais consommateurs, et l'autorité étrangère. */
 class ApiGameTests : AegisGameTests() {
 
-    /** Prouve que la commande sous l'API de Fabric suit les règles : fermée sous `deny`, ouverte sous `allow`, au repli de niveau du consommateur sous `unset`. */
+    /** Prouve que la commande sous l'API de Fabric suit les règles : fermée sous `deny`, ouverte sous `allow`, au repli de niveau d'op du consommateur sous `unset`. */
     @GameTest
     fun fabricApiCommandFollowsTheRules(helper: GameTestHelper) {
         consumerCommandFollowsTheRules(helper, "aegistest_fabric", "$TEST_MOD_ID:api/fabric")
     }
 
-    /** Prouve la même chose pour la commande sous l'API de lucko, dont la chaîne à points donne la clé d'API. */
+    /** Prouve que la commande sous l'API de lucko suit les règles comme celle de l'API de Fabric, sa chaîne à points donnant la clé d'API. */
     @GameTest
     fun luckoApiCommandFollowsTheRules(helper: GameTestHelper) {
         consumerCommandFollowsTheRules(helper, "aegistest_lucko", "$TEST_MOD_ID:lucko")
@@ -38,21 +38,21 @@ class ApiGameTests : AegisGameTests() {
         val judged = helper.judgedPlayer()
         val other = helper.judgedPlayer()
         TestStates.publish(permissionsWith(deliveredDefaultPlus(), players = mapOf(judged.readableForm() to Player(rules = mapOf("$TEST_MOD_ID:lucko" to Rule.ALLOW)))))
-        helper.assertTrue(LuckoPermissions.check(judged.source, GameTestCommands.LUCKO_PERMISSION, false), "le joueur à la règle propre a la permission")
-        helper.assertFalse(LuckoPermissions.check(other.source, GameTestCommands.LUCKO_PERMISSION, false), "l'autre ne l'a pas, et le repli du consommateur vaut")
-        helper.assertTrue(LuckoPermissions.check(judged.source.withEntity(other), GameTestCommands.LUCKO_PERMISSION, false), "execute as garde le juge")
-        helper.assertFalse(LuckoPermissions.check(other.source.withEntity(judged), GameTestCommands.LUCKO_PERMISSION, false), "dans l'autre sens aussi")
+        helper.assertTrue(LuckoPermissions.check(judged.source, GameTestCommands.LUCKO_DOTTED_STRING, false), "la règle propre du joueur lui répond vrai")
+        helper.assertFalse(LuckoPermissions.check(other.source, GameTestCommands.LUCKO_DOTTED_STRING, false), "l'autre ne l'a pas, et le repli du consommateur vaut")
+        helper.assertTrue(LuckoPermissions.check(judged.source.withEntity(other), GameTestCommands.LUCKO_DOTTED_STRING, false), "execute as garde le juge")
+        helper.assertFalse(LuckoPermissions.check(other.source.withEntity(judged), GameTestCommands.LUCKO_DOTTED_STRING, false), "dans l'autre sens aussi")
         helper.succeed()
     }
 
-    /** Prouve que la console n'est pas jugée par les API : le fournisseur ne répond pas, et le repli du consommateur décide, niveau 4 compris. */
+    /** Prouve que la console n'est pas jugée par les API : le fournisseur ne répond pas, et le repli du consommateur décide, niveau d'op 4 compris. */
     @GameTest
     fun consoleIsNotJudgedByTheApis(helper: GameTestHelper) {
         val console = helper.server.createCommandSourceStack()
-        helper.assertFalse(LuckoPermissions.check(console, GameTestCommands.LUCKO_PERMISSION, false), "lucko : le repli faux vaut")
-        helper.assertTrue(LuckoPermissions.check(console, GameTestCommands.LUCKO_PERMISSION, true), "lucko : le repli vrai vaut")
-        helper.assertTrue(LuckoPermissions.check(console, GameTestCommands.LUCKO_PERMISSION, PermissionLevel.ADMINS), "lucko : le repli de niveau lit le niveau 4 de la console")
-        val fabric = PermissionPredicates.require<PermissionContextOwner>(GameTestCommands.FABRIC_NODE, PermissionLevel.ADMINS)
+        helper.assertFalse(LuckoPermissions.check(console, GameTestCommands.LUCKO_DOTTED_STRING, false), "lucko : le repli faux vaut")
+        helper.assertTrue(LuckoPermissions.check(console, GameTestCommands.LUCKO_DOTTED_STRING, true), "lucko : le repli vrai vaut")
+        helper.assertTrue(LuckoPermissions.check(console, GameTestCommands.LUCKO_DOTTED_STRING, PermissionLevel.ADMINS), "lucko : le repli de niveau d'op lit le niveau d'op 4 de la console")
+        val fabric = PermissionPredicates.require<PermissionContextOwner>(GameTestCommands.FABRIC_API_KEY, PermissionLevel.ADMINS)
         helper.assertTrue(fabric.test(console as PermissionContextOwner), "Fabric : le repli de niveau lit le niveau 4 de la console")
         helper.succeed()
     }
@@ -62,8 +62,8 @@ class ApiGameTests : AegisGameTests() {
     fun offlinePlayerIsJudgedByUuid(helper: GameTestHelper) {
         val player = helper.judgedPlayer()
         TestStates.publish(permissionsWith(deliveredDefaultPlus(), players = mapOf(player.readableForm() to Player(rules = mapOf("$TEST_MOD_ID:lucko" to Rule.ALLOW)))))
-        helper.assertTrue(LuckoPermissions.check(player.uuid, GameTestCommands.LUCKO_PERMISSION, false).get(), "un UUID connu des droits a la permission")
-        helper.assertFalse(LuckoPermissions.check(UUID.randomUUID(), GameTestCommands.LUCKO_PERMISSION, false).get(), "un UUID inconnu reste au repli")
+        helper.assertTrue(LuckoPermissions.check(player.uuid, GameTestCommands.LUCKO_DOTTED_STRING, false).get(), "un UUID connu des droits reçoit vrai")
+        helper.assertFalse(LuckoPermissions.check(UUID.randomUUID(), GameTestCommands.LUCKO_DOTTED_STRING, false).get(), "un UUID inconnu reste au repli")
         helper.succeed()
     }
 

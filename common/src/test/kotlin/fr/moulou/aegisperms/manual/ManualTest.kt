@@ -73,7 +73,11 @@ class ManualTest {
 
         assertTrue("- `datapack` : `minecraft:command.datapack`, niveau 2 (gamemasters)\n  - `create` : `minecraft:command.datapack.create`, s'exécute, niveau 3 (admins), plus exigeant que son ancêtre\n" in text, text)
         assertTrue("- `whitelist` : `minecraft:command.whitelist`, niveau 3 (admins)\n  - `add` : `minecraft:command.whitelist.add`, alias : `/wla`. Ajoute à la liste blanche.\n    - `<targets>` : `minecraft:command.whitelist.add.targets`, s'exécute\n" in text, text)
-        assertTrue("  - `as` : `minecraft:command.execute.as`, sensible : impersonation\n    - `<targets>` : `minecraft:command.execute.as.targets`, redirige vers `minecraft:command.execute`\n  - `if` : `minecraft:command.execute.if`, s'exécute\n  - `run` : `minecraft:command.execute.run`, redirige vers toute commande\n" in text, text)
+        assertTrue(
+            "  - `as` : `minecraft:command.execute.as`, sensible : impersonation\n    - `<targets>` : `minecraft:command.execute.as.targets`, redirige vers `minecraft:command.execute`\n" +
+                "  - `if` : `minecraft:command.execute.if`, s'exécute\n  - `run` : `minecraft:command.execute.run`, redirige vers toute commande\n" in text,
+            text,
+        )
         assertTrue("- `list` : `minecraft:command.list`, s'exécute\n  - `page` : `minecraft:command.list.page`\n    - `<number>` : `minecraft:command.list.page.number`, s'exécute\n" in text, "le premier chemin déroule le nœud partagé")
         assertTrue("- `banlist` : `minecraft:command.banlist`, s'exécute, niveau 3 (admins)\n  - `page` : `minecraft:command.list.page`, partagé, décrit sous sa clé\n\n" in text, "le second chemin le cite seul")
         assertTrue(text.endsWith("\n") && "\r" !in text)

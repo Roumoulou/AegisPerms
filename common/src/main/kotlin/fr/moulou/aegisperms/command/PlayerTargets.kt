@@ -30,7 +30,7 @@ sealed interface TargetResolution {
 /** Les sources qu'une résolution consulte : le serveur, son cache de profils, et les joueurs du fichier des droits. */
 interface PlayerLookup {
 
-    /** Le joueur en ligne de ce pseudo. */
+    /** Le joueur en ligne de ce pseudo, ou `null` quand aucun ne l'est. */
     fun online(name: String): PlayerTarget?
 
     /** Le joueur que le cache de profils du serveur connaît sous ce pseudo. */

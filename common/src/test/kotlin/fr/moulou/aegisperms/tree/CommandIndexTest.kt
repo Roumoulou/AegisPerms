@@ -151,7 +151,7 @@ class CommandIndexTest {
     fun `une racine tardive reçoit son mod, sa clé et sa forme préfixée`() {
         val dispatcher = tree()
         val index = index(dispatcher, Settings.DELIVERED)
-        val warp = dispatcher.register(literal<Any>("warp").requires(MOD_OPTION).executes(WarpsMod.command()).then(literal<Any>("list").executes(WarpsMod.command())))
+        val warp = dispatcher.register(literal<Any>("warp").requires(MOD_PREDICATE).executes(WarpsMod.command()).then(literal<Any>("list").executes(WarpsMod.command())))
 
         val late = index.lateRoot(warp, index::markOf)!!
         val form = late.form!!
@@ -203,7 +203,7 @@ class CommandIndexTest {
         val dispatcher = CommandDispatcher<Any>()
         val gamemode = dispatcher.register(literal<Any>("gamemode").requires(GAMEMASTERS).then(literal<Any>("creative").executes(VanillaCommand())))
         dispatcher.register(literal<Any>("gm").requires(GAMEMASTERS).redirect(gamemode))
-        dispatcher.register(literal<Any>("home").requires(MOD_OPTION).executes(HomeCommand()))
+        dispatcher.register(literal<Any>("home").requires(MOD_PREDICATE).executes(HomeCommand()))
         return dispatcher
     }
 }

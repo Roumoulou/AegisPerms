@@ -48,8 +48,8 @@ class TreeResendTest {
 
     @Test
     fun `une règle changée ne concerne que les joueurs dont l'ordre d'examen passe par son ensemble`() {
-        val membre = personas.groups.getValue("membre")
-        val next = state(withGroup("membre", membre.copy(rules = membre.rules + ("minecraft:command.me" to Rule.ALLOW))), generation = 2)
+        val member = personas.groups.getValue("membre")
+        val next = state(withGroup("membre", member.copy(rules = member.rules + ("minecraft:command.me" to Rule.ALLOW))), generation = 2)
         TreeResend.afterPublication(state(personas), next)
         val resolver = Resolver(next)
         val pending = TreeResend.pending()

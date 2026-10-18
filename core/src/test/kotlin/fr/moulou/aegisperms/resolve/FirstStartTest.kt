@@ -26,7 +26,7 @@ class FirstStartTest {
 
         assertEquals(listOf("default"), resolver.order(player).groups.map { it.name })
         for (opened in listOf("help", "msg.targets.message")) assertEquals(NodeJudgment.ALLOWED, resolver.judgment(player, commandKey("minecraft:command.$opened")), opened)
-        assertEquals(NodeJudgment.HIDDEN, resolver.judgment(player, commandKey("minecraft:command.me.action")), "me ne s'ouvre plus par défaut")
+        assertEquals(NodeJudgment.HIDDEN, resolver.judgment(player, commandKey("minecraft:command.me.action")), "me reste fermé aux valeurs livrées")
         // Ni ce que vanilla ouvrait à tous, ni aucune commande d'un mod.
         for (closed in listOf("list", "teammsg", "trigger", "random.value", "gamemode")) assertEquals(NodeJudgment.HIDDEN, resolver.judgment(player, commandKey("minecraft:command.$closed")), closed)
         assertEquals(NodeJudgment.HIDDEN, resolver.judgment(player, commandKey("homes:command.home")))
@@ -49,10 +49,10 @@ class FirstStartTest {
         for (opLevel in 1..3) {
             val op = subject("Otto", opLevel)
 
-            assertEquals(listOf("default"), resolver.order(op).groups.map { it.name }, "niveau $opLevel")
-            assertEquals(NodeJudgment.ALLOWED, resolver.judgment(op, commandKey("minecraft:command.help")), "niveau $opLevel")
-            assertEquals(NodeJudgment.HIDDEN, resolver.judgment(op, commandKey("minecraft:command.gamemode")), "niveau $opLevel")
-            assertEquals(Decision.UNSET, resolver.decision(op, reload), "niveau $opLevel")
+            assertEquals(listOf("default"), resolver.order(op).groups.map { it.name }, "niveau d'op $opLevel")
+            assertEquals(NodeJudgment.ALLOWED, resolver.judgment(op, commandKey("minecraft:command.help")), "niveau d'op $opLevel")
+            assertEquals(NodeJudgment.HIDDEN, resolver.judgment(op, commandKey("minecraft:command.gamemode")), "niveau d'op $opLevel")
+            assertEquals(Decision.UNSET, resolver.decision(op, reload), "niveau d'op $opLevel")
         }
     }
 

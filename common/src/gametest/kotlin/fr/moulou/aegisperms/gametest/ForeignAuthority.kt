@@ -19,7 +19,7 @@ object ForeignAuthority {
     @Volatile
     var armed: Boolean = false
 
-    /** L'autorité posée : un ensemble de niveau 0 qui refuse tout, qu'aucune enveloppe ne reconnaît. */
+    /** L'autorité posée : un ensemble de niveau d'op 0 qui refuse tout, qu'aucune enveloppe ne reconnaît. */
     @JvmField
     val SET: PermissionSet = object : LevelBasedPermissionSet {
         override fun level(): PermissionLevel = PermissionLevel.ALL

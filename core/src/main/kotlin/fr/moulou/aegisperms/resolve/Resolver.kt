@@ -24,12 +24,12 @@ import java.util.concurrent.atomic.AtomicReferenceArray
  * avec un résolveur nouveau, et un calcul fait sur l'ancien ne peut rien y écrire (7.4).
  *
  * Le cache s'indexe par UUID et par niveau d'op, parce que le niveau d'op change les groupes de départ du sujet : après un `/op`, la commande suivante se
- * juge dans une autre case. Les joueurs que le fichier des droits ne connaît pas partagent une case par niveau.
+ * juge dans une autre case. Les joueurs que le fichier des droits ne connaît pas partagent une case par niveau d'op.
  */
 class Resolver(val state: EffectiveState) {
 
     companion object {
-        /** Les niveaux d'op, de 0 à 4. */
+        /** Le nombre de niveaux d'op, de 0 à 4. */
         private val OP_LEVEL_COUNT = OpLevel.OWNERS.level + 1
     }
 
@@ -39,16 +39,16 @@ class Resolver(val state: EffectiveState) {
     /** La décision d'un sujet pour une clé, étape 0 comprise. */
     fun decision(subject: Subject, key: Key): Decision = decision(subject.uuid, subject.opLevel, key)
 
-    /** La même, sans objet sujet : la forme du chemin chaud, sans allocation une fois la décision en cache. */
+    /** La décision d'un sujet donné par son UUID et son niveau d'op, étape 0 comprise : la forme du chemin chaud, sans allocation une fois la décision en cache. */
     fun decision(uuid: UUID, opLevel: Int, key: Key): Decision {
         if (isStep0(opLevel, key)) return Decision.ALLOW
         return ruleDecision(cacheFor(uuid, opLevel), key)
     }
 
-    /** Le jugement d'un nœud de clé [key] (2.7). */
+    /** Le jugement du nœud de clé [key] pour [subject], toutes les clés de son chemin lues (2.7) ; une clé générale, qui ne nomme aucun nœud, est refusée. */
     fun judgment(subject: Subject, key: CommandKey): NodeJudgment = judgment(subject.uuid, subject.opLevel, key)
 
-    /** Le même, sans objet sujet : la forme du chemin chaud, sans allocation une fois le jugement en cache. */
+    /** Le jugement du nœud de clé [key] pour un sujet donné par son UUID et son niveau d'op : la forme du chemin chaud, sans allocation une fois le jugement en cache. */
     fun judgment(uuid: UUID, opLevel: Int, key: CommandKey): NodeJudgment {
         require(key.isNode) { "Only a node key has a judgment: $key" }
         if (isStep0(opLevel, key)) return NodeJudgment.ALLOWED
@@ -58,10 +58,10 @@ class Resolver(val state: EffectiveState) {
         return cache.judgments.putIfAbsent(key, computed) ?: computed
     }
 
-    /** L'ordre dans lequel les groupes d'un sujet s'examinent. */
+    /** L'ordre d'examen de [subject] (2.6), calculé une fois par UUID et par niveau d'op. */
     fun order(subject: Subject): ExaminationOrder = cacheFor(subject.uuid, subject.opLevel).order
 
-    /** La trace d'une décision. */
+    /** La décision de [subject] pour [key] avec sa trace (5.5) : ce que `/aegis check` et `/aegis why` montrent. */
     fun explain(subject: Subject, key: Key): DecisionTrace {
         val cache = cacheFor(subject.uuid, subject.opLevel)
         val hits = hits(cache.player, cache.order, key).toList()

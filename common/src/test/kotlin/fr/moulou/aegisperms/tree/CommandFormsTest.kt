@@ -70,7 +70,6 @@ class CommandFormsTest {
         assertNull(prefixed.redirect)
         assertEquals(7, dispatcher.execute("mc:teleport Joe", 2))
         assertThrows(CommandSyntaxException::class.java) { dispatcher.execute("mc:teleport Joe", 0) }
-        // La forme d'une commande qui s'exécute seule s'exécute seule.
         assertSame(dispatcher.root.getChild("list").command, dispatcher.root.getChild("mc:list").command)
         assertEquals(3, dispatcher.execute("mc:list", 0))
     }
@@ -99,7 +98,7 @@ class CommandFormsTest {
         val prefixed = dispatcher.root.getChild("mc:tp")
         assertSame(teleport, plan.aliases.getValue("mc:tp").end)
         assertSame(teleport.getChild("targets"), prefixed.getChild("targets"))
-        // `tp` exige le niveau 3 dans cet arbre : l'alias de la table, lui, ne porte que l'exigence de /teleport, le niveau 2.
+        // `tp` exige le niveau d'op 3 dans cet arbre : l'alias de la table, lui, ne porte que l'exigence de /teleport, le niveau d'op 2.
         assertTrue(prefixed.canUse(2))
         assertEquals(7, dispatcher.execute("mc:tp Joe", 2))
     }
@@ -220,7 +219,7 @@ class CommandFormsTest {
         assertThrows(CommandSyntaxException::class.java) { dispatcher.execute("gm creative", 0) }
         assertEquals(3, dispatcher.execute("ls", 0))
         assertEquals(13, dispatcher.execute("h", 0))
-        // Un alias n'a pas de forme préfixée, et reste visible sous la forme exigée.
+        // Un alias n'a pas de forme préfixée, et reste vu sous la forme exigée.
         assertNull(dispatcher.root.getChild("mc:gm"))
         assertFalse(gm in plan.hiddenBareForms)
     }
@@ -234,7 +233,7 @@ class CommandFormsTest {
 
         assertSame(add, plan.aliases.getValue("wla").end)
         assertSame(add.getChild("targets"), wla.getChild("targets"))
-        // `add` n'exige rien lui-même : c'est `whitelist` qui porte le niveau 3.
+        // `add` n'exige rien lui-même : c'est `whitelist` qui porte le niveau d'op 3.
         assertSame(ADMINS, wla.requirement)
         assertFalse(wla.canUse(2))
         assertEquals(9, dispatcher.execute("wla Joe", 3))
@@ -325,7 +324,7 @@ class CommandFormsTest {
     }
 
     /**
-     * Un arbre qui imite vanilla et deux mods. `teleport` exige le niveau 2 et son alias `tp` le niveau 3, pour que la conjonction se voie ; `gamemode` prend
+     * Un arbre qui imite vanilla et deux mods. `teleport` exige le niveau d'op 2 et son alias `tp` le niveau d'op 3, pour que la conjonction se voie ; `gamemode` prend
      * la valeur de son mode en argument, comme en vanilla ; `whitelist` porte l'exigence que `add` n'a pas ; `execute` a `run` vers la racine et le fork de
      * `as` ; `home` est d'un mod, `aegis` du mod lui-même, et `orphan` n'a pas de mod propriétaire.
      */

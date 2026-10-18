@@ -82,7 +82,7 @@ enum class IssueKind(val severity: Severity) {
     ALIAS_TARGET_TYPED_PREFIX(Severity.ERROR),
 
     /** Une règle qui porte l'ancienne clé d'une commande rattachée à un autre mod (3.2). Arguments : la clé de la règle, la clé que le rattachement lui donne. */
-    REASSIGNED_COMMAND_KEY(Severity.ERROR),
+    OWNER_ASSIGNMENT_OLD_KEY(Severity.ERROR),
 
     /** Un groupe nomme deux fois le même parent. Arguments : le groupe, le parent. */
     DUPLICATE_PARENT(Severity.WARNING),
@@ -117,7 +117,7 @@ enum class IssueKind(val severity: Severity) {
     /** Une clé de commande que le catalogue ne connaît pas. Argument : la clé. */
     UNKNOWN_COMMAND_KEY(Severity.WARNING),
 
-    /** La même, quand le catalogue propose une clé proche. Arguments : la clé, la plus proche. */
+    /** Une clé de commande que le catalogue ne connaît pas, quand il en propose une proche. Arguments : la clé, la plus proche. */
     UNKNOWN_COMMAND_KEY_NEAR(Severity.WARNING),
 
     /** Une clé d'API ni connue de vanilla ni jamais demandée. Argument : la clé. */
@@ -162,14 +162,14 @@ enum class IssueKind(val severity: Severity) {
     /** Un `deny` dont la clé n'existe plus : ce qu'il fermait ne l'est peut-être plus. Argument : la clé. */
     DENY_KEY_GONE(Severity.REINFORCED),
 
-    /** Le même, quand des clés sont apparues au même endroit du catalogue. Arguments : la clé, les clés apparues, séparées par des virgules. */
+    /** Un `deny` dont la clé n'existe plus, quand des clés sont apparues au même endroit du catalogue. Arguments : la clé, les clés apparues, séparées par des virgules. */
     DENY_KEY_GONE_NEAR(Severity.REINFORCED);
 
     /** La clé de traduction du texte du constat. */
     val translationKey: String get() = "aegisperms.issue." + name.lowercase()
 }
 
-/** Le niveau d'un constat. */
+/** Le niveau d'un constat (4.5) : une erreur refuse la configuration, un avertissement la laisse se publier, un avertissement renforcé se répète à chaque démarrage et à chaque connexion d'un op d'au moins `admin-level`. */
 enum class Severity {
 
     /** La configuration est refusée. */

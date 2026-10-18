@@ -30,7 +30,7 @@
   "aegisperms.issue.duplicate_prefix": "Prefix %s is given to two mods, %s and %s",
   "aegisperms.issue.alias_target_not_literals": "Alias %s targets %s, where %s is not a literal",
   "aegisperms.issue.alias_target_typed_prefix": "Alias %s targets %s with the typed prefix: write %s",
-  "aegisperms.issue.reassigned_command_key": "Key %s is the former key of a reassigned command: write %s",
+  "aegisperms.issue.owner_assignment_old_key": "Key %s is the former key of a command assigned to another mod: write %s",
   "aegisperms.issue.duplicate_parent": "Group %s names parent %s twice",
   "aegisperms.issue.duplicate_player_group": "Group %s is listed twice",
   "aegisperms.issue.default_as_direct_group": "default is listed as a direct group: it already applies",

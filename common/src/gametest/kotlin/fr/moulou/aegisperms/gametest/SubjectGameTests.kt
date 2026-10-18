@@ -64,7 +64,7 @@ class SubjectGameTests : AegisGameTests() {
 
     /**
      * Prouve que `withMaximumPermission`, le chemin de `/function`, sort de l'enveloppe : la source plafonnée n'est plus jugée et suit vanilla, qui ouvre
-     * `/list` à tous là où `default` le refuse. Le plafond ne relève pas le niveau : `union` rend le plus bas, et un joueur de niveau 0 le reste.
+     * `/list` à tous là où `default` le refuse. Le plafond ne relève pas le niveau d'op : `union` rend le plus bas, et un joueur de niveau d'op 0 le reste.
      */
     @GameTest
     fun maximumPermissionLeavesTheEnvelope(helper: GameTestHelper) {
@@ -79,7 +79,7 @@ class SubjectGameTests : AegisGameTests() {
         helper.succeed()
     }
 
-    /** Prouve qu'un `/op` puis un `/deop` renouvellent l'enveloppe et son niveau à la source suivante, et ce que chaque niveau donne au premier démarrage. */
+    /** Prouve qu'un `/op` puis un `/deop` renouvellent l'enveloppe et son niveau d'op à la source suivante, et ce que chaque niveau d'op donne au premier démarrage. */
     @GameTest
     fun opAndDeopRenewTheEnvelope(helper: GameTestHelper) {
         val server = helper.server

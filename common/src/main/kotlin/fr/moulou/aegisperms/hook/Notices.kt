@@ -33,8 +33,8 @@ object Notices {
     /** Le résultat d'un rechargement par la surveillance (4.8), aux ops d'au moins `admin-level` en ligne : appliqué, avec ses nombres, ou refusé. */
     fun watch(server: MinecraftServer, outcome: Outcome<ConfigurationRead>) {
         val settings = Publisher.settings()
-        for (admin in admins(server)) {
-            val recipient = Recipient.of(admin, settings.language)
+        for (administrator in administrators(server)) {
+            val recipient = Recipient.of(administrator, settings.language)
             val message = when (val read = outcome.result) {
                 is ConfigurationRead.Valid -> {
                     val published = outcome.published
@@ -43,11 +43,11 @@ object Notices {
                 }
                 is ConfigurationRead.Refused -> recipient.text(Notice.WATCH_REFUSED, read.report.errors.size)
             }
-            admin.sendSystemMessage(message)
+            administrator.sendSystemMessage(message)
         }
     }
 
-    private fun admins(server: MinecraftServer): List<ServerPlayer> {
+    private fun administrators(server: MinecraftServer): List<ServerPlayer> {
         val required = Publisher.settings().adminLevel.level
         return server.playerList.players.filter { levelOf(it) >= required }
     }

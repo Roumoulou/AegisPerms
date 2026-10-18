@@ -34,7 +34,7 @@ object Texts {
         return format(template, arguments.asList())
     }
 
-    /** [template] rempli par [arguments] : `%s` et `%d` dans l'ordre, `%1$s` par rang, `%%` pour un `%` ; un gabarit sans valeur reste tel quel. */
+    /** [template] rempli par [arguments] : `%s` et `%d` dans l'ordre, `%1$s` par rang, `%%` pour un `%` ; un marqueur sans valeur reste tel quel. */
     fun format(template: String, arguments: List<Any?>): String {
         var next = 0
         return PLACEHOLDER.replace(template) { match ->
@@ -44,7 +44,7 @@ object Texts {
         }
     }
 
-    /** Le nombre de valeurs qu'un gabarit attend : ses gabarits dans l'ordre, ou le plus haut rang nommé. */
+    /** Le nombre de valeurs qu'un gabarit attend : ses marqueurs dans l'ordre, ou le plus haut rang nommé. */
     fun arity(template: String): Int {
         var ordered = 0
         var highest = 0

@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/** Les personnages du cahier des charges (2.11) : chaque ligne de leur table, dans son ordre. Seule Olga est op, de niveau 4. */
+/** Les personnages du cahier des charges (2.11) : chaque ligne de leur table, dans son ordre. Seule Olga est op de niveau 4. */
 class PersonasTest {
 
     private val resolver = resolver(personas)

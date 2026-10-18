@@ -169,9 +169,9 @@ class DecisionTraceTest {
 
     @Test
     fun `un nœud refusé visible par sa propre clé se ferme lui-même, et reste vu`() {
-        val membre = personas.groups.getValue("membre")
+        val member = personas.groups.getValue("membre")
         val permissions = permissions(
-            groups = personas.groups + ("membre" to membre.copy(rules = membre.rules + (coordinates.text to Rule(RuleValue.DENY, visible = true)))),
+            groups = personas.groups + ("membre" to member.copy(rules = member.rules + (coordinates.text to Rule(RuleValue.DENY, visible = true)))),
             players = personas.players,
         )
         val trace = resolver(permissions).explainNode(subject("Jogger"), coordinates)

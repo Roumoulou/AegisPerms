@@ -117,7 +117,7 @@ class IndexCatalog<S>(private val index: CommandIndex<S>, private val apiKeys: S
     /** Le nœud qui porte [key] : le premier de ceux qui se jugent sur elle, devant ceux qui la lui empruntent. */
     private fun bearerOf(key: CommandKey): CommandNode<S> = index.nodesOf(key).first()
 
-    /** Le niveau d'op que vanilla exige pour le nœud de [key], ou `null` quand son exigence n'est pas un niveau. */
+    /** Le niveau d'op que vanilla exige pour le nœud de [key], ou `null` quand son exigence n'est pas un niveau d'op. */
     private fun levelOf(key: CommandKey): Int? = index.entryOf(bearerOf(key))?.requirement?.opLevel?.level
 
     /**

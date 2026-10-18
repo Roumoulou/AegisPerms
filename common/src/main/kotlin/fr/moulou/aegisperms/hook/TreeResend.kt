@@ -37,7 +37,7 @@ object TreeResend {
         everyone.set(true)
     }
 
-    /** Demande l'arbre d'un joueur. */
+    /** Ajoute [player] aux joueurs dont l'arbre part à la fin du tick. */
     fun request(player: UUID) {
         players += player
     }

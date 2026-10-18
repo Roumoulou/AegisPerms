@@ -37,6 +37,6 @@ enum class ConfigurationSource {
     /** La copie `last-good`, la dernière configuration publiée. */
     LAST_GOOD,
 
-    /** Les valeurs livrées : les réglages par défaut, ou les deux groupes du premier démarrage (2.10). */
+    /** Les valeurs livrées : les réglages de `Settings.DELIVERED`, ou les deux groupes du premier démarrage (2.10). */
     DELIVERED,
 }

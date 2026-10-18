@@ -30,7 +30,7 @@
   "aegisperms.issue.duplicate_prefix": "Le préfixe %s est donné à deux mods, %s et %s",
   "aegisperms.issue.alias_target_not_literals": "L'alias %s vise %s, dont %s n'est pas un littéral",
   "aegisperms.issue.alias_target_typed_prefix": "L'alias %s vise %s avec le préfixe tapé : écrire %s",
-  "aegisperms.issue.reassigned_command_key": "La clé %s est l'ancienne clé d'une commande rattachée : écrire %s",
+  "aegisperms.issue.owner_assignment_old_key": "La clé %s est l'ancienne clé d'une commande rattachée : écrire %s",
   "aegisperms.issue.duplicate_parent": "Le groupe %s nomme deux fois le parent %s",
   "aegisperms.issue.duplicate_player_group": "Le groupe %s est inscrit deux fois",
   "aegisperms.issue.default_as_direct_group": "default est inscrit comme groupe direct : il s'applique déjà",

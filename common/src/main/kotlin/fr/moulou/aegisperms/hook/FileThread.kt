@@ -59,8 +59,10 @@ object FileThread {
     private lateinit var files: ConfigurationFiles
     private lateinit var executor: ScheduledExecutorService
 
-    /** La période de la surveillance (4.8) et le délai qui laisse un éditeur finir d'écrire, en millisecondes ; un test les raccourcit. */
+    /** La période de la surveillance (4.8), en millisecondes ; un test la raccourcit. */
     internal var watchPeriodMillis = 2_000L
+
+    /** Le délai qui laisse un éditeur finir d'écrire avant le rechargement, en millisecondes ; un test le raccourcit. */
     internal var watchDelayMillis = 1_000L
 
     /** Ce qui reçoit le résultat d'un rechargement par la surveillance, sur le fil des fichiers : le cycle de vie le porte aux ops (E12). */
@@ -75,8 +77,10 @@ object FileThread {
     /** Vrai entre la détection d'un changement extérieur et la fin du rechargement qu'il déclenche : un seul rechargement par changement. */
     private var reloadPending = false
 
-    /** L'index adopté, et le catalogue qu'il donne à la validation ; `null` tant qu'aucun index n'est adopté, ou quand il a manqué. */
+    /** L'index adopté ; `null` tant qu'aucun index n'est adopté, ou quand il a manqué. */
     private var index: CommandIndex<CommandSourceStack>? = null
+
+    /** Le catalogue que l'index adopté donne à la validation, `null` avec lui. */
     private var catalog: IndexCatalog<CommandSourceStack>? = null
 
     private var createdAtStart: Set<ConfigurationFile> = emptySet()

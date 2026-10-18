@@ -35,8 +35,8 @@ import java.util.function.Predicate
 
 /**
  * `/aegis why` et `/aegis check` (cahier des charges, 5.5) : la même fonction de décision que le chemin chaud, lue avec sa trace. `why` analyse la ligne
- * avec la source de la console, qui voit tout, puis juge chaque nœud du chemin avec la sonde du joueur ; `check` donne la décision d'une clé. Ni l'un ni
- * l'autre n'écrit ni ne se diffuse.
+ * avec une source qui voit tout, celle du joueur à tous droits quand il est en ligne, celle de la console sinon, puis juge chaque nœud du chemin avec la
+ * sonde du joueur ; `check` donne la décision d'une clé. Ni l'un ni l'autre n'écrit ni ne se diffuse.
  */
 internal object Explain {
 
@@ -45,7 +45,7 @@ internal object Explain {
 
     /**
      * La sonde d'un joueur (E6) : sa propre source quand il est en ligne, qui porte l'enveloppe ; sinon la source de la console, sans entité, à qui l'on
-     * donne une enveloppe bâtie sur son niveau d'`ops.json`.
+     * donne une enveloppe bâtie sur son niveau d'op d'`ops.json`.
      */
     fun probe(server: MinecraftServer, target: PlayerTarget): Probe {
         val online = server.playerList.getPlayer(target.uuid)
@@ -61,7 +61,7 @@ internal object Explain {
         val resolver = Publisher.currentOrNull() ?: return reply.refuse(fr.moulou.aegisperms.text.TextKeys.Command.NOT_PUBLISHED)
         val probe = probe(server, target)
         val command = line.trim().removePrefix("/")
-        // La sonde qui voit tout (5.5) : la source du joueur en ligne, qui porte son entité, avec tous les droits, pour qu'un prédicat de mod qui demande
+        // La source qui voit tout (5.5) : celle du joueur en ligne, qui porte son entité, avec tous les droits, pour qu'un prédicat de mod qui demande
         // un joueur s'analyse aussi ; hors ligne, la console, sans entité.
         val seeing = if (probe.online) probe.source.withPermission(AllRights) else server.createCommandSourceStack()
         val parse = server.commands.dispatcher.parse(command, seeing)
@@ -136,7 +136,7 @@ internal object Explain {
 
     // ── Les briques ──────────────────────────────────────────────────────────────
 
-    /** L'exigence d'un nœud sur la sonde : un prédicat de mod ne s'évalue pas hors ligne, et ce qui lève ne s'évalue pas non plus. */
+    /** L'exigence d'un nœud sur la sonde : un prédicat de mod ne s'évalue pas hors ligne ; ce qui lève échoue en ligne, et ne s'évalue pas hors ligne. */
     private fun evaluate(node: CommandNode<*>, probe: Probe, test: () -> Boolean): Evaluation {
         if (!probe.online && (Hooks.markOf(node) as? NodeEntry)?.requirement == CommandRequirement.MOD_PREDICATE) return Evaluation.NOT_EVALUATED
         return try {

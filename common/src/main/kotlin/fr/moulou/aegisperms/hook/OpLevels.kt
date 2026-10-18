@@ -20,7 +20,7 @@ object OpLevels {
     /** Le niveau d'op de [uuid], de 0 à 4 ; 0 pour un joueur inconnu. */
     fun levelOf(uuid: UUID): Int = levels[uuid] ?: 0
 
-    /** Retient le niveau d'op [level] de [uuid]. */
+    /** Retient le niveau d'op [level] de [uuid] ; un niveau d'op 0 retire [uuid] de la table. */
     fun record(uuid: UUID, level: Int) {
         if (level == 0) levels.remove(uuid) else levels[uuid] = level
     }
@@ -34,6 +34,6 @@ object OpLevels {
         levels.keys.retainAll(read.keys)
     }
 
-    /** Oublie tout niveau. Réservé aux tests. */
+    /** Oublie tous les niveaux d'op retenus. Réservé aux tests. */
     internal fun clear() = levels.clear()
 }

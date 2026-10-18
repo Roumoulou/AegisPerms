@@ -18,7 +18,7 @@ import java.util.UUID
  * Elle répond à un atome par la décision du sujet sur la clé d'API de même nom, et rend tout le reste à l'ensemble vanilla : un niveau de commande, parce que
  * la décision sur un nœud se prend dans `canUse` (7.5) et que les pouvoirs hors commandes restent à vanilla (2.8) ; `union`, pour que la source qui sort d'une
  * élévation, `/function` lancé par un joueur, soit un ensemble vanilla et ne soit plus jugée. Elle est un `LevelBasedPermissionSet` du niveau d'op du joueur,
- * parce que l'API de Fabric lit le niveau d'une source par `instanceof`.
+ * parce que l'API de Fabric lit le niveau d'op d'une source par `instanceof`.
  *
  * Elle peut être interrogée depuis n'importe quel fil : elle ne lit que l'état en vigueur, publié d'un bloc. Une erreur interne vaut un refus, journalisé une
  * fois par clé et par génération (7.5).
@@ -39,7 +39,6 @@ class Envelope(val subject: UUID, val vanilla: LevelBasedPermissionSet) : LevelB
             ApiKeyRequests.request(key, ApiRoute.ATOM)
             val decision = Publisher.current().decision(subject, level().id(), key)
             if (Publisher.mode() == Mode.OBSERVE) {
-                // En observation (6.5), l'ensemble vanilla répond, et un écart avec la décision se journalise.
                 val answer = vanilla.hasPermission(permission)
                 val applied = when (decision) {
                     Decision.ALLOW -> true

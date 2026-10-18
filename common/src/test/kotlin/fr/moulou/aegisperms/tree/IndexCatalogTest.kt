@@ -191,7 +191,7 @@ class IndexCatalogTest {
         val amount = argument<Any, Int>("amount", IntegerArgumentType.integer()).executes(VanillaCommand()).build()
         dispatcher.register(literal<Any>("give").requires(GAMEMASTERS).then(amount))
         dispatcher.register(literal<Any>("take").requires(GAMEMASTERS).then(amount))
-        dispatcher.register(literal<Any>("home").requires(MOD_OPTION).executes(HomeCommand()))
+        dispatcher.register(literal<Any>("home").requires(MOD_PREDICATE).executes(HomeCommand()))
         dispatcher.register(literal<Any>("home").then(literal<Any>("warp").executes(WarpsMod.command())))
         dispatcher.register(literal<Any>("orphan").executes(OrphanCommand()))
         return dispatcher

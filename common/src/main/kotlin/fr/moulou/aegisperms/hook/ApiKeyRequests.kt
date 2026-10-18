@@ -133,7 +133,6 @@ object ApiKeyRequests {
     /** Le type de [key] au catalogue, ou `null` quand elle n'a jamais été demandée. */
     fun typeOf(key: ApiKey): String? = routesByKey[key]?.let(::typeOf)
 
-    /** Les clés demandées. */
     fun keys(): Set<ApiKey> = routesByKey.keys.toSet()
 
     /** Oublie toute demande et toute chaîne refusée. Réservé aux tests. */

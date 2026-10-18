@@ -143,7 +143,7 @@ class ConfigurationFilesTest {
         ConfigurationFiles(config).use { files ->
             val expected = listOf(
                 Issue(IssueKind.MISSING_DEFAULT, ConfigurationFile.PERMISSIONS, listOf("groups"), line = 3),
-                // `require-prefix` n'est pas écrit : il vaut `true` par défaut, et le constat montre `namespaces`.
+                // `require-prefix` n'est pas écrit : il vaut `true` à la livraison, et le constat montre `namespaces`.
                 Issue(IssueKind.REQUIRE_PREFIX_WITHOUT_FORMS, ConfigurationFile.SETTINGS, listOf("namespaces", "require-prefix"), line = 3),
             )
             assertEquals(expected, files.reload().refused())

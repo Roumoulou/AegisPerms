@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 /**
  * L'autorité (cahier des charges, 6.2 et 7.5) : le {@code PermissionSet} d'un joueur est enveloppé, et c'est l'enveloppe qui fait d'une source une source
- * jugée. Elle se réutilise tant que l'ensemble vanilla reste le même, l'un des singletons de niveau, et se recrée sinon, pour qu'un {@code /op} ou un
+ * jugée. Elle se réutilise tant que l'ensemble vanilla reste le même, l'un des singletons de niveau d'op, et se recrée sinon, pour qu'un {@code /op} ou un
  * {@code /deop} agisse à la commande suivante, comme en vanilla.
  */
 @Mixin(ServerPlayer.class)
@@ -24,11 +24,11 @@ public abstract class ServerPlayerMixin {
     private volatile Envelope aegisperms$envelope;
 
     @ModifyReturnValue(method = "permissions", at = @At("RETURN"))
-    private PermissionSet aegisperms$wrap(PermissionSet original) {
+    private PermissionSet aegisperms$enveloped(PermissionSet original) {
         Envelope cached = this.aegisperms$envelope;
         if (cached != null && cached.getVanilla() == original) return cached;
-        PermissionSet wrapped = Hooks.envelope((ServerPlayer) (Object) this, original);
-        if (wrapped instanceof Envelope envelope) this.aegisperms$envelope = envelope;
-        return wrapped;
+        PermissionSet enveloped = Hooks.envelope((ServerPlayer) (Object) this, original);
+        if (enveloped instanceof Envelope envelope) this.aegisperms$envelope = envelope;
+        return enveloped;
     }
 }

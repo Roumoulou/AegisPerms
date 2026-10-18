@@ -24,6 +24,7 @@ object LuckoPermissionProvider {
     /** Le nom de l'accroche au journal. */
     const val HOOK = "luckoApi"
 
+    /** Inscrit le fournisseur aux trois événements de l'API de lucko ; le point d'entrée du mod l'appelle une fois, à l'initialisation du serveur. */
     fun register() {
         PermissionCheckEvent.EVENT.register(PermissionCheckEvent { source, permission -> check(RequestSubject.of(source.permissions()), permission) })
         OfflinePermissionCheckEvent.EVENT.register(OfflinePermissionCheckEvent { uuid, permission -> CompletableFuture.completedFuture(check(RequestSubject.of(uuid), permission)) })

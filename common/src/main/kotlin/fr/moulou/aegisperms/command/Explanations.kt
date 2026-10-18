@@ -34,7 +34,7 @@ internal object Explanations {
         NOT_EVALUATED,
     }
 
-    /** Le statut d'un nœud (5.5). */
+    /** Le statut d'un nœud dans `why` (5.5) : son jugement, complété par vanilla et par le catalogue. */
     enum class NodeStatus {
         SEEN,
         HIDDEN,

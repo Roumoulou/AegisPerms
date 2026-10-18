@@ -23,6 +23,7 @@ object FabricPermissionProvider {
     /** Le nom de l'accroche au journal. */
     const val HOOK = "fabricApi"
 
+    /** Inscrit le fournisseur à `PermissionEvents.ON_REQUEST` ; le point d'entrée du mod l'appelle une fois, à l'initialisation du serveur. */
     fun register() {
         PermissionEvents.ON_REQUEST.register(object : PermissionEvents.OnRequest {
             override fun <T : Any> handlePermissionRequest(context: PermissionContext, permission: PermissionNode<T>): T? = answer(context, permission)

@@ -15,12 +15,16 @@ import java.util.concurrent.atomic.AtomicLong
  */
 object ObservationLog {
 
-    /** Le plus de lignes par minute (5.8). */
+    /** Au-delà de ce nombre d'écarts écrits dans la minute, le journal compte au lieu d'écrire (5.8). */
     const val MAX_LINES_PER_MINUTE = 60
 
-    /** Ce que vanilla répond quand l'écart est noté : la commande s'exécute, l'atome est accordé ; ou il est refusé ; ou le consommateur va à son repli. */
+    /** Ce que vanilla répond quand l'écart est noté : la commande s'exécute, ou l'atome est accordé. */
     const val VANILLA_EXECUTES = "allow"
+
+    /** Ce que vanilla répond quand l'écart est noté : la commande ou l'atome est refusé. */
     const val VANILLA_REFUSES = "deny"
+
+    /** Ce que vanilla répond quand l'écart est noté : le consommateur va à son repli. */
     const val VANILLA_DEFAULT = "default"
 
     /** L'horloge, en millisecondes ; un test la fixe. */

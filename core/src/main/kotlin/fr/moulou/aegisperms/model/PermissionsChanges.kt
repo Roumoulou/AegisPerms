@@ -23,6 +23,7 @@ data class PermissionsChanges(
 ) {
 
     companion object {
+        /** Ce qui change des droits de [before] à ceux de [after] : les groupes et les joueurs créés, retirés ou modifiés, et les règles une à une. */
         fun between(before: EffectiveState, after: EffectiveState): PermissionsChanges {
             val groupsBefore = before.permissions.groups
             val groupsAfter = after.permissions.groups

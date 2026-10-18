@@ -42,7 +42,7 @@ class CommandKey internal constructor(
     /** Vrai pour `command` et `<modid>:command`, qui nomment une famille entière. */
     val isGeneral: Boolean get() = segments.isEmpty()
 
-    /** Vrai pour une clé qui nomme un nœud. */
+    /** Le contraire d'[isGeneral] : la clé nomme un nœud de l'arbre. */
     val isNode: Boolean get() = segments.isNotEmpty()
 
     /** La clé ancêtre la plus proche : `<modid>:command` pour une commande racine, `command` pour `<modid>:command`, rien pour `command`. */

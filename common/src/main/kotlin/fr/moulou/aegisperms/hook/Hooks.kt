@@ -36,14 +36,14 @@ import java.util.function.Predicate
 
 /**
  * Les points d'accroche que les mixins appellent (cahier des charges, 7.5). Chacun écarte d'abord toute source non jugée, dont la réponse reste celle de
- * vanilla, sans rien lire de l'état. Pour une source jugée, une erreur interne vaut un refus masqué, journalisé une fois par clé et par génération, parce
+ * vanilla, sans rien lire de l'état en vigueur. Pour une source jugée, une erreur interne vaut un refus masqué, journalisé une fois par clé et par génération, parce
  * qu'un serveur fermé vaut mieux qu'un serveur ouvert à vanilla par accident.
  *
  * Les fonctions qui prennent une marque ou un `markOf` sont celles que l'étage 1 éprouve : sans mixin, un nœud ne porte pas de marque.
  */
 object Hooks {
 
-    /** Les noms des accroches au journal. */
+    // Les noms des accroches au journal.
     const val CAN_USE = "canUse"
     const val GATE = "gate"
     const val SUGGESTIONS = "suggestions"
@@ -60,7 +60,7 @@ object Hooks {
 
     /**
      * Le `PermissionSet` d'un joueur, enveloppé (6.2), et son niveau d'op retenu pour les demandes d'API par UUID. L'ensemble d'origine reste quand il n'est
-     * pas celui d'un niveau, ce qu'aucune version ne fait sans un autre mod : c'est le contrôle à la connexion qui le dit (6.6).
+     * pas celui d'un niveau d'op, ce qu'aucune version ne fait sans un autre mod : c'est le contrôle à la connexion qui le dit (6.6).
      */
     @JvmStatic
     fun envelope(player: ServerPlayer, original: PermissionSet): PermissionSet {
@@ -120,7 +120,7 @@ object Hooks {
     fun allowsExecution(parse: ParseResults<*>): Boolean = allowsExecution(parse, ::markOf)
 
     /**
-     * La même, les marques lues par [markOf]. En observation (5.8), la commande s'exécute quoi qu'il en soit, la forme exigée ne retire rien, et le refus
+     * La porte d'exécution pour [parse], les marques lues par [markOf] : la forme que l'étage 1 éprouve, sans mixin. En observation (5.8), la commande s'exécute quoi qu'il en soit, la forme exigée ne retire rien, et le refus
      * que le mod aurait opposé se journalise comme un écart (E11).
      */
     internal fun allowsExecution(parse: ParseResults<*>, markOf: (CommandNode<*>) -> NodeMark?): Boolean {
@@ -135,7 +135,6 @@ object Hooks {
             if (observing) return true
             GateRefusal(visible = false, deep = false, key = "?")
         }
-        // La décision de la porte, au niveau DEBUG seulement (5.9) : une ligne par commande lancée par une source jugée.
         ModLog.debug(ModLog.DECISION, envelope.subject, root, refusal?.let { (if (it.visible) "deny-visible " else "deny-hidden ") + it.key } ?: "allow")
         if (refusal == null) return true
         if (observing) {

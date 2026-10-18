@@ -47,7 +47,7 @@ class ManualCommand(
     val name: String,
     /** La forme préfixée, telle qu'on la tape et sans la barre oblique, ou `null`. */
     val prefixedForm: String?,
-    /** Les alias qui mènent à cette racine, de vanilla et de la table, telles qu'on les tape. */
+    /** Les alias qui mènent à cette racine, de vanilla et de la table, tels qu'on les tape. */
     val aliases: List<String>,
     val description: String?,
     val root: ManualNode,
@@ -71,7 +71,7 @@ class ManualNode(
     /** Vrai pour un nœud rattaché à plusieurs nœuds, atteint ici par un autre chemin que celui de sa clé : il se cite sans se dérouler (2.4). */
     val reference: Boolean,
     val redirect: ManualRedirect?,
-    /** Les alias de la table qui mènent à ce nœud, telles qu'on les tape. */
+    /** Les alias de la table qui mènent à ce nœud, tels qu'on les tape. */
     val aliases: List<String>,
     val description: String?,
     val children: List<ManualNode>,

@@ -22,7 +22,7 @@ import java.time.temporal.ChronoUnit
  * Les fichiers de `config\aegisperms\` (cahier des charges, 4.2), le point d'entrée du package : ce que le mod et l'application de bureau appellent pour
  * lire, valider, écrire et sauvegarder une configuration.
  *
- * Elle s'appelle d'un seul fil, le fil des fichiers (7.4), et ne se protège pas contre un second. Rien de ce qui vient d'un fichier n'en sort en
+ * Cette façade s'appelle d'un seul fil, le fil des fichiers (7.4), et ne se protège pas contre un second. Rien de ce qui vient d'un fichier n'en sort en
  * exception (4.9) : chaque appel rend un résultat, qui porte ses constats ou sa panne. L'heure vient de [clock], qu'un test fixe.
  */
 class ConfigurationFiles internal constructor(val directory: Path, private val clock: Clock, settingsFormat: JsonFileFormat, permissionsFormat: JsonFileFormat) : AutoCloseable {
@@ -54,12 +54,12 @@ class ConfigurationFiles internal constructor(val directory: Path, private val c
      */
     fun start(catalog: Catalog? = null): ConfigurationStart {
         val reads = readByStores(catalog)
-        val live = reads.combined
-        if (live is ConfigurationRead.Valid) return ConfigurationStart(live.configuration, ConfigurationSource.FILE, ConfigurationSource.FILE, live.report, live.created)
+        val inPlace = reads.combined
+        if (inPlace is ConfigurationRead.Valid) return ConfigurationStart(inPlace.configuration, ConfigurationSource.FILE, ConfigurationSource.FILE, inPlace.report, inPlace.created)
 
         val copy = lastGood.read(catalog)
         val sources = ConfigurationFile.entries.associateWithTo(mutableMapOf()) { ConfigurationSource.FILE }
-        var faulty = live.report.errors.map { it.file }.toSet()
+        var faulty = inPlace.report.errors.map { it.file }.toSet()
         while (true) {
             for (file in faulty) sources[file] = fallbackOf(sources.getValue(file), copy)
             val settingsSource = sources.getValue(ConfigurationFile.SETTINGS)
@@ -83,7 +83,7 @@ class ConfigurationFiles internal constructor(val directory: Path, private val c
                     val settingsText = (reads.settings as? FileRead.Loaded)?.text.takeIf { settingsSource == ConfigurationSource.FILE }
                     writableWith = FileRead.Loaded(candidate.settings, created = false, settingsText)
                 }
-                return ConfigurationStart(candidate, settingsSource, permissionsSource, live.report, createdOf(reads))
+                return ConfigurationStart(candidate, settingsSource, permissionsSource, inPlace.report, createdOf(reads))
             }
             // Un fichier déjà aux valeurs livrées ne descend plus : s'il est seul en cause, c'est l'autre qui descend.
             faulty = errors.map { it.file }.filterTo(mutableSetOf()) { sources[it] != ConfigurationSource.DELIVERED }.ifEmpty { ConfigurationFile.entries.toSet() }
@@ -165,7 +165,7 @@ class ConfigurationFiles internal constructor(val directory: Path, private val c
 
     /**
      * Écrit `catalog.json` (4.6) : les clés de commande de [commands] remplacent celles du catalogue précédent, et les clés d'API de [requestedApiKeys],
-     * une clé vers son type, s'ajoutent à celles qu'il gardait, comme les chaînes à points refusées de [refusedApiKeys], un texte vers son type (6.4). Le
+     * une clé vers sa voie, s'ajoutent à celles qu'il gardait, comme les chaînes à points refusées de [refusedApiKeys], un texte vers sa voie (6.4). Le
      * catalogue précédent est relu d'abord, pour retrouver ses clés d'API et leur date, et pour dire les clés de commande apparues et disparues.
      * Illisible, il est régénéré, et le résultat le signale.
      */

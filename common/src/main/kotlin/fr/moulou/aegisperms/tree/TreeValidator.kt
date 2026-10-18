@@ -42,7 +42,7 @@ object TreeValidator {
         val plan = CommandForms.plan(index.root, index.originals, owners, settings, index.mods)
 
         val issues = ArrayList<Issue>()
-        checkReassignedKeys(configuration, detected, owners, issues)
+        checkOwnerAssignmentOldKeys(configuration, detected, owners, issues)
         checkAliases(settings, plan, issues)
         checkPrefixes(settings, index.mods, issues)
         checkAssignments(settings, detected, index.mods, issues)
@@ -67,14 +67,14 @@ object TreeValidator {
      * Une règle qui porte l'ancienne clé d'une commande rattachée (3.2) : son espace de noms est celui que les classes donnent à la racine, alors qu'un
      * rattachement valide lui en donne un autre. La règle ne couvrirait plus rien.
      */
-    private fun checkReassignedKeys(configuration: Configuration, detected: Map<String, Owner>, owners: Map<String, Owner>, issues: MutableList<Issue>) {
+    private fun checkOwnerAssignmentOldKeys(configuration: Configuration, detected: Map<String, Owner>, owners: Map<String, Owner>, issues: MutableList<Issue>) {
         fun check(ownerPath: List<String>, rules: Map<String, Rule>) {
             for (keyText in rules.keys.sortedWith(CodePointOrder)) {
                 val key = Keys.parseOrNull(keyText) as? CommandKey ?: continue
                 val rootName = key.segments.firstOrNull() ?: continue
                 val assigned = owners[rootName]?.takeIf { it.source == OwnerSource.ASSIGNED } ?: continue
                 if (key.namespace == assigned.modId || key.namespace != detected.getValue(rootName).modId) continue
-                issues += Issue(IssueKind.REASSIGNED_COMMAND_KEY, ConfigurationFile.PERMISSIONS, ownerPath + RULES + keyText, literals(keyText, Keys.command(assigned.modId, key.segments).text))
+                issues += Issue(IssueKind.OWNER_ASSIGNMENT_OLD_KEY, ConfigurationFile.PERMISSIONS, ownerPath + RULES + keyText, literals(keyText, Keys.command(assigned.modId, key.segments).text))
             }
         }
         for ((name, group) in configuration.permissions.groups.sorted()) check(listOf(GROUPS, name), group.rules)

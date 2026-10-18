@@ -76,7 +76,7 @@ class EnvelopeTest {
 
     @Test
     fun `un atome reçoit la décision du sujet, et la réponse de l'ensemble vanilla sous unset`() {
-        // Bob : moderateur ouvre les sélecteurs à un non-op. Joe : aucune règle ne les nomme, vanilla décide par le niveau.
+        // Bob : moderateur ouvre les sélecteurs à un non-op. Joe : aucune règle ne les nomme, vanilla décide par le niveau d'op.
         assertTrue(Envelope(uuidOf("Bob"), NON_OP).hasPermission(Permissions.COMMANDS_ENTITY_SELECTORS))
         assertFalse(Envelope(uuidOf("Joe"), NON_OP).hasPermission(Permissions.COMMANDS_ENTITY_SELECTORS))
         assertTrue(Envelope(uuidOf("Joe"), LevelBasedPermissionSet.GAMEMASTER).hasPermission(Permissions.COMMANDS_ENTITY_SELECTORS))

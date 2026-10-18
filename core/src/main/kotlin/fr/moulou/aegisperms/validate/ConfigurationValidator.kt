@@ -49,7 +49,7 @@ object ConfigurationValidator {
     /** Un préfixe s'écrit avec les caractères d'un modid (3.3). */
     private val PREFIX = Regex("[a-z0-9_-]+")
 
-    /** Valide [configuration]. [catalog] manque tant que le serveur n'a pas d'index : les constats qui en dépendent se taisent. */
+    /** Les constats de [configuration], erreurs et avertissements (4.5) ; sans [catalog], tant que le serveur n'a pas d'index, les constats qui en dépendent se taisent. */
     fun validate(configuration: Configuration, catalog: Catalog? = null): ValidationReport {
         val issues = mutableListOf<Issue>()
         checkGroups(configuration.permissions, issues)
@@ -183,7 +183,7 @@ object ConfigurationValidator {
     private fun lineageOf(state: EffectiveState, name: String): List<RuleSet> =
         ExaminationOrder.from(state.permissions.groups, listOf(StartingGroup(name, Membership.DIRECT, 0))).groups.map { state.groupRules.getValue(it.name) }
 
-    /** La première clé du chemin de [key], plus haut que lui, que [lineage] refuse. */
+    /** La première clé du chemin de [key], plus haute qu'elle, que [lineage] refuse ; `null` quand aucune ne l'est. */
     private fun refusedInLineage(lineage: List<RuleSet>, key: CommandKey): CommandKey? = key.pathKeys.firstOrNull { pathKey ->
         pathKey !== key && lineage.firstNotNullOfOrNull { ruleSet -> ruleSet.mostPrecise(pathKey)?.let { ruleSet.rules.getValue(it) } }?.value == RuleValue.DENY
     }

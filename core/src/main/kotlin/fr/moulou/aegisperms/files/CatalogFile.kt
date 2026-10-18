@@ -43,14 +43,14 @@ data class CatalogFile(
 
         /**
          * Le catalogue qui succède à [previous] : les clés de commande sont celles de [commands], qui remplacent les anciennes ; les clés d'API sont
-         * celles de [previous], avec leur date, plus celles de [requestedApiKeys], une clé vers son type, datées de [now] quand elles sont nouvelles, et
-         * les chaînes à points de [refusedApiKeys], un texte vers son type, qui ne font pas une clé et entrent refusées (6.4). Une clé dont un segment
+         * celles de [previous], avec leur date, plus celles de [requestedApiKeys], une clé vers sa voie, datées de [now] quand elles sont nouvelles, et
+         * les chaînes à points de [refusedApiKeys], un texte vers sa voie, qui ne font pas une clé et entrent refusées (6.4). Une clé dont un segment
          * porte un point est marquée : la chaîne à points de l'API de lucko ne la rend pas.
          */
         fun succeeding(previous: CatalogFile?, commands: Map<String, CommandEntry>, requestedApiKeys: Map<String, String>, now: Instant, refusedApiKeys: Map<String, String> = emptyMap()): CatalogFile {
             val known = previous?.apiKeys.orEmpty()
-            val requested = requestedApiKeys.mapValues { (key, type) -> ApiKeyEntry(type, known[key]?.firstRequested ?: now.toString(), dottedPath = hasDottedPath(key)) }
-            val refused = refusedApiKeys.mapValues { (text, type) -> ApiKeyEntry(type, known[text]?.firstRequested ?: now.toString(), refused = true) }
+            val requested = requestedApiKeys.mapValues { (key, route) -> ApiKeyEntry(route, known[key]?.firstRequested ?: now.toString(), dottedPath = hasDottedPath(key)) }
+            val refused = refusedApiKeys.mapValues { (text, route) -> ApiKeyEntry(route, known[text]?.firstRequested ?: now.toString(), refused = true) }
             return CatalogFile(SCHEMA_VERSION, commands, known + requested + refused)
         }
 
@@ -90,7 +90,7 @@ data class CommandEntry(
     }
 }
 
-/** La nature d'un nœud de commande. */
+/** La nature d'un nœud de commande au catalogue : un littéral ou un argument. */
 @Serializable
 enum class NodeKind {
     @SerialName("literal") LITERAL,
@@ -108,13 +108,12 @@ enum class CommandRequirement(val opLevel: OpLevel? = null) {
     @SerialName("mod-predicate") MOD_PREDICATE;
 
     companion object {
-        /** L'exigence d'un niveau d'op. */
         fun of(opLevel: OpLevel): CommandRequirement = entries.first { it.opLevel == opLevel }
     }
 }
 
 /**
- * Ce que le catalogue dit d'une clé d'API (4.6) : son type, l'instant de sa première demande, en ISO 8601, à la seconde et en UTC, et deux marques de 6.4.
+ * Ce que le catalogue dit d'une clé d'API (4.6) : sa voie, l'instant de sa première demande, en ISO 8601, à la seconde et en UTC, et deux marques de 6.4.
  * Ce qui vaut sa valeur par défaut ne s'écrit pas.
  */
 @Serializable

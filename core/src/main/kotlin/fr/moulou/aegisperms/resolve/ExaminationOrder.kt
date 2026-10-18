@@ -68,9 +68,7 @@ class ExaminationOrder private constructor(
 /** Un groupe de départ : l'appartenance qui l'y met, et son poids. */
 data class StartingGroup(val name: String, val membership: Membership, val weight: Int)
 
-/**
- * Un groupe à sa place dans l'ordre d'examen : l'héritage qui y mène, du groupe de départ jusqu'à lui, et l'appartenance du sujet à ce groupe de départ.
- */
+/** Un groupe à sa place dans l'ordre d'examen : l'héritage qui y mène, du groupe de départ jusqu'à lui, et l'appartenance du sujet à ce groupe de départ. */
 data class OrderedGroup(val name: String, val membership: Membership, val chain: List<String>)
 
 /** Ce qui met un groupe parmi les groupes de départ d'un sujet. Un groupe direct dont le sujet est aussi membre d'office compte pour direct. */

@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * Le journal du mod (cahier des charges, 5.9), sous le nom `aegisperms`, où Storify range aussi ses lignes. Une seule entrée : une clé de traduction
+ * Le journal du mod (cahier des charges, 5.9), sous le nom `aegisperms`, où Storify range aussi ses lignes. Un seul point d'entrée : une clé de traduction
  * `aegisperms.log.<événement>` et ses arguments, résolus en texte dans la langue de la console (5.7). Un constat s'écrit sous sa propre clé,
  * `aegisperms.issue.<nature>`, précédé de son fichier, de son chemin et de sa ligne. Ce qui écrit la ligne reçoit aussi la clé et les arguments : c'est
  * ce que les tests comparent.
@@ -157,7 +157,6 @@ object ModLog {
     private fun language(): Lang = Messages.consoleLanguage(Publisher.settings().language)
 }
 
-/** Le niveau d'une ligne du journal. */
 enum class LogLevel {
     DEBUG,
     INFO,
@@ -172,7 +171,6 @@ class LogLine(val level: LogLevel, val key: String, val arguments: List<Any?>, v
     fun keyAndArguments(): String = (listOf(key) + arguments).joinToString(" ")
 }
 
-/** Ce qui reçoit une ligne du journal. */
 fun interface LogWriter {
 
     fun write(line: LogLine)

@@ -18,6 +18,7 @@ import net.fabricmc.loader.api.FabricLoader
  * vie et s'inscrit comme fournisseur des deux API de permissions.
  */
 object AegisPerms : DedicatedServerModInitializer {
+    /** L'identifiant du mod : celui de `fabric.mod.json`, du journal et du dossier de configuration. */
     const val MOD_ID = "aegisperms"
 
     override fun onInitializeServer() {

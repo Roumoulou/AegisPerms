@@ -30,7 +30,7 @@ class WatchTest {
         fun bootstrap() = HookFixtures.bootstrap()
     }
 
-    /** Écrits par le fil des fichiers, lus par celui du test. */
+    // Écrits par le fil des fichiers, lus par celui du test.
     private val lines = CopyOnWriteArrayList<String>()
     private val outcomes = CopyOnWriteArrayList<Outcome<ConfigurationRead>>()
 

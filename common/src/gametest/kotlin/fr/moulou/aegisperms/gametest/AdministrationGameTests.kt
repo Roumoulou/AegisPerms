@@ -177,7 +177,10 @@ class AdministrationGameTests : FileGameTests() {
         val reply = Console.texts(recorder).singleOrNull().orEmpty()
         helper.assertTrue(reply.startsWith(Console.text(Command.MANUAL_DONE, "${ManualWrite.FOLDER}/$name", "").substringBefore(" (")), "la réponse dit le fichier, pas $reply")
         val text = Files.readString(manuals.resolve(name))
-        for (expected in listOf("# Les commandes du serveur", "## minecraft (Minecraft ", "### /msg", "- `msg` : `minecraft:command.msg`", "`minecraft:command.msg.targets.message`", "### /aegis", "- `manual` : `aegisperms:command.aegis.manual`", "## aegisperms-gametest", "### /aegistest_target")) {
+        for (expected in listOf(
+            "# Les commandes du serveur", "## minecraft (Minecraft ", "### /msg", "- `msg` : `minecraft:command.msg`", "`minecraft:command.msg.targets.message`",
+            "### /aegis", "- `manual` : `aegisperms:command.aegis.manual`", "## aegisperms-gametest", "### /aegistest_target",
+        )) {
             helper.assertTrue(expected in text, "le manuel porte « $expected »")
         }
         helper.assertTrue("| `/msg` | `/mc:msg` | `/tell`, `/w` | `minecraft:command.msg` |" in text, "la table de vanilla donne la forme et les alias de /msg")

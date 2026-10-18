@@ -203,7 +203,6 @@ class BackupsTest {
             assertEquals("$stampName-before-restore", restored.savedAs)
             assertBytes(edited, backups.resolve("$stampName-before-restore").resolve("settings.json"))
             assertBytes(personasText, backups.resolve("$stampName-before-restore").resolve("permissions.json"))
-            // Et la sauvegarde restaurée est toujours là, intacte.
             assertBytes(permissionsByHand, backups.resolve(folder).resolve("permissions.json"))
         }
     }

@@ -20,7 +20,7 @@ internal val GAMEMASTERS: Predicate<Any> = Predicate { (it as Int) >= 2 }
 internal val ADMINS: Predicate<Any> = Predicate { (it as Int) >= 3 }
 
 /** Un prédicat écrit par un mod, que le mod ne sait pas lire. */
-internal val MOD_OPTION: Predicate<Any> = Predicate { true }
+internal val MOD_PREDICATE: Predicate<Any> = Predicate { true }
 
 /** Un loader simulé : chaque mod y a la classe qui définit ses commandes, et la classe d'[OrphanCommand] n'est dans aucun. */
 internal class FakeMods(private val loaded: Set<String> = setOf("minecraft", "homes", "warps", "aegisperms")) : ModLocator {

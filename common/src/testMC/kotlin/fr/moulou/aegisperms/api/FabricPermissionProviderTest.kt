@@ -82,7 +82,7 @@ class FabricPermissionProviderTest {
         Publisher.publish(state(HookFixtures.permissions(mapOf(Group.DEFAULT to Group(), "staff" to staff)), generation = 2))
         OpLevels.record(uuidOf("Olga"), 4)
 
-        // Le niveau du contexte, que le consommateur a pu fixer lui-même, n'est pas lu (6.3) : seul le niveau retenu compte.
+        // Le niveau d'op du contexte, que le consommateur a pu fixer lui-même, n'est pas lu (6.3) : seul le niveau d'op retenu compte.
         assertEquals(true, FabricPermissionProvider.answer(playerContext("Olga", PermissionLevel.ALL), SELECTORS))
         assertNull(FabricPermissionProvider.answer(playerContext("Nina", PermissionLevel.OWNERS), SELECTORS))
     }

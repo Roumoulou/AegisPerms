@@ -28,7 +28,7 @@ data class Rule(val value: RuleValue, val visible: Boolean? = null, val note: St
     }
 }
 
-/** La valeur d'une règle. */
+/** La valeur d'une règle, `allow` ou `deny` : `unset` n'en est pas une, c'est l'absence de règle. */
 @Serializable
 enum class RuleValue {
     @SerialName("allow") ALLOW,

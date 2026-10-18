@@ -113,7 +113,7 @@ fun deliveredDefaultPlus(vararg rules: Pair<String, Rule>): Map<String, Rule> = 
 /** Les ops du serveur de test, par sa liste des ops, comme `/op` et `/deop` le font. */
 object Ops {
 
-    /** Fait de [player] un op de niveau [level] : sans le niveau explicite, le serveur de test donnerait le niveau 0, son `operatorUserPermissions()` étant `ALL`. */
+    /** Fait de [player] un op de niveau [level] : sans le niveau d'op explicite, le serveur de test donnerait le niveau d'op 0, son `operatorUserPermissions()` étant `ALL`. */
     fun opAs(server: MinecraftServer, player: ServerPlayer, level: PermissionLevel) {
         server.playerList.op(player.nameAndId(), Optional.of(LevelBasedPermissionSet.forLevel(level)), Optional.of(false))
     }
