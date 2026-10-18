@@ -97,5 +97,7 @@ Sans `-Ppublish_live=true`, `publishMods` est un essai à blanc. `checkPublicati
 `modrinth_project_id` et `curseforge_project_id` dans `gradle.properties`, et la présence des jetons `MODRINTH_TOKEN` et `CURSEFORGE_TOKEN` dans
 l'environnement du terminal ; en envoi réel, ce qui manque refuse tout. Les jetons ne vivent dans aucun fichier du dépôt.
 
-Une version publiée est un tag `v<mod_version>`, sans la version du jeu : les trois jars viennent du même commit. Avant la première publication, Storify et
-Outfitter passent de `-SNAPSHOT` à une version figée dans les catalogues, pour qu'un jar publié se reconstruise à l'identique.
+Une version publiée est un tag `v<mod_version>`, sans la version du jeu : les trois jars viennent du même commit. Le type de la version suit `mod_version` :
+une pré-version `-alpha` ou `-beta` part comme alpha ou bêta sur les deux plateformes, et sa release GitHub est une pré-release ; le reste part en release.
+Avant la première release, Storify et Outfitter passent de `-SNAPSHOT` à une version figée dans les catalogues, pour qu'un jar publié se reconstruise à
+l'identique ; l'alpha `1.0.0-alpha.1` embarque encore Storify en snapshot.

@@ -21,14 +21,16 @@ versionne et copie d'un serveur à l'autre.
 
 ## État
 
-Version `1.0.0`, en préparation : le mod est complet et éprouvé par ses trois étages de tests sur les trois versions servies, et attend ses derniers essais
-en jeu avant sa première publication sur Modrinth et CurseForge.
+Version `1.0.0-alpha.1`, la première publication, en alpha : le mod est complet et éprouvé par ses trois étages de tests sur les trois versions servies ;
+le plan de tests en jeu n'est pas encore joué en entier, et le jar embarque Storify en `0.6.0-SNAPSHOT`. La `1.0.0` suivra les essais en jeu et les versions
+figées. Les versions sont sur [Modrinth](https://modrinth.com/mod/KNCR3gkY), sur CurseForge et dans les
+[releases](https://github.com/Roumoulou/AegisPerms/releases) du dépôt ; le détail de chacune est dans [CHANGELOG.md](CHANGELOG.md).
 
 ## Installation
 
 | Prérequis | Version |
 |---|---|
-| Minecraft, serveur dédié | 26.1.2, 26.2 ou 26.3, un jar par version : `aegisperms-1.0.0+26.1.2.jar`, `aegisperms-1.0.0+26.2.jar`, `aegisperms-1.0.0+26.3.jar` |
+| Minecraft, serveur dédié | 26.1.2, 26.2 ou 26.3, un jar par version : `aegisperms-<version>+26.1.2.jar`, `aegisperms-<version>+26.2.jar`, `aegisperms-<version>+26.3.jar` |
 | Fabric Loader | 0.19.5 ou plus récent |
 | Fabric API | celle de votre version du jeu, au plus bas 0.155.3 pour 26.1.2, 0.161.0 pour 26.2, 0.163.0 pour 26.3 |
 | Fabric Language Kotlin | 1.14.1 ou plus récent |
