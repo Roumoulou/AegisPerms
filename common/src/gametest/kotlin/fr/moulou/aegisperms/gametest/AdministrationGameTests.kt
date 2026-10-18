@@ -3,6 +3,7 @@
 
 package fr.moulou.aegisperms.gametest
 
+import fr.moulou.aegisperms.files.ManualWrite
 import fr.moulou.aegisperms.hook.Publisher
 import fr.moulou.aegisperms.model.CodePointOrder
 import fr.moulou.aegisperms.model.Group
@@ -18,6 +19,8 @@ import net.fabricmc.fabric.api.gametest.v1.GameTest
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.gametest.framework.GameTestHelper
 import net.minecraft.server.MinecraftServer
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.UUID
 
 /**
@@ -154,6 +157,41 @@ class AdministrationGameTests : FileGameTests() {
         helper.assertValueEqual(texts.getOrNull(1).orEmpty(), Console.text(Command.VALIDATE_CHANGES, 1), "l'état publié a une règle de plus que le disque : une règle changerait, pas $texts")
         helper.succeed()
     }
+
+    /**
+     * Prouve que `/aegis manual` écrit le manuel des commandes dans `manuals\` (5.10) : mod par mod, chaque nœud avec sa clé, sans section pour un alias de
+     * vanilla ; qu'un second manuel n'écrase pas le premier ; et qu'une langue inconnue se refuse.
+     */
+    @GameTest
+    fun manualIsWrittenFromTheConsole(helper: GameTestHelper) {
+        val server = helper.server
+        val manuals = configDirectory.resolve(ManualWrite.FOLDER)
+        val before = manualNames(manuals)
+        val recorder = Recorder()
+        helper.assertValueEqual(Console.perform(server, Console.source(server, recorder), "aegis manual fr"), 1, "la commande est acceptée")
+        Console.settle(server)
+        val written = (manualNames(manuals) - before).toList()
+        helper.assertValueEqual(written.size, 1, "un manuel de plus est écrit, pas $written")
+        val name = written.single()
+        helper.assertTrue(name.matches(Regex("commands-\\d{4}-\\d{2}-\\d{2}-fr(-\\d+)?\\.md")), "nommé par la date et la langue, pas $name")
+        val reply = Console.texts(recorder).singleOrNull().orEmpty()
+        helper.assertTrue(reply.startsWith(Console.text(Command.MANUAL_DONE, "${ManualWrite.FOLDER}/$name", "").substringBefore(" (")), "la réponse dit le fichier, pas $reply")
+        val text = Files.readString(manuals.resolve(name))
+        for (expected in listOf("# Les commandes du serveur", "## minecraft (Minecraft ", "### /msg", "- `msg` : `minecraft:command.msg`", "`minecraft:command.msg.targets.message`", "### /aegis", "- `manual` : `aegisperms:command.aegis.manual`", "## aegisperms-gametest", "### /aegistest_target")) {
+            helper.assertTrue(expected in text, "le manuel porte « $expected »")
+        }
+        helper.assertTrue("| `/msg` | `/mc:msg` | `/tell`, `/w` | `minecraft:command.msg` |" in text, "la table de vanilla donne la forme et les alias de /msg")
+        helper.assertFalse("### /tell\n" in text || "### /w\n" in text || "### /tp\n" in text, "un alias de vanilla n'a pas de section")
+        helper.assertValueEqual(Console.perform(server, Console.source(server, Recorder()), "aegis manual en"), 1, "un manuel anglais s'écrit aussi")
+        Console.settle(server)
+        helper.assertValueEqual((manualNames(manuals) - before).size, 2, "sans écraser le premier")
+        val refused = Recorder()
+        helper.assertValueEqual(Console.perform(server, Console.source(server, refused), "aegis manual de"), 0, "une langue inconnue se refuse")
+        helper.assertValueEqual(Console.texts(refused).singleOrNull().orEmpty(), Console.text(Command.MANUAL_UNKNOWN_LANGUAGE, "de"), "en une ligne qui la cite")
+        helper.succeed()
+    }
+
+    private fun manualNames(manuals: Path): Set<String> = if (Files.isDirectory(manuals)) Files.list(manuals).use { found -> found.map { it.fileName.toString() }.toList().toSet() } else emptySet()
 
     /** Lance une modification depuis [console], qui doit l'accepter, et attend que le fil des fichiers l'ait écrite et publiée. */
     private fun perform(helper: GameTestHelper, server: MinecraftServer, console: CommandSourceStack, line: String) {
