@@ -56,7 +56,7 @@ dependencies {
  *  SECTION 2 — LES ENVIRONNEMENTS DE DÉVELOPPEMENT : OUTFITTER
  * ════════════════════════════════════════════════════════════════════════════════
  *
- *  Même mécanique que mc-26.2 (voir son build) : trois environnements, le serveur de
+ *  Même mécanique que mc-26.2 (voir son build) : quatre environnements, le serveur de
  *  test, une cible.
  *
  *  ── DEUX ENVIRONNEMENTS, VANILLA PURS ───────────────────────────────────────
@@ -66,10 +66,14 @@ dependencies {
  *  reçoit la sélection de outfitter.maps, le serveur le monde que le profil `dev`
  *  désigne.
  *
- *  ── LE SERVEUR MODDÉ ────────────────────────────────────────────────────────
- *  `serverModded`, déclaré comme dans mc-26.2 : les mods côté serveur du solo publié
- *  de MDTK pour 26.3, l'instance de référence de ce module (son gradle.properties),
- *  et le contenu du modpack par PackTool ; dans mc-26.3\run\server-modded.
+ *  ── LES DEUX ENVIRONNEMENTS MODDÉS ──────────────────────────────────────────
+ *  `serverModded` et son client `clientModded`, déclarés comme dans mc-26.2 : les
+ *  mods du solo publié de MDTK pour 26.3, chacun de son côté, et le contenu du
+ *  modpack par PackTool ; dans mc-26.3\run\server-modded et mc-26.3\run\client-modded.
+ *  L'instance de référence se déclare de même, dans le machine.properties de ce
+ *  module :
+ *
+ *      outfitter.reference_instance_dir=C:/MC-Kit/08-modpacks/26.3/MDTK-1.0.0+26.3/MDTK-CORE-SOLO_1.0.0+26.3/minecraft
  *
  *  ── LE SERVEUR DE TEST ──────────────────────────────────────────────────────
  *  `gameTest`, déclaré comme dans mc-26.2 : il tourne dans mc-26.3\run\game-test,
@@ -85,6 +89,7 @@ outfitter {
     environments {
         register("client") { client(); profile = "vanilla" }
         register("server") { server(); profile = "dev" }
+        register("clientModded") { client(); profile = "vanilla"; modded = true }
         register("serverModded") { server(); profile = "dev"; modded = true }
     }
     gameTests {

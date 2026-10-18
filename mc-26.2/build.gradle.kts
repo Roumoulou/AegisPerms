@@ -59,13 +59,15 @@ dependencies {
  *  Le plugin Outfitter (pris sur Repsy : voir settings.gradle.kts) prépare chaque
  *  environnement avant son run, serveur de test compris, et déploie le jar. Ce bloc
  *  ne déclare que ce qui est propre à ce module : la version de Minecraft, qui
- *  choisit le dossier de l'entrepôt C:\MC-Kit, les trois environnements avec leur profil,
+ *  choisit le dossier de l'entrepôt C:\MC-Kit, les quatre environnements avec leur profil,
  *  le serveur de test, la cible de déploiement et le panier du serveur dédié. Tout
  *  le reste vient des clés `outfitter.*` : gradle.properties de la racine pour ce
  *  qui vaut sur chaque poste (l'entrepôt C:\MC-Kit, les maps, le monde du serveur, les
- *  logs), machine.properties pour ce qui est propre à la personne (le joueur), ou à un
- *  poste qui range le kit ailleurs. Outfitter lit le machine.properties de la racine,
- *  puis celui de ce module s'il existe, qui le surcharge clé par clé.
+ *  logs), machine.properties pour ce qui est propre à la personne (le joueur), au
+ *  poste (PackTool, le kit rangé ailleurs) ou à la lignée (l'instance de référence,
+ *  dans celui de ce module). Outfitter lit le machine.properties de la racine, puis
+ *  celui de ce module, qui le surcharge clé par clé ; il ne lit pas le
+ *  gradle.properties d'un module.
  *
  *  ── DEUX ENVIRONNEMENTS, VANILLA PURS ───────────────────────────────────────
  *  `server`, profil `dev`, est le serveur dédié de développement : Loom y charge le
@@ -75,17 +77,33 @@ dependencies {
  *  est run\<nom-en-kebab-case> DANS ce module (mc-26.2\run\server) : les mondes
  *  d'une version ne se mélangent pas à ceux d'une autre.
  *
- *  ── UN ENVIRONNEMENT MODDÉ : LE MODPACK MDTK ────────────────────────────────
+ *  ── DEUX ENVIRONNEMENTS MODDÉS : LE MODPACK MDTK ────────────────────────────
  *  `serverModded`, profil `dev`, est le serveur de dev AVEC le modpack, là où le mod
  *  se voit face à des mods tiers (cahier, 7.3). Outfitter y copie les mods côté
  *  serveur de l'instance de référence de ce module, le solo publié de MDTK pour 26.2
- *  dans le kit (outfitter.reference_instance_dir, dans le gradle.properties de ce
- *  module), sauf Fabric API, FLK et le mod lui-même, que Loom porte déjà ; puis il y
+ *  dans le kit, sauf Fabric API, FLK et le mod lui-même, que Loom porte déjà ; puis il y
  *  pose le contenu du modpack par PackTool (outfitter.content_project dans le
  *  gradle.properties de la racine ; le lanceur et l'atelier de l'outil, propres au
  *  poste, dans machine.properties). Sans PackTool déclaré, le serveur démarre sans ce
  *  contenu, et Outfitter le dit. Un environnement moddé ne reçoit pas les packs du
  *  profil. Son dossier est mc-26.2\run\server-modded, et `runServerModded` le lance.
+ *
+ *  `clientModded`, profil `vanilla`, est son client : Outfitter y copie les mods
+ *  côté client de la même instance de référence, sauf Fabric API, FLK et le mod
+ *  lui-même, puis le contenu du modpack par PackTool, ses packs compris. Le mod ne
+ *  s'y charge pas, comme dans `client` : c'est le client qui rejoint `serverModded`
+ *  en joueur, un client vanilla ne rejoignant pas un serveur dont les mods ajoutent
+ *  du contenu (l'essai 17 du plan de tests). Son dossier est
+ *  mc-26.2\run\client-modded, et `runClientModded` le lance.
+ *
+ *  L'instance de référence se déclare sur chaque poste, dans le machine.properties de
+ *  ce module, en barres obliques, un .properties lisant l'antislash comme un
+ *  échappement ; une publication nouvelle de MDTK en change le chemin :
+ *
+ *      outfitter.reference_instance_dir=C:/MC-Kit/08-modpacks/26.2/MDTK-1.0.0+26.2/MDTK-CORE-SOLO_1.0.0+26.2/minecraft
+ *
+ *  Sans elle, les deux environnements moddés démarrent sans les mods du modpack, et
+ *  Outfitter la dit « non déclarée ».
  *
  *  ── LE SERVEUR DE TEST : CRÉÉ PAR LE PLUGIN DE VERSION, DÉCLARÉ ICI ─────────
  *  `gameTest`, le serveur de l'étage 2, est le run que le plugin de version crée
@@ -107,8 +125,9 @@ dependencies {
  *  `serverPurBundle`, Fabric API et FLK aux versions de ce module, sans leurs
  *  dépendances. Son chemin part de la racine du build, pas de ce module.
  *
- *  Les tâches, groupe `outfitter` : sync<Env>Profile, sync<Env>Worlds, fresh<Env>,
- *  prepare<Env>, deployTo<Cible>, setup<Cible>, resetEnvironments, resetWorlds,
+ *  Les tâches, groupe `outfitter` : sync<Env>Profile, sync<Env>Worlds, sync<Env>Mods,
+ *  sync<Env>Packs, sync<Env>Datapacks, sync<Env>Settings, fresh<Env>, prepare<Env>,
+ *  refresh<Env>Content, deployTo<Cible>, setup<Cible>, resetEnvironments, resetWorlds,
  *  outfitterLog4jConfigs. Le détail, condition, geste et marqueur de chacune : la
  *  doc du plugin.
  * ════════════════════════════════════════════════════════════════════════════════
@@ -118,6 +137,7 @@ outfitter {
     environments {
         register("client") { client(); profile = "vanilla" }
         register("server") { server(); profile = "dev" }
+        register("clientModded") { client(); profile = "vanilla"; modded = true }
         register("serverModded") { server(); profile = "dev"; modded = true }
     }
     gameTests {

@@ -70,13 +70,16 @@ instable. Ce que ces étages ne montrent pas, l'arbre affiché par un client, la
 ## 4. Les environnements de développement
 
 Outfitter prépare et lance les environnements, dans `run\<nom>` sous chaque module de version, depuis l'entrepôt `C:\MC-Kit` de l'auteur, déclaré dans
-`gradle.properties` ; sur un autre poste, `machine.properties` donne ses propres chemins.
+`gradle.properties` ; sur un autre poste, `machine.properties` donne ses propres chemins. Les environnements moddés lisent l'instance de référence de leur
+lignée, le solo publié du modpack, dans le `machine.properties` de leur module (`outfitter.reference_instance_dir`), à poser sur chaque poste : sans elle, ils
+démarrent sans les mods du modpack.
 
 | Environnement | Tâche | Ce que c'est |
 |---|---|---|
 | `client` | `:mc-<lignée>:runClient` | un client vanilla, profil `vanilla`, qui rejoint `localhost` ; le mod est `environment: server`, le client n'en charge rien |
 | `server` | `:mc-<lignée>:runServer` | un serveur dédié avec le mod, profil `dev` |
 | `serverModded` | `:mc-26.2:runServerModded`, `:mc-26.3:runServerModded` | le même, avec les mods du modpack de référence de la lignée, pour voir le mod au milieu d'autres ; pas en 26.1 |
+| `clientModded` | `:mc-26.2:runClientModded`, `:mc-26.3:runClientModded` | le client du même modpack, qui rejoint `serverModded` en joueur ; le mod ne s'y charge pas ; pas en 26.1 |
 | `gameTest` | `:mc-<lignée>:runGameTest` | le serveur de test de l'étage 2 |
 | `serverPur` | `:mc-<lignée>:setupServerPur`, `deployToServerPur` | une cible de déploiement hors de Gradle : un serveur dédié installé à part, où le jar se pose pour l'éprouver tel qu'un administrateur le recevra |
 

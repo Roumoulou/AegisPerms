@@ -68,8 +68,8 @@ dependencies {
  *  L'entrepôt C:\MC-Kit a les profils 26.1.2, `vanilla` et `dev`, pas de maps 26.1.2 :
  *  le client démarre sans monde, le serveur génère le sien, ce qu'Outfitter annonce.
  *
- *  Pas de `serverModded` ici : MDTK n'est pas publié pour 26.1.2, le kit (08-modpacks)
- *  n'a que 26.2 et 26.3.
+ *  Pas d'environnement moddé ici, ni `serverModded` ni `clientModded` : MDTK n'est pas
+ *  publié pour 26.1.2, le kit (08-modpacks) n'a que 26.2 et 26.3.
  *
  *  ── LE SERVEUR DE TEST ──────────────────────────────────────────────────────
  *  `gameTest`, déclaré comme dans mc-26.2 : il tourne dans mc-26.1\run\game-test,

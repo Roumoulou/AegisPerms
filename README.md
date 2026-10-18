@@ -99,5 +99,5 @@ jar.
 Ce dépôt est la racine Gradle du mod, et rien d'autre : le code, ses tests, sa doc dans `docs/`, ses tags et ses releases. Le classeur de l'auteur reste
 hors du dépôt : ses notes de travail, ses relevés et le cahier des charges, privé, qui fait foi sur ce que le mod doit faire ; les mentions
 `(cahier des charges, <section>)` du code et de la doc renvoient à ses sections. Un clone se construit et passe ses tests sans lui ; seuls les
-environnements de développement (`runServer`, `runClient`, `serverModded`) lisent l'entrepôt de l'auteur, `C:\MC-Kit`, ou les chemins qu'un
+environnements de développement (`runServer`, `runClient`, `serverModded`, `clientModded`) lisent l'entrepôt de l'auteur, `C:\MC-Kit`, ou les chemins qu'un
 `machine.properties` donne.
