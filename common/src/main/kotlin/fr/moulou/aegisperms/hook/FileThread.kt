@@ -323,7 +323,7 @@ object FileThread {
     private fun <T> await(block: () -> T): T = executor.submit(Callable(block)).get()
 }
 
-/** Une publication faite : l'état publié et celui qu'il remplace, `null` à la première. */
+/** Une publication faite : l'état en vigueur publié et celui qu'il remplace, `null` à la première. */
 class Published(val previous: EffectiveState?, val state: EffectiveState)
 
 /** Ce qu'un travail du fil des fichiers rend à qui l'a demandé : son [result], ce qu'il a publié, et la dernière publication d'avant lui. */

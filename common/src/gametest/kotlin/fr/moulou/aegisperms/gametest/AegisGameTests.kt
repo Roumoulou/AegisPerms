@@ -24,7 +24,7 @@ abstract class AegisGameTests : CustomTestMethodInvoker {
         }
     }
 
-    /** Ce qui se remet avant chaque test : l'état publié en mémoire et les ops. Une classe qui passe par les fichiers y ajoute le disque. */
+    /** Ce qui se remet avant chaque test : l'état en vigueur publié et les ops. Une classe qui passe par les fichiers y ajoute le disque. */
     protected open fun reset(helper: GameTestHelper) {
         TestStates.reset()
         Ops.deopAll(helper.server)

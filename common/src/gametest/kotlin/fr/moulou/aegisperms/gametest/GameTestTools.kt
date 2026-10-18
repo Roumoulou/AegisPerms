@@ -92,14 +92,14 @@ object TestStates {
 
     private val generation = AtomicLong(10_000)
 
-    /** Publie une configuration faite de [permissions] et de [settings], et rend l'état publié. */
+    /** Publie une configuration faite de [permissions] et de [settings], et rend l'état en vigueur publié. */
     fun publish(permissions: Permissions, settings: Settings = Settings.DELIVERED): EffectiveState {
         val state = EffectiveState(generation.incrementAndGet(), Configuration(settings, permissions))
         Publisher.publish(state)
         return state
     }
 
-    /** Remet l'état du premier démarrage : les deux groupes livrés et les réglages livrés. */
+    /** Remet l'état en vigueur du premier démarrage : les deux groupes livrés et les réglages livrés. */
     fun reset(): EffectiveState = publish(Permissions.DELIVERED)
 }
 
@@ -120,7 +120,7 @@ object Ops {
 
     fun deop(server: MinecraftServer, player: ServerPlayer) = server.playerList.deop(player.nameAndId())
 
-    /** Retire l'op à tout joueur en ligne : l'état d'avant chaque test. */
+    /** Retire l'op à tout joueur en ligne, avant chaque test. */
     fun deopAll(server: MinecraftServer) {
         for (player in server.playerList.players) {
             if (server.playerList.isOp(player.nameAndId())) server.playerList.deop(player.nameAndId())

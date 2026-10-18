@@ -28,7 +28,7 @@ import kotlin.io.path.writeText
 /**
  * Le format des fichiers JSON du mod (cahier des charges, 4.2), un format de Storify, pour qu'un store lise et écrive par lui.
  *
- * La lecture est celle du `JsonFormat` strict de Storify, à qui elle est déléguée : un commentaire, une virgule finale, une clé inconnue ou une clé écrite
+ * La lecture est celle du `JsonFormat` strict de Storify, à qui elle est déléguée : un commentaire, une virgule finale, un champ inconnu ou un champ écrit
  * deux fois font refuser le fichier, et un BOM posé par un éditeur est toléré (4.11, 4.12). Le format y ajoute le numéro de structure : il refuse lui-même
  * un fichier qui ne le porte pas ou dont le numéro est plus récent que le mod, et porte au numéro courant, en mémoire, l'arbre d'un numéro plus ancien.
  *
@@ -57,7 +57,7 @@ class JsonFileFormat private constructor(private val json: Json, private val sor
 
         internal fun permissions(migrations: SchemaMigrations): JsonFileFormat = JsonFileFormat(strictJson(encodeDefaults = false), sorted = true, migrations)
 
-        /** Un `Json` aux réglages de lecture de kotlinx, qui sont stricts : ni syntaxe relâchée, ni commentaire, ni virgule finale, ni clé inconnue. */
+        /** Un `Json` aux réglages de lecture de kotlinx, qui sont stricts : ni syntaxe relâchée, ni commentaire, ni virgule finale, ni champ inconnu. */
         private fun strictJson(encodeDefaults: Boolean): Json = Json { this.encodeDefaults = encodeDefaults }
     }
 
@@ -80,7 +80,7 @@ class JsonFileFormat private constructor(private val json: Json, private val sor
         if (version.number == migrations.current) return reader.decodeFromPath(deserializer, path)
 
         val decoded = json.decodeFromJsonElement(deserializer, migrations.migrate(root, version.number))
-        // L'arbre ne garde que la dernière d'une clé écrite deux fois : le doublon se cherche sur le texte, comme le lecteur strict le fait.
+        // L'arbre ne garde que le dernier d'un champ écrit deux fois : le doublon se cherche sur le texte, comme le lecteur strict le fait.
         JsonDuplicateKeys.firstDuplicate(text)?.let { throw DuplicateKeyException(it.key, it.line, it.path) }
         return decoded
     }

@@ -53,7 +53,7 @@ object Publisher {
     }
 
     /**
-     * Publie [state] d'un bloc et rend l'état qu'il remplace, pour dire ce qui change ; `null` à la première publication. Le mode posé en mémoire s'efface
+     * Publie [state] d'un bloc et rend l'état en vigueur qu'il remplace, pour dire ce qui change ; `null` à la première publication. Le mode posé en mémoire s'efface
      * quand [resetMode] le dit : à une publication qui relit le fichier des réglages, démarrage, rechargement, restauration, pas à une écriture du mod, qui
      * ne le relit pas (5.8).
      */
@@ -64,7 +64,7 @@ object Publisher {
         return previous
     }
 
-    /** Retire l'état publié, la dernière publication et le mode posé, comme avant la première publication. Réservé aux tests. */
+    /** Retire l'état en vigueur, la dernière publication et le mode posé, comme avant la première publication. Réservé aux tests. */
     internal fun clear() {
         resolver = null
         lastPublication = null

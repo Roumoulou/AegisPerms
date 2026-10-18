@@ -23,7 +23,7 @@ import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * L'inspection de l'arbre JSON d'un fichier, avant son décodage (cahier des charges, 4.5) : le numéro de structure, puis l'arbre confronté aux descripteurs
- * du modèle. Elle dit en une passe toutes les clés inconnues et toutes les valeurs hors de leur domaine, chacune avec son chemin JSON, là où le décodage
+ * du modèle. Elle dit en une passe tous les champs inconnus et toutes les valeurs hors de leur domaine, chacune avec son chemin JSON, là où le décodage
  * s'arrêterait à la première, sans chemin ni nature.
  *
  * Les clés et les domaines fermés se lisent dans les descripteurs, donc dans les annotations du modèle : rien ne s'en recopie ici. Seule la règle a sa

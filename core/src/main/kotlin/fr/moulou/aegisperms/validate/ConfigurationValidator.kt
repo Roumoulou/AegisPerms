@@ -32,7 +32,7 @@ import java.util.UUID
  * même ordre quel que soit celui des entrées, les droits d'abord, groupes puis joueurs par nom croissant, puis les réglages, puis ceux que le catalogue tire
  * de l'arbre des commandes.
  *
- * Ce que seule la lecture d'un fichier sait dire, un fichier illisible, une clé inconnue ou écrite deux fois, une valeur hors d'un domaine fermé, se
+ * Ce que seule la lecture d'un fichier sait dire, un fichier illisible, un champ inconnu ou écrit deux fois, une valeur hors d'un domaine fermé, se
  * constate à la lecture.
  */
 object ConfigurationValidator {

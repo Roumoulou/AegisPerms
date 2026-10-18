@@ -150,7 +150,7 @@ class CatalogFileTest {
         )
         assertEquals(second.apiKeys, update(nextStart).catalog.apiKeys)
 
-        // Redemandée sous un autre type, une clé garde sa première date.
+        // Redemandée par une autre voie, une clé garde sa première date.
         val third = update(nextStart, apiKeys = mapOf("homes:home/limit" to "boolean")).catalog
         assertEquals(ApiKeyEntry("boolean", "2026-10-05T12:05:09Z"), third.apiKeys.getValue("homes:home/limit"))
         assertEquals(third, readCatalog())

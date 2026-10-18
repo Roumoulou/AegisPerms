@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-/** Les clés d'API demandées, leur type au catalogue et les chaînes à points (cahier des charges, 4.6, 6.1 et 6.4). */
+/** Les clés d'API demandées, leurs voies au catalogue et les chaînes à points (cahier des charges, 4.6, 6.1 et 6.4). */
 class ApiKeyRequestsTest {
 
     companion object {

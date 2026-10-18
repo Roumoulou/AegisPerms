@@ -9,7 +9,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 /**
- * Le numéro de structure d'un fichier (cahier des charges, 4.2), tel que son arbre JSON l'écrit sous la clé `schema-version`. Le mod le lit lui-même, sur
+ * Le numéro de structure d'un fichier (cahier des charges, 4.2), tel que son arbre JSON l'écrit sous le champ `schema-version`. Le mod le lit lui-même, sur
  * l'arbre, avant tout décodage.
  */
 internal sealed interface SchemaVersion {

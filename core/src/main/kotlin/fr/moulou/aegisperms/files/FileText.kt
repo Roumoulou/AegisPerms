@@ -18,7 +18,7 @@ import kotlin.io.path.readText
  * Le texte d'un fichier tel qu'il a été lu, sans son BOM : ses lignes et, quand il est du JSON strict, son arbre. Il donne à un constat la ligne de son
  * chemin JSON (cahier des charges, 4.5), par le localisateur de lignes de Storify.
  *
- * La ligne est donnée au mieux : le localisateur lit une clé par ligne, et rend pour une valeur écrite en ligne la ligne de la clé qui la porte. Un chemin
+ * La ligne est donnée au mieux : le localisateur lit un champ par ligne, et rend pour une valeur écrite en ligne la ligne du champ qui la porte. Un chemin
  * que le fichier n'écrit pas, une valeur laissée à son défaut, prend la ligne de son plus proche ancêtre écrit.
  */
 internal class FileText private constructor(private val content: String, private val locator: ErrorLineLocator) {

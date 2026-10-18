@@ -80,8 +80,8 @@ d'`ObservationLog`, et les files de `TreeResend`.
 
 ## 4. Les accroches
 
-Les mixins vivent dans `common\src\main\java\fr\moulou\aegisperms\mixin\`, déclarés dans `aegisperms.mixins.json` avec `defaultRequire: 1` : une cible qui
-disparaît fait échouer le chargement, le bon réglage pour un mod de sûreté. Chacun appelle une fonction de `Hooks` ou de `hook`, où vit la logique et où les
+Les mixins vivent dans `common\src\main\java\fr\moulou\aegisperms\mixin\`, déclarés dans `aegisperms.mixins.json` avec `defaultRequire: 1` : une méthode visée
+qui disparaît fait échouer le chargement, le bon réglage pour un mod de sûreté. Chacun appelle une fonction de `Hooks` ou de `hook`, où vit la logique et où les
 tests la trouvent.
 
 | Accroche | Cible | Moyen | Ce qu'elle fait |

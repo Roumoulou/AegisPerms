@@ -24,8 +24,8 @@ enum class ApiRoute(val catalogName: String) {
 /**
  * Les clés d'API demandées (cahier des charges, 4.6), chacune avec les voies par lesquelles elle l'a été : ce que le catalogue note sous `api-keys`. Une clé
  * venue par plusieurs voies les porte jointes par `+`, dans l'ordre atome, Fabric, lucko. S'y ajoutent les chaînes à points que l'API de lucko a données sans
- * qu'elles fassent une clé, que le catalogue signale refusées sous leur texte (6.4). Ce que le catalogue gardait se reprend au démarrage, pour qu'un type
- * fusionné et une chaîne refusée survivent au redémarrage.
+ * qu'elles fassent une clé, que le catalogue signale refusées sous leur texte (6.4). Ce que le catalogue gardait se reprend au démarrage, pour que des voies
+ * jointes et une chaîne refusée survivent au redémarrage.
  *
  * Les deux tables d'identifiant vers clé servent au chemin des atomes et des demandes : après la première fois, rien ne découpe plus de chaîne. `request`
  * n'alloue rien quand la clé et sa voie sont déjà connues.
@@ -124,13 +124,13 @@ object ApiKeyRequests {
         }
     }
 
-    /** Les clés demandées, chacune sous son texte avec son type, pour `catalog.json`. */
+    /** Les clés demandées, chacune sous son texte avec ses voies, pour `catalog.json`. */
     fun types(): Map<String, String> = routesByKey.entries.associate { (key, routes) -> key.text to typeOf(routes) }
 
     /** Les textes refusés, chacun avec les voies qui l'ont demandé, pour `catalog.json`. */
     fun refusedTypes(): Map<String, String> = refused.entries.associate { (text, routes) -> text to typeOf(routes) }
 
-    /** Le type de [key] au catalogue, ou `null` quand elle n'a jamais été demandée. */
+    /** Le champ `type` de [key] au catalogue, ses voies jointes par `+`, ou `null` quand elle n'a jamais été demandée. */
     fun typeOf(key: ApiKey): String? = routesByKey[key]?.let(::typeOf)
 
     private fun typeOf(routes: Set<ApiRoute>): String = routes.sortedBy { it.ordinal }.joinToString(SEPARATOR) { it.catalogName }

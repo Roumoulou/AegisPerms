@@ -7,7 +7,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Les réglages (cahier des charges, 4.3) : le contenu du fichier `settings.json`, tel qu'il l'écrit, chaque réglage sous sa clé JSON et dans l'ordre du
+ * Les réglages (cahier des charges, 4.3) : le contenu du fichier `settings.json`, tel qu'il l'écrit, chaque réglage sous son champ et dans l'ordre du
  * fichier. Les valeurs par défaut sont les valeurs livrées.
  */
 @Serializable

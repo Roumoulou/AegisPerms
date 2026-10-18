@@ -18,7 +18,7 @@ enum class IssueKind(val severity: Severity) {
     /** Un fichier qui n'est pas du JSON strict, ou que sa structure fait refuser sans que la lecture sache dire où (4.2). Argument : ce que le parseur en dit. */
     MALFORMED_FILE(Severity.ERROR),
 
-    /** Une clé écrite deux fois dans un même objet : un groupe, un joueur ou une règle en double (4.12). Argument : la clé. */
+    /** Un champ écrit deux fois dans un même objet : un groupe, un joueur ou une règle en double (4.12). Argument : son nom. */
     DUPLICATE_KEY(Severity.ERROR),
 
     /** Un fichier sans `schema-version` (4.2). Sans argument. */

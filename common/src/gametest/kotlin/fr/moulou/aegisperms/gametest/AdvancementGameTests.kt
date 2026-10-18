@@ -13,7 +13,7 @@ import net.minecraft.resources.Identifier
 
 /**
  * `/advancement` nœud par nœud (cahier des charges, 2.6 à 2.8 et 8.5) : ce qu'un `allow` sur la racine ouvre, ce qu'un `deny` sur `revoke` ferme, un refus
- * visible au fond de l'arbre, un `allow` sans effet sous un refus, et l'exécution vraie, qui donne le progrès. Les cibles s'écrivent `@s`, l'atome des
+ * visible au fond de l'arbre, un `allow` sans effet sous un refus, et l'exécution vraie, qui donne le progrès. Les joueurs désignés s'écrivent `@s`, l'atome des
  * sélecteurs ouvert : tous les joueurs simulés portent le même pseudo, et un UUID ne désigne pas un joueur pour `players()`.
  */
 class AdvancementGameTests : AegisGameTests() {
@@ -21,7 +21,7 @@ class AdvancementGameTests : AegisGameTests() {
     companion object {
         private const val ADVANCEMENT = "minecraft:command.advancement"
 
-        /** L'atome des sélecteurs (2.8) : les cibles s'écrivent `@s`, parce que tous les joueurs simulés portent le même pseudo et qu'un UUID ne désigne pas un joueur. */
+        /** L'atome des sélecteurs (2.8) : les joueurs désignés s'écrivent `@s`, parce que tous les joueurs simulés portent le même pseudo et qu'un UUID ne désigne pas un joueur. */
         private const val SELECTORS = "minecraft:commands/entity_selectors"
 
         /** Le progrès « L'âge de pierre », présent dans les trois versions. */

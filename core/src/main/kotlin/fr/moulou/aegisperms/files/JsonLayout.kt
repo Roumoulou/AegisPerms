@@ -9,7 +9,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 /**
- * La mise en page des fichiers JSON que le mod écrit (cahier des charges, 4.2 et 4.4) : un objet s'écrit une clé par ligne, une liste de valeurs simples
+ * La mise en page des fichiers JSON que le mod écrit (cahier des charges, 4.2 et 4.4) : un objet s'écrit un champ par ligne, une liste de valeurs simples
  * sur une ligne, un objet et une liste vides sans rien entre leurs crochets. L'indentation est de deux espaces, les fins de ligne sont des LF, et le texte
  * finit par une fin de ligne. Une liste qui porte un objet ou une autre liste s'écrit un élément par ligne.
  *

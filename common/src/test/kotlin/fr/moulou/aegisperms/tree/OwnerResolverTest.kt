@@ -74,7 +74,7 @@ class OwnerResolverTest {
 
         assertEquals(Owner("homes", OwnerSource.DETECTED, listOf("warps")), resolver().ownerOf(home))
 
-        // Brigadier garde la commande du dernier qui en a donné une : le propriétaire change avec l'ordre de chargement.
+        // Brigadier garde la commande du dernier qui en a donné une : le mod propriétaire change avec l'ordre de chargement.
         dispatcher.register(literal<Any>("home").executes(WarpsMod.command()))
         assertEquals(Owner("warps", OwnerSource.DETECTED, emptyList()), resolver().ownerOf(home))
     }

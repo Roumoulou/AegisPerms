@@ -32,7 +32,7 @@ class ApiGameTests : AegisGameTests() {
         consumerCommandFollowsTheRules(helper, "aegistest_lucko", "$TEST_MOD_ID:lucko")
     }
 
-    /** Prouve que la demande d'un consommateur sous `execute as` se juge sur l'émetteur : la règle propre du juge répond, celle de la cible ne compte pas. */
+    /** Prouve que la demande d'un consommateur sous `execute as` se juge sur l'émetteur : la règle propre du juge répond, celle du joueur que `execute as` désigne ne compte pas. */
     @GameTest
     fun apiRequestUnderExecuteAsKeepsTheJudge(helper: GameTestHelper) {
         val judged = helper.judgedPlayer()

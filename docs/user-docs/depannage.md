@@ -65,7 +65,7 @@ Un avertissement laisse la configuration s'appliquer. Il se dit à la publicatio
 | « La forme préfixée de X est refusée : son nom est déjà pris » | une commande porte déjà le nom `<préfixe>:<commande>` |
 | « Le rattachement de X est ignoré » | la commande est de vanilla, le mod nommé n'est pas chargé, ou la commande n'est pas sur le serveur |
 | « La commande X n'a pas de mod propriétaire connu » | ses clés prennent l'espace de noms `unknown`, et elle n'a pas de forme préfixée ; `namespaces.owners` lui donne un mod |
-| « La commande X est partagée » | plusieurs mods ont enregistré la même racine ; `namespaces.owners` fixe le propriétaire pour que la clé ne dépende plus de l'ordre de chargement |
+| « La commande X est partagée » | plusieurs mods ont enregistré la même racine ; `namespaces.owners` fixe le mod propriétaire pour que la clé ne dépende plus de l'ordre de chargement |
 
 **L'avertissement renforcé**, « Le deny de X ne ferme plus rien : sa clé n'existe plus », se répète à chaque démarrage et à chaque connexion d'un op
 d'au moins `admin-level`, jusqu'à correction : une mise à jour qui renomme un argument ou change le modid d'un mod rendrait sinon l'accès que le refus fermait.
