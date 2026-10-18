@@ -533,10 +533,12 @@ tasks.named("check") { dependsOn(checkCommonCompatibility) }
  *
  *  Ce qui tient à la version ne s'écrit pas à la main, il se calcule comme les
  *  planchers de la section 1 : le fichier, la version (1.0.0+26.3), le nom affiché
- *  (AegisPerms-1.0.0+26.3) et la version du jeu, celle que le jar exige. Le reste
- *  est commun aux trois jars :
- *    - Fabric, release, serveur dédié seul : DEDICATED_SERVER_ONLY pour Modrinth,
- *      `server` sans `client` pour CurseForge
+ *  (AegisPerms-1.0.0+26.3), la version du jeu, celle que le jar exige, et le type,
+ *  lu dans mod_version : une pré-version `-alpha` ou `-beta` part comme alpha ou
+ *  bêta sur les deux plateformes, le reste en release (git-et-versions.md, 2 et 3).
+ *  Le reste est commun aux trois jars :
+ *    - Fabric, serveur dédié seul : DEDICATED_SERVER_ONLY pour Modrinth, `server`
+ *      sans `client` pour CurseForge
  *    - Fabric API et Fabric Language Kotlin requises, par leur slug, le même sur
  *      les deux plateformes
  *    - le changelog : 04-releases\<version du mod>\changelog - a publier.md, dans
@@ -580,7 +582,11 @@ publishMods {
     version = releaseVersion
     displayName = releaseVersion.map { "AegisPerms-$it" }
     changelog = providers.fileContents(releaseChangelog).asText.orElse("")
-    type = STABLE
+    type = when {
+        "-alpha" in modVersion -> ALPHA
+        "-beta" in modVersion -> BETA
+        else -> STABLE
+    }
     modLoaders.add("fabric")
 
     modrinth {

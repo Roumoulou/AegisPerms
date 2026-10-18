@@ -5,7 +5,11 @@
   "name": "AegisPerms",
   "description": "Le pare-feu des commandes d'un serveur Fabric : pour chaque joueur et chaque nœud de l'arbre Brigadier, ce qui se voit et ce qui s'utilise, commandes vanilla et commandes des mods comprises, sans rien installer côté client.",
   "authors": ["roumoulou"],
-  "contact": {},
+  "contact": {
+    "homepage": "https://modrinth.com/mod/KNCR3gkY",
+    "sources": "https://github.com/Roumoulou/AegisPerms",
+    "issues": "https://github.com/Roumoulou/AegisPerms/issues"
+  },
   "license": "LGPL-3.0-only",
   "environment": "server",
   "entrypoints": {
